@@ -58,7 +58,7 @@ const Map = () => {
                   latitude: order.User.originLat,
                   longitude: order.User.originLng
                 }}
-                apikey={'AIzaSyCpZgg6kdYXn8GD71Cfr3Hq3_F1IXH08dU'}
+                apikey={'AIzaU'}
                 timePrecision='now'
                 strokeWidth={3}
                 strokeColor= 'red'
