@@ -1,11 +1,18 @@
+navigator.geolocation = require('@react-native-community/geolocation');
 import { Stack } from "expo-router";
+import ProfileProvider from '../providers/ProfileProvider'
 
-export default function RootLayout() {
+const RootLayout = () => {
+
   return (
-    <Stack screenOptions={{
-      headerShown:false
-    }}>
-      <Stack.Screen name="(tabs)" />
-    </Stack>
+    <ProfileProvider>
+      <Stack screenOptions={{
+        headerShown:false
+      }}>
+          <Stack.Screen name="(tabs)" />
+      </Stack>
+    </ProfileProvider>
   );
 }
+
+export default RootLayout;

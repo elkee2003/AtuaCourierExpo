@@ -31,6 +31,7 @@ const HomeComponent = () => {
   return (
     <GestureHandlerRootView style={styles.container}>
       
+      {/* later check if availableorder prop is necessary */}
       <HomeMap avaliableOrders={avaliableOrders}/>
 
       {/* Money Balance */}

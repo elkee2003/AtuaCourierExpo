@@ -1,6 +1,7 @@
-import { View, Text, useWindowDimensions, ActivityIndicator } from 'react-native';
+import { View, Text, useWindowDimensions, ActivityIndicator, PermissionsAndroid, Platform, } from 'react-native';
 import React, { useState, useEffect, } from 'react';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import Geolocation from '@react-native-community/geolocation';
 import MapViewDirections from 'react-native-maps-directions';
 import * as Location from 'expo-location';
 import Entypo from '@expo/vector-icons/Entypo';
@@ -23,77 +24,58 @@ const OrderDeliveryMap = ({
         const [errorMsg, setErrorMsg] = useState(null);
 
         useEffect(() => {
-            let foregroundSubscription;
-
-            (async () => {
+            let watchId;
+        
+            const requestLocationPermission = async () => {
                 try {
-                    let { status } = await Location.requestForegroundPermissionsAsync();
-                    if (status !== 'granted') {
-                        setErrorMsg('Permission to access location was denied');
-                        return;
+                    // For both iOS and Android
+                    if (Platform.OS === 'ios' || Platform.OS === 'android') {
+                    Geolocation.requestAuthorization(); // Request permission on iOS and Android
                     }
-
-                    let currentLocation = await Location.getCurrentPositionAsync({});
-                    console.log("Initial location:", currentLocation);
-
-                    if (currentLocation && currentLocation.coords) {
-                        setLocation({
-                            coords: {
-                                latitude: currentLocation.coords.latitude,
-                                longitude: currentLocation.coords.longitude
-                            }
-                        });
-
-                        foregroundSubscription = await Location.watchPositionAsync(
-                            {
-                                accuracy: Location.Accuracy.High,
-                                distanceInterval: 500,
-                                timeInterval: 10000,
-                            },
-                            (updatedLocation) => {
-                                console.log("Updated location:", updatedLocation);
-
-                                if (updatedLocation && updatedLocation.coords) {
-                                    setLocation({
-                                        coords: {
-                                            latitude: updatedLocation.coords.latitude,
-                                            longitude: updatedLocation.coords.longitude,
-                                        }
-                                    });
-                                } else {
-                                    console.error("Updated location is undefined or missing coords");
-                                }
-                            }
-                        );
-
-                        if (!foregroundSubscription) {
-                            console.error("Location subscription failed.");
-                        }
-                    } else {
-                        console.error("Initial location is undefined or missing coords");
+            
+                    // Watch the user's location and update it continuously
+                    watchId = Geolocation.watchPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        setLocation({ latitude, longitude });
+                        console.log('Updated Location:', position);
+                    },
+                    (error) => {
+                        console.error('Geolocation error:', error);
+                        setErrorMsg('Error fetching location');
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 20000,
+                        maximumAge: 1000,
+                        distanceFilter: 500, // Update based on distance (e.g., every 500 meters)
                     }
+                    );
                 } catch (error) {
-                    console.error("Error fetching location:", error);
-                    setErrorMsg("Error fetching location. Please try again.");
+                    console.error('Location permission error:', error);
+                    setErrorMsg('Failed to request location permission');
                 }
-            })();
-
+            };
+        
+            requestLocationPermission();
+        
+            // Cleanup subscription when the component unmounts
             return () => {
-                if (foregroundSubscription) {
-                    foregroundSubscription.remove();
-                }
+              if (watchId !== null) {
+                Geolocation.clearWatch(watchId);
+              }
             };
         }, []);
 
-        if (!location || !location.coords.latitude || !location.coords.longitude) {
-            return <ActivityIndicator style={{ marginTop: 30 }} size={"large"} />;
+        if (!location || !location.latitude || !location.longitude) {
+            return <ActivityIndicator style={{ marginTop: 30 }} size="large" />;
         }
 
         // For Order coordinates
-        const userLocationCoords = {
-            latitude: order.User.originLat,
-            longitude: order.User.originLng,
-        };
+        // const userLocationCoords = {
+        //     latitude: order.User.originLat,
+        //     longitude: order.User.originLng,
+        // };
 
         // Function to Change the Latitude and Longitude of MapDirection
         const getDestination=()=>{
@@ -113,9 +95,10 @@ const OrderDeliveryMap = ({
             <MapView
               ref={mapRef}
               style={{ width, height: height - 50 }}
+              provider={PROVIDER_GOOGLE}
               initialRegion={{
-                    latitude: location.coords.latitude,
-                    longitude: location.coords.longitude,
+                    latitude: location.latitude,
+                    longitude: location.longitude,
                     latitudeDelta: 0.0922,
                     longitudeDelta: 0.0421,
               }}
@@ -124,8 +107,8 @@ const OrderDeliveryMap = ({
             >
                 <MapViewDirections
                     origin={{
-                        latitude: location.coords.latitude,
-                        longitude: location.coords.longitude,
+                        latitude: location.latitude,
+                        longitude: location.longitude,
                     }}
                     destination={getDestination()}
                     apikey={'AIzaSyCpZgg6kdYXn8GD71Cfr3Hq3_F1IXH08dU'}

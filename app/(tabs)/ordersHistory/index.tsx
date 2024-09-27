@@ -1,16 +1,32 @@
 import { View, Text } from 'react-native'
-import React from 'react'
+import React, { useEffect } from 'react'
+import { router } from 'expo-router'
+import { useProfileContext } from '@/providers/ProfileProvider'
+import OrderHistoryCom from '../../../components/OrderHistoryCom'
 
 const Orders = () => {
+
+  const {dbUser} = useProfileContext()
+
+  // useEffect(()=>{
+  //   if(!dbUser){
+  //     router.replace('/profile')
+  //   }
+  // }, [dbUser])
+
+  // if(!dbUser){
+  //   return (
+  //     <View style={{flex:1, justifyContent:'center', alignItems:'center'}}>
+  //     <Text style={{fontSize:20, fontWeight:'bold', color:'#afadad'}}>Kindly Fill in Your Data in Proile screen</Text>
+  //     </View>
+  //   )
+  // }
+
   return (
     <View style={{flex:1}}>
-      <Text style={{fontSize:50, textAlign:'center'}}>
-        Order History
-      </Text>
-      <Text style={{fontSize:20,}}>Name of Placer: Adama</Text>
-      <Text>Number: 2840223522232</Text>
+      <OrderHistoryCom/>
     </View>
   )
 }
 
-export default Orders
+export default Orders;

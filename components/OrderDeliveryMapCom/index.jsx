@@ -18,7 +18,7 @@ const ORDER_STATUSES ={
   DELIVERED:'Delivered'
 }
 
-const TestOrderdeliveryMap = ({order}) => {
+const OrderdeliveryMapCom = ({order}) => {
   
   const mapRef = useRef(null);
   const bottomSheetRef = useRef(null)
@@ -38,12 +38,6 @@ const TestOrderdeliveryMap = ({order}) => {
     const filteredOrder = avaliableOrders.filter((order)=> order.id !== id)
     setAvaliableOrders(filteredOrder)
   }
-
-  // const onAccept= (id)=>{
-  //   const acceptedOrder = avaliableOrders.filter((order)=>{ order.id === id})
-  //   setMyOrder(acceptedOrder)
-  // }
-  // Kindly note there is no useState of myOrder and setMyOrder
 
   // Function of the Button on OrderDetails Screen when pressed
   const onButtonPressed = ()=>{
@@ -169,4 +163,4 @@ const TestOrderdeliveryMap = ({order}) => {
   )
 }
 
-export default TestOrderdeliveryMap
+export default OrderdeliveryMapCom;

@@ -1,7 +1,7 @@
-import { View, Text, useWindowDimensions, ActivityIndicator } from 'react-native'
+import { View,  useWindowDimensions, ActivityIndicator, PermissionsAndroid, Platform, } from 'react-native'
 import React, {useState, useEffect} from 'react'
-import MapView, {Marker} from 'react-native-maps';
-import MapViewDirections from 'react-native-maps-directions';
+import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
+import Geolocation from '@react-native-community/geolocation';
 import * as Location from 'expo-location';
 import Entypo from '@expo/vector-icons/Entypo';
 import styles from './styles'
@@ -15,59 +15,69 @@ const Map = () => {
   const [errorMsg, setErrorMsg] = useState(null);
 
   useEffect(() => {
-    (async () => {
-      
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setErrorMsg('Permission to access location was denied');
-        return;
-      }
+    let watchId;
 
-      let location = await Location.getCurrentPositionAsync({});
-      setLocation(location);
-    })();
+    const requestLocationPermission = async () => {
+        try {
+            // For both iOS and Android
+            if (Platform.OS === 'ios' || Platform.OS === 'android') {
+            Geolocation.requestAuthorization(); // Request permission on iOS and Android
+            }
+    
+            // Watch the user's location and update it continuously
+            watchId = Geolocation.watchPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                setLocation({ latitude, longitude });
+                console.log('Updated Location:', position);
+            },
+            (error) => {
+                console.error('Geolocation error:', error);
+                setErrorMsg('Error fetching location');
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 20000,
+                maximumAge: 1000,
+                distanceFilter: 500, // Update based on distance (e.g., every 500 meters)
+            }
+            );
+        } catch (error) {
+            console.error('Location permission error:', error);
+            setErrorMsg('Failed to request location permission');
+        }
+    };
+
+    requestLocationPermission();
+
+    // Cleanup subscription when the component unmounts
+    return () => {
+      if (watchId !== null) {
+        Geolocation.clearWatch(watchId);
+      }
+    };
   }, []);
 
-  if (!location){
-    return <ActivityIndicator size={"large"}/>
+  if (!location || !location.latitude || !location.longitude) {
+    return <ActivityIndicator style={{ marginTop: 90 }} size="large" />;
   }
 
   return (
     <View style={styles.container}>
       <MapView
-      style={{width, height:height-80}}
+      style={{width, height:height- 110}}
+      provider={PROVIDER_GOOGLE}
       initialRegion={{
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
+        latitude: location.latitude,
+        longitude: location.longitude,
         latitudeDelta: 0.0922,
         longitudeDelta: 0.0421,
       }}
       showsUserLocation
       followsUserLocation
-      >
-        {/* {
-          avaliableOrders.map(order=>{
-            return(
-              <MapViewDirections
-                key={order.id}
-                origin={{
-                  latitude: location.coords.latitude,
-                  longitude: location.coords.longitude,
-                }}
-                destination={{
-                  latitude: order.User.originLat,
-                  longitude: order.User.originLng
-                }}
-                apikey={'AIzaSyCpZgg6kdYXn8GD71Cfr3Hq3_F1IXH08dU'}
-                timePrecision='now'
-                strokeWidth={3}
-                strokeColor= 'red'
-              />
-            )
-          })
-        } */}
+      />
 
-        {
+        {/* {
           avaliableOrders.map(order=>{
             return(
               <Marker 
@@ -84,8 +94,8 @@ const Map = () => {
               </Marker>
             )
           })
-        }
-      </MapView>
+        } */}
+      {/* </MapView> */}
     </View>
   )
 }
