@@ -37,7 +37,8 @@ const EditProfile = () => {
 
     async function handleSignOut() {
       try {
-        await signOut();
+        const res = await signOut();
+        console.log(res)
       } catch (error) {
         console.log('error signing out: ', error);
       }

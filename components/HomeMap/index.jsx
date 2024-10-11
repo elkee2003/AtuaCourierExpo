@@ -76,26 +76,6 @@ const Map = () => {
       showsUserLocation
       followsUserLocation
       />
-
-        {/* {
-          avaliableOrders.map(order=>{
-            return(
-              <Marker 
-              key={order.id}
-              title={order.User.name} 
-              description={order.User.address}
-              coordinate={{
-                latitude:order.User.originLat,
-                longitude:order.User.originLng,
-              }}>
-                <View style={{backgroundColor:'#04b831', padding:5, borderRadius:20}}>
-                  <Entypo name={'location-pin'} color={'white'} size={24}/>
-                </View>
-              </Marker>
-            )
-          })
-        } */}
-      {/* </MapView> */}
     </View>
   )
 }

@@ -23,14 +23,13 @@ export default function Index() {
 
   useEffect(()=>{
     checkUser()
-    console.log('hello')
-  },[])
+  },[checkUser])
 
   useEffect(()=>{
 
     const listener = data =>{
       const { event } = data.payload;
-      if (event === 'signIn' || event === 'signOut'){
+      if (event === 'signedIn' || event === 'signedOut'){
         checkUser();
       }
     }

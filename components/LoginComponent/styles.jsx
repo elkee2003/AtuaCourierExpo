@@ -144,8 +144,10 @@ const styles = StyleSheet.create({
     text_SECONDARY:{
         fontSize:18,
         fontWeight:'bold',
-        color:'#058b05'
+        color:'#058b05',
+        marginBottom:20,
     },
+
     errorText: {
         color: 'red',
         marginBottom: 10,

@@ -120,7 +120,7 @@ const index = () => {
 
             {/* Forgot Password & Create Account Btns */}
             <View style={styles.secBtnSection}>
-                <CustomButton 
+                <CustomButton
                     text='Forgot Password?' 
                     onPress={onForgotPassword}
                     type='SECONDARY'

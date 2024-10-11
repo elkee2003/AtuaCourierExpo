@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "688934285178",
+    "project_id": "atua-fe4aa",
+    "storage_bucket": "atua-fe4aa.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:688934285178:android:388978df62c4b053a730c3",
+        "android_client_info": {
+          "package_name": "com.anonymous.AtuaCourier"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqLrtW4AOQmX9Zl9XUXRxQJxiHKwWBkwE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
