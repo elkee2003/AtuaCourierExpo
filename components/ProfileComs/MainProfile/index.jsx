@@ -1,7 +1,8 @@
-import { View, Text, Image, TouchableOpacity, Alert } from 'react-native'
+import { View, Text, Image, TouchableOpacity, Alert, ScrollView } from 'react-native'
 import React from 'react'
 import { useProfileContext } from '../../../providers/ProfileProvider';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import Placeholder from '../../../assets/images/placeholder.png'
 import styles from './styles';
 import { router } from 'expo-router';
 import { signOut } from 'aws-amplify/auth';
@@ -53,46 +54,51 @@ const MainProfile = () => {
         <Text style={styles.signoutTxt}>Sign Out</Text>
       </TouchableOpacity>
 
-      <View style={styles.centerCon}>
+      <ScrollView contentContainerStyle={styles.centerCon} showsVerticalScrollIndicator={false}>
 
         {/* Profile Picture */}
         <View style={styles.profilePicContainer}>
-            <Image source={{ uri: profilePic }} style={styles.img} />
+            {profilePic ? (
+                <Image source={{ uri: profilePic }} style={styles.img} />
+            ) : (
+                <Image source={Placeholder} style={styles.img} />
+            )}
         </View>
 
         {/* Relevant Info section */}
         <View>
-          <Text>{firstName}</Text>
-          <Text>{phoneNumber}</Text>
-          <Text>{firstName}</Text>
-          <Text>{bankName}</Text>
-          <Text>{accountName}</Text>
-          <Text>{accountNumber}</Text>
-          <Text>{guarantorName}</Text>
+          <Text style={styles.details}>{firstName}</Text>
+          <Text style={styles.details}>{phoneNumber}</Text>
+          <Text style={styles.details}>{bankName}</Text>
+          <Text style={styles.details}>{accountName}</Text>
+          <Text style={styles.details}>{accountNumber}</Text>
+          <Text style={styles.details}>{guarantorName}</Text>
         </View>
 
         {/* Button Section */}
-        <View style={styles.mainBtnRow}>
-          <TouchableOpacity style={styles.viewInfo} onPress={()=>router.push('/profile/reviewinfo/reviewcourier')}>
-              <Text style={styles.viewInfoText}>View Info</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.editProfile} onPress={()=>router.push('/profile/editprofile')}>
-              <Text style={styles.editProfileTxt}>Edit Profile</Text>
-          </TouchableOpacity>
-
-          {/* Cards container */}
-          <View>
-            <TouchableOpacity onPress={()=>router.push('/transportationtype')}>
-              <Text>Transportation Type</Text>
+        <View>
+          <View style={styles.mainBtnsCard}>
+            <TouchableOpacity style={styles.viewInfo} onPress={()=>router.push('/profile/reviewinfo/reviewcourier')}>
+                <Text style={styles.viewInfoText}>View Info</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={()=>router.push('/policies')}>
-              <Text>Policies</Text>
+            <TouchableOpacity style={styles.editProfile} onPress={()=>router.push('/profile/editprofile')}>
+                <Text style={styles.editProfileTxt}>Edit Profile</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Cards container */}
+          <View style={styles.tetiaryCard}>
+            <TouchableOpacity style={styles.btnTetiary} onPress={()=>router.push('/transportationtype')}>
+              <Text style={styles.btnTetiaryTxt}>Transportation Type</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.btnTetiary} onPress={()=>router.push('/policies')}>
+              <Text style={styles.btnTetiaryTxt}>Policies</Text>
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </ScrollView>
     </View>
   )
 }

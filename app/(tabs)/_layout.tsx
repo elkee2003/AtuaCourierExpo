@@ -1,6 +1,8 @@
 import { Tabs } from 'expo-router';
 import { Entypo, Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import NotificationProvider from '@/providers/NotificationProvider';
+// import ProfileProvider from '@/providers/ProfileProvider';
+// import AuthProvider from '@/providers/AuthProvider'
 import {
   withAuthenticator,
   useAuthenticator
@@ -12,31 +14,35 @@ Amplify.configure(amplifyconfig);
 
 const TabsLayout = () => {
   return (
-    <NotificationProvider>
-      <Tabs screenOptions={{ headerShown: false }}>
-        <Tabs.Screen
-          name="home"
-          options={{
-            tabBarLabel: 'Home',
-            tabBarIcon: ({ color }) => <Entypo name="home" size={24} color={color} />
-          }}
-        />
-        <Tabs.Screen
-          name="ordersHistory"
-          options={{
-            tabBarLabel: 'Order History',
-            tabBarIcon: ({ color }) => <FontAwesome5 name="clipboard-list" size={24} color={color} />
-          }}
-        />
-        <Tabs.Screen
-          name="profile"
-          options={{
-            tabBarLabel: 'Profile',
-            tabBarIcon: ({ color }) => <Ionicons name="person-sharp" size={24} color={color} />
-          }}
-        />
-      </Tabs>
-    </NotificationProvider>
+    // <AuthProvider>
+      <NotificationProvider>
+        {/* <ProfileProvider> */}
+          <Tabs screenOptions={{ headerShown: false }}>
+            <Tabs.Screen
+              name="home"
+              options={{
+                tabBarLabel: 'Home',
+                tabBarIcon: ({ color }) => <Entypo name="home" size={24} color={color} />
+              }}
+            />
+            <Tabs.Screen
+              name="ordersHistory"
+              options={{
+                tabBarLabel: 'Order History',
+                tabBarIcon: ({ color }) => <FontAwesome5 name="clipboard-list" size={24} color={color} />
+              }}
+            />
+            <Tabs.Screen
+              name="profile"
+              options={{
+                tabBarLabel: 'Profile',
+                tabBarIcon: ({ color }) => <Ionicons name="person-sharp" size={24} color={color} />
+              }}
+            />
+          </Tabs>
+        {/* </ProfileProvider> */}
+      </NotificationProvider>
+    // </AuthProvider>
   );
 };
 

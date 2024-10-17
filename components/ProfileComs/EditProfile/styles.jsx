@@ -68,6 +68,13 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         fontSize:16,
     },
+    inputLast: {
+        marginTop: 10,
+        backgroundColor: "white",
+        padding: 15,
+        borderRadius: 5,
+        fontSize:16,
+    },
     error:{
         color:'#d80b0b',
         fontSize:13,

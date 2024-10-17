@@ -3,11 +3,16 @@ import React, {useState} from 'react'
 import { Dropdown } from 'react-native-element-dropdown';
 import styles from './styles'
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { useProfileContext } from '../../../providers/ProfileProvider'
+import { router } from 'expo-router';
+import { useProfileContext } from '../../../../providers/ProfileProvider'
+import { useAuthContext } from '../../../../providers/AuthProvider';
+import { DataStore } from 'aws-amplify/datastore';
+import {Courier} from '../../../../src/models'
 
-const TransportationTypeCom = () => {
+const StandaloneTtypeCom = () => {
 
-  const {transportationType, setTransportationType,} = useProfileContext()
+  const {transportationType, setTransportationType} = useProfileContext()
+  const {dbUser, setDbUser} = useAuthContext()
 
   const [isFocus, setIsFocus] = useState(false);
 
@@ -29,9 +34,28 @@ const TransportationTypeCom = () => {
     Alert.alert('Transportation Type Details', description);
   };
 
+  const updateTransportType = async () => {
+    try{
+      const transportType = await DataStore.save(Courier.copyOf(dbUser, (updated)=>{
+         
+        updated.transportationType = transportationType 
+      }))
+      setDbUser(transportType)
+      Alert.alert('Successful', 'Changed Successfully')
+      router.push('/profile')
+
+    }catch(e){
+      Alert.alert('Error', e.message)
+    } 
+  }
+
   return (
     <View style={styles.container}>
-      {/* <Text>TransportationTypeCom</Text> */}
+
+      <Text style={styles.header}>Transportation Type</Text>
+
+      <Text style={styles.subHeader}>Selected Transportation Type:</Text>
+      <Text style={styles.selectTransportTypeTxt}>{transportationType}</Text>
       <Dropdown
           style={[styles.dropdown, isFocus && { borderColor: '#0f238a' }]}
           placeholderStyle={styles.placeholderStyle}
@@ -64,8 +88,12 @@ const TransportationTypeCom = () => {
             </View>
           )}
       />
+
+      <TouchableOpacity style={styles.btnCon} onPress={updateTransportType}>
+        <Text style={styles.btnTxt}>Change</Text>
+      </TouchableOpacity>
     </View>
   )
 }
 
-export default TransportationTypeCom
+export default StandaloneTtypeCom

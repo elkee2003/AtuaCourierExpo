@@ -1,63 +1,6 @@
 /* eslint-disable */
 // this is an auto generated file. This will be overwritten
 
-export const onCreateCompanyVehicle = /* GraphQL */ `
-  subscription OnCreateCompanyVehicle(
-    $filter: ModelSubscriptionCompanyVehicleFilterInput
-  ) {
-    onCreateCompanyVehicle(filter: $filter) {
-      id
-      vehicleType
-      model
-      regNumber
-      couriercompanyID
-      createdAt
-      updatedAt
-      _version
-      _deleted
-      _lastChangedAt
-      __typename
-    }
-  }
-`;
-export const onUpdateCompanyVehicle = /* GraphQL */ `
-  subscription OnUpdateCompanyVehicle(
-    $filter: ModelSubscriptionCompanyVehicleFilterInput
-  ) {
-    onUpdateCompanyVehicle(filter: $filter) {
-      id
-      vehicleType
-      model
-      regNumber
-      couriercompanyID
-      createdAt
-      updatedAt
-      _version
-      _deleted
-      _lastChangedAt
-      __typename
-    }
-  }
-`;
-export const onDeleteCompanyVehicle = /* GraphQL */ `
-  subscription OnDeleteCompanyVehicle(
-    $filter: ModelSubscriptionCompanyVehicleFilterInput
-  ) {
-    onDeleteCompanyVehicle(filter: $filter) {
-      id
-      vehicleType
-      model
-      regNumber
-      couriercompanyID
-      createdAt
-      updatedAt
-      _version
-      _deleted
-      _lastChangedAt
-      __typename
-    }
-  }
-`;
 export const onCreateCourierCompany = /* GraphQL */ `
   subscription OnCreateCourierCompany(
     $filter: ModelSubscriptionCourierCompanyFilterInput
@@ -163,6 +106,63 @@ export const onDeleteCourierCompany = /* GraphQL */ `
     }
   }
 `;
+export const onCreateCompanyVehicle = /* GraphQL */ `
+  subscription OnCreateCompanyVehicle(
+    $filter: ModelSubscriptionCompanyVehicleFilterInput
+  ) {
+    onCreateCompanyVehicle(filter: $filter) {
+      id
+      vehicleType
+      model
+      regNumber
+      couriercompanyID
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const onUpdateCompanyVehicle = /* GraphQL */ `
+  subscription OnUpdateCompanyVehicle(
+    $filter: ModelSubscriptionCompanyVehicleFilterInput
+  ) {
+    onUpdateCompanyVehicle(filter: $filter) {
+      id
+      vehicleType
+      model
+      regNumber
+      couriercompanyID
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const onDeleteCompanyVehicle = /* GraphQL */ `
+  subscription OnDeleteCompanyVehicle(
+    $filter: ModelSubscriptionCompanyVehicleFilterInput
+  ) {
+    onDeleteCompanyVehicle(filter: $filter) {
+      id
+      vehicleType
+      model
+      regNumber
+      couriercompanyID
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
 export const onCreateCourier = /* GraphQL */ `
   subscription OnCreateCourier($filter: ModelSubscriptionCourierFilterInput) {
     onCreateCourier(filter: $filter) {
@@ -172,8 +172,8 @@ export const onCreateCourier = /* GraphQL */ `
       lastName
       profilePic
       address
-      landmark
-      phoneBNumber
+      landMark
+      phoneNumber
       email
       courierNIN
       courierBVN
@@ -192,6 +192,11 @@ export const onCreateCourier = /* GraphQL */ `
       lat
       lng
       heading
+      Orders {
+        nextToken
+        startedAt
+        __typename
+      }
       createdAt
       updatedAt
       _version
@@ -210,8 +215,8 @@ export const onUpdateCourier = /* GraphQL */ `
       lastName
       profilePic
       address
-      landmark
-      phoneBNumber
+      landMark
+      phoneNumber
       email
       courierNIN
       courierBVN
@@ -230,6 +235,11 @@ export const onUpdateCourier = /* GraphQL */ `
       lat
       lng
       heading
+      Orders {
+        nextToken
+        startedAt
+        __typename
+      }
       createdAt
       updatedAt
       _version
@@ -248,8 +258,8 @@ export const onDeleteCourier = /* GraphQL */ `
       lastName
       profilePic
       address
-      landmark
-      phoneBNumber
+      landMark
+      phoneNumber
       email
       courierNIN
       courierBVN
@@ -268,6 +278,89 @@ export const onDeleteCourier = /* GraphQL */ `
       lat
       lng
       heading
+      Orders {
+        nextToken
+        startedAt
+        __typename
+      }
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const onCreateOrder = /* GraphQL */ `
+  subscription OnCreateOrder($filter: ModelSubscriptionOrderFilterInput) {
+    onCreateOrder(filter: $filter) {
+      id
+      recipientName
+      recipientNumber
+      orderDetails
+      parcelOrgin
+      parcelOriginLat
+      parcelOriginLng
+      parcelDestination
+      parcelDestinationLat
+      parcelDestinationLng
+      status
+      price
+      userID
+      courierID
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const onUpdateOrder = /* GraphQL */ `
+  subscription OnUpdateOrder($filter: ModelSubscriptionOrderFilterInput) {
+    onUpdateOrder(filter: $filter) {
+      id
+      recipientName
+      recipientNumber
+      orderDetails
+      parcelOrgin
+      parcelOriginLat
+      parcelOriginLng
+      parcelDestination
+      parcelDestinationLat
+      parcelDestinationLng
+      status
+      price
+      userID
+      courierID
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const onDeleteOrder = /* GraphQL */ `
+  subscription OnDeleteOrder($filter: ModelSubscriptionOrderFilterInput) {
+    onDeleteOrder(filter: $filter) {
+      id
+      recipientName
+      recipientNumber
+      orderDetails
+      parcelOrgin
+      parcelOriginLat
+      parcelOriginLng
+      parcelDestination
+      parcelDestinationLat
+      parcelDestinationLng
+      status
+      price
+      userID
+      courierID
       createdAt
       updatedAt
       _version
@@ -348,186 +441,6 @@ export const onDeleteUser = /* GraphQL */ `
       _version
       _deleted
       _lastChangedAt
-      __typename
-    }
-  }
-`;
-export const onCreateOrder = /* GraphQL */ `
-  subscription OnCreateOrder($filter: ModelSubscriptionOrderFilterInput) {
-    onCreateOrder(filter: $filter) {
-      id
-      recipientName
-      recipientNumber
-      orderDetails
-      parcelOrigin
-      parcelOriginLat
-      parcelOriginLng
-      parcelDestination
-      parcelDestinationLat
-      parcelDestinationLng
-      status
-      price
-      userID
-      Courier {
-        id
-        sub
-        firstName
-        lastName
-        profilePic
-        address
-        landmark
-        phoneBNumber
-        email
-        courierNIN
-        courierBVN
-        bankName
-        accountName
-        accountNumber
-        transportationType
-        guarantorName
-        guarantorLastName
-        guarantorProfession
-        guarantorNumber
-        guarantorRelationship
-        guarantorAddress
-        guarantorEmail
-        guarantorNIN
-        lat
-        lng
-        heading
-        createdAt
-        updatedAt
-        _version
-        _deleted
-        _lastChangedAt
-        __typename
-      }
-      createdAt
-      updatedAt
-      _version
-      _deleted
-      _lastChangedAt
-      orderCourierId
-      __typename
-    }
-  }
-`;
-export const onUpdateOrder = /* GraphQL */ `
-  subscription OnUpdateOrder($filter: ModelSubscriptionOrderFilterInput) {
-    onUpdateOrder(filter: $filter) {
-      id
-      recipientName
-      recipientNumber
-      orderDetails
-      parcelOrigin
-      parcelOriginLat
-      parcelOriginLng
-      parcelDestination
-      parcelDestinationLat
-      parcelDestinationLng
-      status
-      price
-      userID
-      Courier {
-        id
-        sub
-        firstName
-        lastName
-        profilePic
-        address
-        landmark
-        phoneBNumber
-        email
-        courierNIN
-        courierBVN
-        bankName
-        accountName
-        accountNumber
-        transportationType
-        guarantorName
-        guarantorLastName
-        guarantorProfession
-        guarantorNumber
-        guarantorRelationship
-        guarantorAddress
-        guarantorEmail
-        guarantorNIN
-        lat
-        lng
-        heading
-        createdAt
-        updatedAt
-        _version
-        _deleted
-        _lastChangedAt
-        __typename
-      }
-      createdAt
-      updatedAt
-      _version
-      _deleted
-      _lastChangedAt
-      orderCourierId
-      __typename
-    }
-  }
-`;
-export const onDeleteOrder = /* GraphQL */ `
-  subscription OnDeleteOrder($filter: ModelSubscriptionOrderFilterInput) {
-    onDeleteOrder(filter: $filter) {
-      id
-      recipientName
-      recipientNumber
-      orderDetails
-      parcelOrigin
-      parcelOriginLat
-      parcelOriginLng
-      parcelDestination
-      parcelDestinationLat
-      parcelDestinationLng
-      status
-      price
-      userID
-      Courier {
-        id
-        sub
-        firstName
-        lastName
-        profilePic
-        address
-        landmark
-        phoneBNumber
-        email
-        courierNIN
-        courierBVN
-        bankName
-        accountName
-        accountNumber
-        transportationType
-        guarantorName
-        guarantorLastName
-        guarantorProfession
-        guarantorNumber
-        guarantorRelationship
-        guarantorAddress
-        guarantorEmail
-        guarantorNIN
-        lat
-        lng
-        heading
-        createdAt
-        updatedAt
-        _version
-        _deleted
-        _lastChangedAt
-        __typename
-      }
-      createdAt
-      updatedAt
-      _version
-      _deleted
-      _lastChangedAt
-      orderCourierId
       __typename
     }
   }

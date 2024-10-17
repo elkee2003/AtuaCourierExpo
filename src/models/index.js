@@ -9,13 +9,13 @@ const OrderStatus = {
   "DELIVERED": "DELIVERED"
 };
 
-const { CompanyVehicle, CourierCompany, Courier, User, Order } = initSchema(schema);
+const { CourierCompany, CompanyVehicle, Courier, Order, User } = initSchema(schema);
 
 export {
-  CompanyVehicle,
   CourierCompany,
+  CompanyVehicle,
   Courier,
-  User,
   Order,
+  User,
   OrderStatus
 };

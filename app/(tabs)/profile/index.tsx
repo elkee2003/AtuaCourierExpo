@@ -3,17 +3,20 @@ import React from 'react'
 import {orders} from '../../../assets/data/orders'
 import EditProfile from '@/components/ProfileComs/EditProfile'
 import MainProfile from '../../../components/ProfileComs/MainProfile'
-import { useProfileContext } from '@/providers/ProfileProvider'
+import { useAuthContext } from '@/providers/AuthProvider'
 
 const Profile = () => {
 
-  const {dbUser} = useProfileContext()
+  const {dbUser} = useAuthContext()
   
   return (
     <View style={{flex:1}}>
       {/* Note that its mainprofile thats meant to be here */}
-      {/* <MainProfile/> */}
-      <EditProfile/>
+      {dbUser ?
+        <MainProfile/>
+      :
+        <EditProfile/>
+      }
     </View>
   )
 }

@@ -1,6 +1,7 @@
-import { View, Text, Image, ScrollView, TouchableOpacity } from 'react-native'
+import { View, Text, Image, ScrollView, TouchableOpacity, Alert } from 'react-native'
 import React from 'react'
 import { useProfileContext } from '../../../providers/ProfileProvider'
+import { useAuthContext } from '../../../providers/AuthProvider';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import styles from './styles'
 import { router } from 'expo-router';
@@ -9,26 +10,66 @@ import {Courier} from '../../../src/models'
 
 const ReviewGuarantorCom = () => {
     const {
-        firstName, lastName, profilePic,  address, phoneNumber, landMark, courierNIN, courierBVN, bankName, accountName, accountNumber,
-        guarantorName, guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN, setDbUser, sub
+        firstName, lastName, profilePic, transportationType,  address, phoneNumber, landMark, courierNIN, courierBVN, bankName, accountName, accountNumber,
+        guarantorName, guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN,
     } = useProfileContext()
 
-    // Navigation Function
-    const handleSave = () => {
-        const createUser = async ()=>{
-            try{
-                const courier = await DataStore.save(new Courier({
-                firstName, lastName, profilePic, address, landMark, phoneNumber, courierNIN, courierBVN, bankName, accountName, accountNumber, guarantorName,guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN, 
-                sub,
-                })
-                );
-                console.log("I am User:",user)
-                setDbUser(courier)
-            }catch(e){
-                Alert.alert("Error", e.message)
-            }
-        };
+    console.log(transportationType)
+
+    const {dbUser, setDbUser, sub} = useAuthContext()
+
+    // Function to create and update courier
+    const createCourier = async ()=>{
+        try{
+            const courier = await DataStore.save(new Courier({
+            firstName, lastName, transportationType, profilePic, address, landMark, phoneNumber, courierNIN, courierBVN, bankName, accountName, accountNumber, guarantorName,guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN, 
+            sub,
+            })
+            );
+            console.log("I am a courirer:", courier)
+            setDbUser(courier)
+        }catch(e){
+            Alert.alert("Error", e.message)
+        }
     };
+
+    const updateCourier = async () => {
+        const courier = await DataStore.save(Courier.copyOf(dbUser, (updated)=>{
+            updated.firstName = firstName, 
+            updated.lastName = lastName, 
+            updated.profilePic = profilePic, 
+            updated.transportationType = transportationType,
+            updated.address = address, 
+            updated.landMark = landMark 
+            updated.phoneNumber = phoneNumber, 
+            updated.courierNIN = courierNIN, 
+            updated.courierBVN = courierBVN, 
+            updated.bankName = bankName, 
+            updated.accountName = accountName, 
+            updated.accountNumber = accountNumber, 
+            updated.guarantorName = guarantorName,
+            updated.guarantorLastName = guarantorLastName, 
+            updated.guarantorProfession = guarantorProfession, 
+            updated.guarantorNumber = guarantorNumber, 
+            updated.guarantorRelationship = guarantorRelationship, 
+            updated.guarantorAddress = guarantorAddress, 
+            updated.guarantorEmail = guarantorEmail, 
+            updated.guarantorNIN = guarantorNIN
+        }))
+        setDbUser(courier)
+    }
+    
+    const handleSave = async () => {
+        if(dbUser){
+            await updateCourier()
+            router.push('/home')
+        }else {
+            await createCourier ()
+            router.push('/home')
+        }
+    }
+    
+
 
   return (
     <View style={styles.reviewContainer}>

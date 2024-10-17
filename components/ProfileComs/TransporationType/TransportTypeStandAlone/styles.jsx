@@ -3,7 +3,24 @@ import { StyleSheet, } from 'react-native'
 const styles = StyleSheet.create({
     container:{
         flex:1,
+        marginTop:40,
         marginHorizontal:10,
+    },
+    header:{
+        fontSize: 30,
+        fontWeight: "bold",
+        textAlign: "center",
+        margin: 10,
+    },
+    subHeader:{
+        fontSize:17,
+        fontWeight:'bold'
+    },
+    selectTransportTypeTxt:{
+        fontSize:16,
+        padding:10,
+        color:'white',
+        backgroundColor:'black',
     },
     dropdown: {
         height: 50,
@@ -37,6 +54,20 @@ const styles = StyleSheet.create({
     inputSearchStyle: {
         height: 40,
         fontSize: 16,
+    },
+    btnCon:{
+        marginTop:20,
+        backgroundColor:'#0de90d',
+        marginHorizontal:50,
+        padding:10,
+        justifyContent:'center',
+        alignItems:'center',
+        borderRadius:15,
+    },
+    btnTxt:{
+        fontSize:25,
+        fontWeight:'bold',
+        textAlign:'center',
     },
     // labelTxt:{
     //     color:'#02061b',

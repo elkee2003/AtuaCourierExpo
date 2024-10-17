@@ -1,6 +1,5 @@
 import { Text, View, ActivityIndicator } from "react-native";
 import { Redirect } from "expo-router";
-import { useProfileContext } from "@/providers/ProfileProvider";
 import { useEffect, useState } from "react";
 import { getCurrentUser, AuthUser } from 'aws-amplify/auth';
 import { Hub } from 'aws-amplify/utils';

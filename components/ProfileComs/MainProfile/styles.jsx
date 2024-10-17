@@ -31,9 +31,8 @@ const styles = StyleSheet.create({
         color:'#c90707',
     },
     centerCon:{
-        top:'20%',
+        // top:'20%',
         justifyContent:'center',
-        alignItems:'center',
     },
     profilePicContainer:{
         position:'relative',
@@ -54,24 +53,24 @@ const styles = StyleSheet.create({
         resizeMode:"contain",
         borderRadius:75,
     },
+    details:{
+        textAlign:'center',
+        fontWeight:'bold',
+        fontSize:17,
+    },
     mainBtnRow:{
         flexDirection:"row",
         gap:20,
         justifyContent:'center',
+        marginHorizontal:10,
     },
-    editProfile:{
-        padding:10,
-        justifyContent:'center',
-        alignItems:'center',
-        backgroundColor:'transparent',
-        borderWidth:1,
-        borderColor:'black',
+    mainBtnsCard:{
+        marginVertical:10,
+        padding:20,
         borderRadius:20,
-    },
-    editProfileTxt:{
-        color:'black',
-        fontSize:18,
-        fontWeight:'bold',
+        backgroundColor:'#c5c5c5',
+        gap:10,
+        alignSelf:'center',
     },
     viewInfo:{
         padding:10,
@@ -85,7 +84,42 @@ const styles = StyleSheet.create({
         fontSize:18,
         fontWeight:"bold",
     },
+    editProfile:{
+        padding:10,
+        justifyContent:'center',
+        alignItems:'center',
+        backgroundColor:'transparent',
+        borderWidth:1,
+        borderColor:'black',
+        borderRadius:20,
+    },
     
+    editProfileTxt:{
+        color:'black',
+        fontSize:18,
+        fontWeight:'bold',
+    },
+    tetiaryCard:{
+        margin:10,
+        padding:20,
+        borderRadius:20,
+        backgroundColor:'#c5c5c5',
+        gap:10,
+        alignSelf:'center',
+    },
+    btnTetiary:{
+        padding:10,
+        justifyContent:'center',
+        alignItems:'center',
+        backgroundColor:'transparent',
+        borderWidth:1,
+        borderColor:'black',
+        borderRadius:20,
+    },
+    btnTetiaryTxt:{
+        fontWeight:'bold',
+        fontSize:18,
+    },
 })
 
 export default styles

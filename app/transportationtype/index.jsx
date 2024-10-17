@@ -1,11 +1,11 @@
 import { View, Text } from 'react-native'
 import React from 'react'
-import TransportationTypeCom from '../../components/ProfileComs/TransporationType'
+import TransportTypeStandAlone from '../../components/ProfileComs/TransporationType/TransportTypeStandAlone'
 
 const TransportationType = () => {
   return (
     <View style={{flex:1}}>
-      <TransportationType/>
+      <TransportTypeStandAlone/>
     </View>
   )
 }

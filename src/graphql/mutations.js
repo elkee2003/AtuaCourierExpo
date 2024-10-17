@@ -1,66 +1,6 @@
 /* eslint-disable */
 // this is an auto generated file. This will be overwritten
 
-export const createCompanyVehicle = /* GraphQL */ `
-  mutation CreateCompanyVehicle(
-    $input: CreateCompanyVehicleInput!
-    $condition: ModelCompanyVehicleConditionInput
-  ) {
-    createCompanyVehicle(input: $input, condition: $condition) {
-      id
-      vehicleType
-      model
-      regNumber
-      couriercompanyID
-      createdAt
-      updatedAt
-      _version
-      _deleted
-      _lastChangedAt
-      __typename
-    }
-  }
-`;
-export const updateCompanyVehicle = /* GraphQL */ `
-  mutation UpdateCompanyVehicle(
-    $input: UpdateCompanyVehicleInput!
-    $condition: ModelCompanyVehicleConditionInput
-  ) {
-    updateCompanyVehicle(input: $input, condition: $condition) {
-      id
-      vehicleType
-      model
-      regNumber
-      couriercompanyID
-      createdAt
-      updatedAt
-      _version
-      _deleted
-      _lastChangedAt
-      __typename
-    }
-  }
-`;
-export const deleteCompanyVehicle = /* GraphQL */ `
-  mutation DeleteCompanyVehicle(
-    $input: DeleteCompanyVehicleInput!
-    $condition: ModelCompanyVehicleConditionInput
-  ) {
-    deleteCompanyVehicle(input: $input, condition: $condition) {
-      id
-      vehicleType
-      model
-      regNumber
-      couriercompanyID
-      createdAt
-      updatedAt
-      _version
-      _deleted
-      _lastChangedAt
-      __typename
-    }
-  }
-`;
 export const createCourierCompany = /* GraphQL */ `
   mutation CreateCourierCompany(
     $input: CreateCourierCompanyInput!
@@ -169,6 +109,66 @@ export const deleteCourierCompany = /* GraphQL */ `
     }
   }
 `;
+export const createCompanyVehicle = /* GraphQL */ `
+  mutation CreateCompanyVehicle(
+    $input: CreateCompanyVehicleInput!
+    $condition: ModelCompanyVehicleConditionInput
+  ) {
+    createCompanyVehicle(input: $input, condition: $condition) {
+      id
+      vehicleType
+      model
+      regNumber
+      couriercompanyID
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const updateCompanyVehicle = /* GraphQL */ `
+  mutation UpdateCompanyVehicle(
+    $input: UpdateCompanyVehicleInput!
+    $condition: ModelCompanyVehicleConditionInput
+  ) {
+    updateCompanyVehicle(input: $input, condition: $condition) {
+      id
+      vehicleType
+      model
+      regNumber
+      couriercompanyID
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const deleteCompanyVehicle = /* GraphQL */ `
+  mutation DeleteCompanyVehicle(
+    $input: DeleteCompanyVehicleInput!
+    $condition: ModelCompanyVehicleConditionInput
+  ) {
+    deleteCompanyVehicle(input: $input, condition: $condition) {
+      id
+      vehicleType
+      model
+      regNumber
+      couriercompanyID
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
 export const createCourier = /* GraphQL */ `
   mutation CreateCourier(
     $input: CreateCourierInput!
@@ -181,8 +181,8 @@ export const createCourier = /* GraphQL */ `
       lastName
       profilePic
       address
-      landmark
-      phoneBNumber
+      landMark
+      phoneNumber
       email
       courierNIN
       courierBVN
@@ -201,6 +201,11 @@ export const createCourier = /* GraphQL */ `
       lat
       lng
       heading
+      Orders {
+        nextToken
+        startedAt
+        __typename
+      }
       createdAt
       updatedAt
       _version
@@ -222,8 +227,8 @@ export const updateCourier = /* GraphQL */ `
       lastName
       profilePic
       address
-      landmark
-      phoneBNumber
+      landMark
+      phoneNumber
       email
       courierNIN
       courierBVN
@@ -242,6 +247,11 @@ export const updateCourier = /* GraphQL */ `
       lat
       lng
       heading
+      Orders {
+        nextToken
+        startedAt
+        __typename
+      }
       createdAt
       updatedAt
       _version
@@ -263,8 +273,8 @@ export const deleteCourier = /* GraphQL */ `
       lastName
       profilePic
       address
-      landmark
-      phoneBNumber
+      landMark
+      phoneNumber
       email
       courierNIN
       courierBVN
@@ -283,6 +293,98 @@ export const deleteCourier = /* GraphQL */ `
       lat
       lng
       heading
+      Orders {
+        nextToken
+        startedAt
+        __typename
+      }
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const createOrder = /* GraphQL */ `
+  mutation CreateOrder(
+    $input: CreateOrderInput!
+    $condition: ModelOrderConditionInput
+  ) {
+    createOrder(input: $input, condition: $condition) {
+      id
+      recipientName
+      recipientNumber
+      orderDetails
+      parcelOrgin
+      parcelOriginLat
+      parcelOriginLng
+      parcelDestination
+      parcelDestinationLat
+      parcelDestinationLng
+      status
+      price
+      userID
+      courierID
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const updateOrder = /* GraphQL */ `
+  mutation UpdateOrder(
+    $input: UpdateOrderInput!
+    $condition: ModelOrderConditionInput
+  ) {
+    updateOrder(input: $input, condition: $condition) {
+      id
+      recipientName
+      recipientNumber
+      orderDetails
+      parcelOrgin
+      parcelOriginLat
+      parcelOriginLng
+      parcelDestination
+      parcelDestinationLat
+      parcelDestinationLng
+      status
+      price
+      userID
+      courierID
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const deleteOrder = /* GraphQL */ `
+  mutation DeleteOrder(
+    $input: DeleteOrderInput!
+    $condition: ModelOrderConditionInput
+  ) {
+    deleteOrder(input: $input, condition: $condition) {
+      id
+      recipientName
+      recipientNumber
+      orderDetails
+      parcelOrgin
+      parcelOriginLat
+      parcelOriginLng
+      parcelDestination
+      parcelDestinationLat
+      parcelDestinationLng
+      status
+      price
+      userID
+      courierID
       createdAt
       updatedAt
       _version
@@ -372,195 +474,6 @@ export const deleteUser = /* GraphQL */ `
       _version
       _deleted
       _lastChangedAt
-      __typename
-    }
-  }
-`;
-export const createOrder = /* GraphQL */ `
-  mutation CreateOrder(
-    $input: CreateOrderInput!
-    $condition: ModelOrderConditionInput
-  ) {
-    createOrder(input: $input, condition: $condition) {
-      id
-      recipientName
-      recipientNumber
-      orderDetails
-      parcelOrigin
-      parcelOriginLat
-      parcelOriginLng
-      parcelDestination
-      parcelDestinationLat
-      parcelDestinationLng
-      status
-      price
-      userID
-      Courier {
-        id
-        sub
-        firstName
-        lastName
-        profilePic
-        address
-        landmark
-        phoneBNumber
-        email
-        courierNIN
-        courierBVN
-        bankName
-        accountName
-        accountNumber
-        transportationType
-        guarantorName
-        guarantorLastName
-        guarantorProfession
-        guarantorNumber
-        guarantorRelationship
-        guarantorAddress
-        guarantorEmail
-        guarantorNIN
-        lat
-        lng
-        heading
-        createdAt
-        updatedAt
-        _version
-        _deleted
-        _lastChangedAt
-        __typename
-      }
-      createdAt
-      updatedAt
-      _version
-      _deleted
-      _lastChangedAt
-      orderCourierId
-      __typename
-    }
-  }
-`;
-export const updateOrder = /* GraphQL */ `
-  mutation UpdateOrder(
-    $input: UpdateOrderInput!
-    $condition: ModelOrderConditionInput
-  ) {
-    updateOrder(input: $input, condition: $condition) {
-      id
-      recipientName
-      recipientNumber
-      orderDetails
-      parcelOrigin
-      parcelOriginLat
-      parcelOriginLng
-      parcelDestination
-      parcelDestinationLat
-      parcelDestinationLng
-      status
-      price
-      userID
-      Courier {
-        id
-        sub
-        firstName
-        lastName
-        profilePic
-        address
-        landmark
-        phoneBNumber
-        email
-        courierNIN
-        courierBVN
-        bankName
-        accountName
-        accountNumber
-        transportationType
-        guarantorName
-        guarantorLastName
-        guarantorProfession
-        guarantorNumber
-        guarantorRelationship
-        guarantorAddress
-        guarantorEmail
-        guarantorNIN
-        lat
-        lng
-        heading
-        createdAt
-        updatedAt
-        _version
-        _deleted
-        _lastChangedAt
-        __typename
-      }
-      createdAt
-      updatedAt
-      _version
-      _deleted
-      _lastChangedAt
-      orderCourierId
-      __typename
-    }
-  }
-`;
-export const deleteOrder = /* GraphQL */ `
-  mutation DeleteOrder(
-    $input: DeleteOrderInput!
-    $condition: ModelOrderConditionInput
-  ) {
-    deleteOrder(input: $input, condition: $condition) {
-      id
-      recipientName
-      recipientNumber
-      orderDetails
-      parcelOrigin
-      parcelOriginLat
-      parcelOriginLng
-      parcelDestination
-      parcelDestinationLat
-      parcelDestinationLng
-      status
-      price
-      userID
-      Courier {
-        id
-        sub
-        firstName
-        lastName
-        profilePic
-        address
-        landmark
-        phoneBNumber
-        email
-        courierNIN
-        courierBVN
-        bankName
-        accountName
-        accountNumber
-        transportationType
-        guarantorName
-        guarantorLastName
-        guarantorProfession
-        guarantorNumber
-        guarantorRelationship
-        guarantorAddress
-        guarantorEmail
-        guarantorNIN
-        lat
-        lng
-        heading
-        createdAt
-        updatedAt
-        _version
-        _deleted
-        _lastChangedAt
-        __typename
-      }
-      createdAt
-      updatedAt
-      _version
-      _deleted
-      _lastChangedAt
-      orderCourierId
       __typename
     }
   }

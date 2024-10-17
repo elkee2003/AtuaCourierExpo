@@ -1,42 +1,45 @@
 import { View, Text } from 'react-native';
 import React, {useState, useEffect, useContext, createContext} from 'react';
-import { getCurrentUser } from 'aws-amplify/auth';
-import { DataStore } from 'aws-amplify/datastore'
-import { Courier } from '@/src/models'
+// import { getCurrentUser } from 'aws-amplify/auth';
+// import { DataStore } from 'aws-amplify/datastore'
+// import { Courier } from '@/src/models'
+import { useAuthContext } from './AuthProvider';
 
 const ProfileContext = createContext({})
 
 const ProfileProvider = ({children}) => {
 
+    const {dbUser} = useAuthContext()
+
     const [profilePic, setProfilePic] = useState(null);
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
-    const [address, setAddress] = useState( "");
-    const [landMark, setLandMark] = useState('');
-    const [phoneNumber, setPhoneNumber]= useState("");
-    const [courierNIN, setCourierNIN] = useState('');
-    const [courierBVN, setCourierBVN] = useState('');
-    const [bankName, setBankName] = useState('');
-    const [accountName, setAccountName] = useState('');
-    const [accountNumber, setAccountNumber] = useState('');
-    const [guarantorName, setGuarantorName] = useState('');
-    const [guarantorLastName, setGuarantorLastName] = useState('');
-    const [guarantorProfession, setGuarantorProfession] = useState('');
-    const [guarantorNumber, setGuarantorNumber] = useState('');
-    const [guarantorRelationship, setGuarantorRelationship] = useState('');
-    const [guarantorAddress, setGuarantorAddress] = useState('');
-    const [guarantorEmail, setGuarantorEmail] = useState('');
-    const [guarantorNIN, setGuarantorNIN] = useState('');
-    const [transportationType, setTransportationType] = useState('')
-    const [lat, setLat] = useState('');
-    const [lng, setLng] = useState('');
-    const [heading, setHeading] = useState('');
+    const [transportationType, setTransportationType] = useState("");
+    const [address, setAddress] = useState("");
+    const [landMark, setLandMark] = useState("");
+    const [phoneNumber, setPhoneNumber] = useState("");
+    const [courierNIN, setCourierNIN] = useState("");
+    const [courierBVN, setCourierBVN] = useState("");
+    const [bankName, setBankName] = useState("");
+    const [accountName, setAccountName] = useState("");
+    const [accountNumber, setAccountNumber] = useState("");
+    const [guarantorName, setGuarantorName] = useState("");
+    const [guarantorLastName, setGuarantorLastName] = useState("");
+    const [guarantorProfession, setGuarantorProfession] = useState("");
+    const [guarantorNumber, setGuarantorNumber] = useState("");
+    const [guarantorRelationship, setGuarantorRelationship] = useState("");
+    const [guarantorAddress, setGuarantorAddress] = useState("");
+    const [guarantorEmail, setGuarantorEmail] = useState("");
+    const [guarantorNIN, setGuarantorNIN] = useState("");
+    const [lat, setLat] = useState("0");
+    const [lng, setLng] = useState("0");
+    const [heading, setHeading] = useState(heading);
     const [errorMessage, setErrorMessage] = useState('');
 
-    // Amplify states
-    const [authUser, setAuthUser] = useState(null);
-    const [dbUser, setDbUser] = useState(null);
-    const [sub, setSub] = useState(null); 
+    // // Amplify states
+    // const [authUser, setAuthUser] = useState(null);
+    // const [dbUser, setDbUser] = useState(null);
+    // const [sub, setSub] = useState(null); 
 
     // Courier Function Validation
     const validateCourierInput = () =>{
@@ -53,6 +56,10 @@ const ProfileProvider = ({children}) => {
           setErrorMessage('Last Name is required')
           return false;
         }
+        if (!transportationType){
+          setErrorMessage('Transportation type is required')
+          return false;
+        }
         if(!address){
           setErrorMessage('Address is required')
           return false;
@@ -65,10 +72,10 @@ const ProfileProvider = ({children}) => {
           setErrorMessage('Your NIN is required')
           return false;
         }
-        if(!courierBVN){
-          setErrorMessage('Your BVN is required')
-          return false;
-        }
+        // if(!courierBVN){
+        //   setErrorMessage('Your BVN is required')
+        //   return false;
+        // }
         if(!bankName){
           setErrorMessage('Bank name is required ')
           return false;
@@ -81,6 +88,7 @@ const ProfileProvider = ({children}) => {
           setErrorMessage('Account number is required')
           return false;
         }
+
         return true;
     }
 
@@ -129,52 +137,81 @@ const ProfileProvider = ({children}) => {
           return false;
         }
     }
+    useEffect(() => {
+        if (dbUser) {
+            setProfilePic(dbUser?.profilePic);
+            setFirstName(dbUser.firstName || "");
+            setLastName(dbUser.lastName || "");
+            setTransportationType(dbUser.transportationType || "");
+            setAddress(dbUser.address || "");
+            setLandMark(dbUser.landMark || "");
+            setPhoneNumber(dbUser.phoneNumber || "");
+            setCourierNIN(dbUser.courierNIN || "");
+            setCourierBVN(dbUser.courierBVN || "");
+            setBankName(dbUser.bankName || "");
+            setAccountName(dbUser.accountName || "");
+            setAccountNumber(dbUser.accountNumber || "");
+            setGuarantorName(dbUser.guarantorName || "");
+            setGuarantorLastName(dbUser.guarantorLastName || "");
+            setGuarantorProfession(dbUser.guarantorProfession || "");
+            setGuarantorNumber(dbUser.guarantorNumber || "");
+            setGuarantorRelationship(dbUser.guarantorRelationship || "");
+            setGuarantorAddress(dbUser.guarantorAddress || "");
+            setGuarantorEmail(dbUser.guarantorEmail || "");
+            setGuarantorNIN(dbUser.guarantorNIN || "");
+            setLat(dbUser.lat.toString() || "0");
+            setLng(dbUser.lng.toString() || "0");
+            setHeading(dbUser.heading || heading);
+        }
+    }, [dbUser]); // This effect runs whenever dbUser changes
 
-    // Functions for useEffect
-    const currentAuthenticatedUser = async () =>{
-    try {
-      const user = await getCurrentUser();
-      setAuthUser(user)
-      console.log(user)
-      const subId = authUser?.userId;
-      setSub(subId);
-      console.log('This is just subId raw:', subId);
-      console.log('This is sub:',sub)
-      console.log('This is dbuser from context:', dbUser)
-    } catch (err) {
-      console.log(err);
-    }
-  }
 
-  const dbCurrentUser = async () =>{
-    try{
-      const dbusercurrent = await DataStore.query(Courier, (courier)=>courier.sub.eq(sub))
+  //   // Functions for useEffect
+  //   const currentAuthenticatedUser = async () =>{
+  //   try {
+  //     const user = await getCurrentUser();
+  //     setAuthUser(user)
+  //     console.log('This is authuser:',user)
+  //     const subId = authUser?.userId;
+  //     setSub(subId);
+  //     console.log('This is just subId raw:', subId);
+  //     console.log('This is sub:',sub)
+  //     console.log('This is dbuser from authcontext:', dbUser)
+  //   } catch (err) {
+  //     console.log(err);
+  //   }
+  // }
+
+  // const dbCurrentUser = async () =>{
+  //   try{
+  //     const dbusercurrent = await DataStore.query(Courier, (courier)=>courier.sub.eq(sub))
+  //     // DataStore.clear()
       
-      setDbUser(dbusercurrent[0])
-      console.log('This is current dbuser:',dbusercurrent)
-    }catch(error){
-      console.error('Error getting dbuser: ', error)
-    }
-  }
+  //     setDbUser(dbusercurrent[0])
+  //     console.log('This is current dbuser:',dbusercurrent)
+  //   }catch(error){
+  //     console.error('Error getting dbuser: ', error)
+  //   }
+  // }
 
-  useEffect(()=>{
-    currentAuthenticatedUser()
-  },[sub])
+  // useEffect(()=>{
+  //   currentAuthenticatedUser()
+  // },[sub])
 
-  useEffect(()=>{
-    dbCurrentUser()
-  }, [sub])
+  // useEffect(()=>{
+  //   dbCurrentUser()
+  // }, [sub,])
 
   return (
     <ProfileContext.Provider value={{
-      firstName,setFirstName, lastName, setLastName, address, setAddress, phoneNumber, setPhoneNumber, errorMessage, setErrorMessage, profilePic, setProfilePic, landMark, setLandMark, courierNIN, setCourierNIN, courierBVN, setCourierBVN, bankName, setBankName, accountName, setAccountName, accountNumber, setAccountNumber, guarantorName, setGuarantorName, guarantorLastName, setGuarantorLastName, guarantorProfession, setGuarantorProfession, guarantorNumber, setGuarantorNumber, guarantorRelationship, setGuarantorRelationship, guarantorAddress, setGuarantorAddress, guarantorEmail, setGuarantorEmail, guarantorNIN, setGuarantorNIN, transportationType, setTransportationType, lat, setLat, lng, setLng, heading, setHeading,
-      onValidateCourierInput, onValidateGuarantorInput, authUser, dbUser, setDbUser, sub
+      firstName,setFirstName, lastName, setLastName, transportationType, setTransportationType, address, setAddress, phoneNumber, setPhoneNumber, errorMessage, setErrorMessage, profilePic, setProfilePic, landMark, setLandMark, courierNIN, setCourierNIN, courierBVN, setCourierBVN, bankName, setBankName, accountName, setAccountName, accountNumber, setAccountNumber, guarantorName, setGuarantorName, guarantorLastName, setGuarantorLastName, guarantorProfession, setGuarantorProfession, guarantorNumber, setGuarantorNumber, guarantorRelationship, setGuarantorRelationship, guarantorAddress, setGuarantorAddress, guarantorEmail, setGuarantorEmail, guarantorNIN, setGuarantorNIN, lat, setLat, lng, setLng, heading, setHeading,
+      onValidateCourierInput, onValidateGuarantorInput, 
       }}>
         {children}
     </ProfileContext.Provider>
   )
 }
 
-export default ProfileProvider
+export default ProfileProvider;
 
-export const useProfileContext = () => useContext(ProfileContext)
+export const useProfileContext = () => useContext(ProfileContext);

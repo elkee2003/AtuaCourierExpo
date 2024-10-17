@@ -6,6 +6,7 @@ import { router } from 'expo-router'
 import { AntDesign } from '@expo/vector-icons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import TranportionType from '../TransporationType'
 import { signOut } from 'aws-amplify/auth';
 import { useProfileContext } from '../../../providers/ProfileProvider';
 
@@ -105,6 +106,8 @@ const EditProfile = () => {
         placeholder='Surname'
         style={styles.input}
         />
+        
+        <TranportionType/>
 
         <TextInput 
         value={address}
@@ -162,6 +165,7 @@ const EditProfile = () => {
           style={styles.input}
           keyboardType='numeric'
         />
+
 
         {/* Error Message */}
         <Text style={styles.error}>{errorMessage}</Text>
