@@ -1,6 +1,7 @@
 import { View, Text, useWindowDimensions, ActivityIndicator, PermissionsAndroid, Platform, } from 'react-native';
 import React, { useState, useEffect, } from 'react';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import {GOOGLE_API_KEY} from '../../keys'
 import Geolocation from '@react-native-community/geolocation';
 import MapViewDirections from 'react-native-maps-directions';
 import * as Location from 'expo-location';
@@ -111,7 +112,7 @@ const OrderDeliveryMap = ({
                         longitude: location.longitude,
                     }}
                     destination={getDestination()}
-                    apikey={'AIzaU'}
+                    apikey={GOOGLE_API_KEY}
                     timePrecision='now'
                     strokeWidth={3}
                     strokeColor='red'

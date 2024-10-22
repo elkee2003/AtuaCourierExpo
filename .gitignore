@@ -46,3 +46,6 @@ amplifytools.xcconfig
 
 # android folder
 /android
+
+# api key
+/keys.jsx

@@ -7,11 +7,10 @@ import Entypo from '@expo/vector-icons/Entypo';
 import styles from './styles'
 import { orders } from '@/assets/data/orders';
 
-const Map = () => {
+const Map = ({location, setLocation, avaliableOrders}) => {
 
   const {width, height} = useWindowDimensions()
-  const [avaliableOrders, setAvaliableOrders]= useState (orders)
-  const [location, setLocation] = useState(null);
+  
   const [errorMsg, setErrorMsg] = useState(null);
 
   useEffect(() => {

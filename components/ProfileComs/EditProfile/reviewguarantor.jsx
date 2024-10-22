@@ -10,7 +10,7 @@ import {Courier} from '../../../src/models'
 
 const ReviewGuarantorCom = () => {
     const {
-        firstName, lastName, profilePic, transportationType,  address, phoneNumber, landMark, courierNIN, courierBVN, bankName, accountName, accountNumber,
+        firstName, lastName, profilePic, transportationType, vehicleType, model, plateNumber, images,  address, phoneNumber, landMark, courierNIN, courierBVN, bankName, accountName, accountNumber,
         guarantorName, guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN,
     } = useProfileContext()
 
@@ -22,7 +22,9 @@ const ReviewGuarantorCom = () => {
     const createCourier = async ()=>{
         try{
             const courier = await DataStore.save(new Courier({
-            firstName, lastName, transportationType, profilePic, address, landMark, phoneNumber, courierNIN, courierBVN, bankName, accountName, accountNumber, guarantorName,guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN, 
+            firstName, lastName, transportationType, vehicleType, model, plateNumber,
+            maxiImages:images, 
+            profilePic, address, landMark, phoneNumber, courierNIN, courierBVN, bankName, accountName, accountNumber, guarantorName,guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN, 
             sub,
             })
             );
@@ -39,8 +41,12 @@ const ReviewGuarantorCom = () => {
             updated.lastName = lastName, 
             updated.profilePic = profilePic, 
             updated.transportationType = transportationType,
+            updated.vehicleType = vehicleType,
+            updated.model = model,
+            updated.plateNumber = plateNumber,
+            updated.maxiImages = images,
             updated.address = address, 
-            updated.landMark = landMark 
+            updated.landMark = landMark, 
             updated.phoneNumber = phoneNumber, 
             updated.courierNIN = courierNIN, 
             updated.courierBVN = courierBVN, 

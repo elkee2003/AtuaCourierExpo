@@ -1,6 +1,6 @@
 import { ModelInit, MutableModel, __modelMeta__, ManagedIdentifier } from "@aws-amplify/datastore";
 // @ts-ignore
-import { LazyLoading, LazyLoadingDisabled, AsyncCollection } from "@aws-amplify/datastore";
+import { LazyLoading, LazyLoadingDisabled, AsyncCollection, AsyncItem } from "@aws-amplify/datastore";
 
 export enum OrderStatus {
   READY_FOR_PICKUP = "READY_FOR_PICKUP",
@@ -77,7 +77,7 @@ type EagerCompanyVehicle = {
   readonly id: string;
   readonly vehicleType?: string | null;
   readonly model?: string | null;
-  readonly regNumber?: string | null;
+  readonly plateNumber?: string | null;
   readonly couriercompanyID: string;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
@@ -91,7 +91,7 @@ type LazyCompanyVehicle = {
   readonly id: string;
   readonly vehicleType?: string | null;
   readonly model?: string | null;
-  readonly regNumber?: string | null;
+  readonly plateNumber?: string | null;
   readonly couriercompanyID: string;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
@@ -103,84 +103,6 @@ export declare const CompanyVehicle: (new (init: ModelInit<CompanyVehicle>) => C
   copyOf(source: CompanyVehicle, mutator: (draft: MutableModel<CompanyVehicle>) => MutableModel<CompanyVehicle> | void): CompanyVehicle;
 }
 
-type EagerCourier = {
-  readonly [__modelMeta__]: {
-    identifier: ManagedIdentifier<Courier, 'id'>;
-    readOnlyFields: 'createdAt' | 'updatedAt';
-  };
-  readonly id: string;
-  readonly sub: string;
-  readonly firstName: string;
-  readonly lastName?: string | null;
-  readonly profilePic?: string | null;
-  readonly address?: string | null;
-  readonly landMark?: string | null;
-  readonly phoneNumber?: string | null;
-  readonly email?: string | null;
-  readonly courierNIN?: string | null;
-  readonly courierBVN?: string | null;
-  readonly bankName?: string | null;
-  readonly accountName?: string | null;
-  readonly accountNumber?: string | null;
-  readonly transportationType?: string | null;
-  readonly guarantorName?: string | null;
-  readonly guarantorLastName?: string | null;
-  readonly guarantorProfession?: string | null;
-  readonly guarantorNumber?: string | null;
-  readonly guarantorRelationship?: string | null;
-  readonly guarantorAddress?: string | null;
-  readonly guarantorEmail?: string | null;
-  readonly guarantorNIN?: string | null;
-  readonly lat?: number | null;
-  readonly lng?: number | null;
-  readonly heading?: number | null;
-  readonly Orders?: (Order | null)[] | null;
-  readonly createdAt?: string | null;
-  readonly updatedAt?: string | null;
-}
-
-type LazyCourier = {
-  readonly [__modelMeta__]: {
-    identifier: ManagedIdentifier<Courier, 'id'>;
-    readOnlyFields: 'createdAt' | 'updatedAt';
-  };
-  readonly id: string;
-  readonly sub: string;
-  readonly firstName: string;
-  readonly lastName?: string | null;
-  readonly profilePic?: string | null;
-  readonly address?: string | null;
-  readonly landMark?: string | null;
-  readonly phoneNumber?: string | null;
-  readonly email?: string | null;
-  readonly courierNIN?: string | null;
-  readonly courierBVN?: string | null;
-  readonly bankName?: string | null;
-  readonly accountName?: string | null;
-  readonly accountNumber?: string | null;
-  readonly transportationType?: string | null;
-  readonly guarantorName?: string | null;
-  readonly guarantorLastName?: string | null;
-  readonly guarantorProfession?: string | null;
-  readonly guarantorNumber?: string | null;
-  readonly guarantorRelationship?: string | null;
-  readonly guarantorAddress?: string | null;
-  readonly guarantorEmail?: string | null;
-  readonly guarantorNIN?: string | null;
-  readonly lat?: number | null;
-  readonly lng?: number | null;
-  readonly heading?: number | null;
-  readonly Orders: AsyncCollection<Order>;
-  readonly createdAt?: string | null;
-  readonly updatedAt?: string | null;
-}
-
-export declare type Courier = LazyLoading extends LazyLoadingDisabled ? EagerCourier : LazyCourier
-
-export declare const Courier: (new (init: ModelInit<Courier>) => Courier) & {
-  copyOf(source: Courier, mutator: (draft: MutableModel<Courier>) => MutableModel<Courier> | void): Courier;
-}
-
 type EagerOrder = {
   readonly [__modelMeta__]: {
     identifier: ManagedIdentifier<Order, 'id'>;
@@ -190,18 +112,20 @@ type EagerOrder = {
   readonly recipientName?: string | null;
   readonly recipientNumber?: string | null;
   readonly orderDetails?: string | null;
-  readonly parcelOrgin?: string | null;
+  readonly parcelOrigin?: string | null;
   readonly parcelOriginLat?: number | null;
   readonly parcelOriginLng?: number | null;
   readonly parcelDestination?: string | null;
   readonly parcelDestinationLat?: number | null;
   readonly parcelDestinationLng?: number | null;
+  readonly transportationType?: string | null;
   readonly status?: OrderStatus | keyof typeof OrderStatus | null;
   readonly price?: number | null;
   readonly userID: string;
-  readonly courierID: string;
+  readonly Courier?: Courier | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
+  readonly orderCourierId?: string | null;
 }
 
 type LazyOrder = {
@@ -213,24 +137,114 @@ type LazyOrder = {
   readonly recipientName?: string | null;
   readonly recipientNumber?: string | null;
   readonly orderDetails?: string | null;
-  readonly parcelOrgin?: string | null;
+  readonly parcelOrigin?: string | null;
   readonly parcelOriginLat?: number | null;
   readonly parcelOriginLng?: number | null;
   readonly parcelDestination?: string | null;
   readonly parcelDestinationLat?: number | null;
   readonly parcelDestinationLng?: number | null;
+  readonly transportationType?: string | null;
   readonly status?: OrderStatus | keyof typeof OrderStatus | null;
   readonly price?: number | null;
   readonly userID: string;
-  readonly courierID: string;
+  readonly Courier: AsyncItem<Courier | undefined>;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
+  readonly orderCourierId?: string | null;
 }
 
 export declare type Order = LazyLoading extends LazyLoadingDisabled ? EagerOrder : LazyOrder
 
 export declare const Order: (new (init: ModelInit<Order>) => Order) & {
   copyOf(source: Order, mutator: (draft: MutableModel<Order>) => MutableModel<Order> | void): Order;
+}
+
+type EagerCourier = {
+  readonly [__modelMeta__]: {
+    identifier: ManagedIdentifier<Courier, 'id'>;
+    readOnlyFields: 'createdAt' | 'updatedAt';
+  };
+  readonly id: string;
+  readonly sub: string;
+  readonly isOnline?: boolean | null;
+  readonly firstName: string;
+  readonly lastName?: string | null;
+  readonly profilePic?: string | null;
+  readonly address?: string | null;
+  readonly landMark?: string | null;
+  readonly phoneNumber?: string | null;
+  readonly email?: string | null;
+  readonly courierNIN?: string | null;
+  readonly courierBVN?: string | null;
+  readonly bankName?: string | null;
+  readonly accountName?: string | null;
+  readonly accountNumber?: string | null;
+  readonly transportationType?: string | null;
+  readonly vehicleType?: string | null;
+  readonly model?: string | null;
+  readonly plateNumber?: string | null;
+  readonly maxiImages?: (string | null)[] | null;
+  readonly maxiTransportPrice?: number | null;
+  readonly guarantorName?: string | null;
+  readonly guarantorLastName?: string | null;
+  readonly guarantorProfession?: string | null;
+  readonly guarantorNumber?: string | null;
+  readonly guarantorRelationship?: string | null;
+  readonly guarantorAddress?: string | null;
+  readonly guarantorEmail?: string | null;
+  readonly guarantorNIN?: string | null;
+  readonly lat?: number | null;
+  readonly lng?: number | null;
+  readonly heading?: number | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+type LazyCourier = {
+  readonly [__modelMeta__]: {
+    identifier: ManagedIdentifier<Courier, 'id'>;
+    readOnlyFields: 'createdAt' | 'updatedAt';
+  };
+  readonly id: string;
+  readonly sub: string;
+  readonly isOnline?: boolean | null;
+  readonly firstName: string;
+  readonly lastName?: string | null;
+  readonly profilePic?: string | null;
+  readonly address?: string | null;
+  readonly landMark?: string | null;
+  readonly phoneNumber?: string | null;
+  readonly email?: string | null;
+  readonly courierNIN?: string | null;
+  readonly courierBVN?: string | null;
+  readonly bankName?: string | null;
+  readonly accountName?: string | null;
+  readonly accountNumber?: string | null;
+  readonly transportationType?: string | null;
+  readonly vehicleType?: string | null;
+  readonly model?: string | null;
+  readonly plateNumber?: string | null;
+  readonly maxiImages?: (string | null)[] | null;
+  readonly maxiTransportPrice?: number | null;
+  readonly guarantorName?: string | null;
+  readonly guarantorLastName?: string | null;
+  readonly guarantorProfession?: string | null;
+  readonly guarantorNumber?: string | null;
+  readonly guarantorRelationship?: string | null;
+  readonly guarantorAddress?: string | null;
+  readonly guarantorEmail?: string | null;
+  readonly guarantorNIN?: string | null;
+  readonly lat?: number | null;
+  readonly lng?: number | null;
+  readonly heading?: number | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+export declare type Courier = LazyLoading extends LazyLoadingDisabled ? EagerCourier : LazyCourier
+
+export declare const Courier: (new (init: ModelInit<Courier>) => Courier) & {
+  copyOf(source: Courier, mutator: (draft: MutableModel<Courier>) => MutableModel<Courier> | void): Courier;
 }
 
 type EagerUser = {
@@ -242,11 +256,13 @@ type EagerUser = {
   readonly sub: string;
   readonly firstName: string;
   readonly lastName?: string | null;
+  readonly phoneNumber?: string | null;
   readonly profilePic?: string | null;
   readonly address?: string | null;
-  readonly lat?: string | null;
-  readonly lng?: string | null;
+  readonly exactAddress?: string | null;
   readonly Orders?: (Order | null)[] | null;
+  readonly lat?: number | null;
+  readonly lng?: number | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -260,11 +276,13 @@ type LazyUser = {
   readonly sub: string;
   readonly firstName: string;
   readonly lastName?: string | null;
+  readonly phoneNumber?: string | null;
   readonly profilePic?: string | null;
   readonly address?: string | null;
-  readonly lat?: string | null;
-  readonly lng?: string | null;
+  readonly exactAddress?: string | null;
   readonly Orders: AsyncCollection<Order>;
+  readonly lat?: number | null;
+  readonly lng?: number | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }

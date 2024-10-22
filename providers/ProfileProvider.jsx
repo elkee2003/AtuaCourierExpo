@@ -11,10 +11,15 @@ const ProfileProvider = ({children}) => {
 
     const {dbUser} = useAuthContext()
 
+    const [isOnline, setIsOnline]= useState(false)
     const [profilePic, setProfilePic] = useState(null);
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [transportationType, setTransportationType] = useState("");
+    const [vehicleType, setVehicleType,] = useState("")
+    const [model, setModel] = useState("")
+    const [plateNumber, setPlateNumber] = useState("")
+    const [images, setImages] = useState("")
     const [address, setAddress] = useState("");
     const [landMark, setLandMark] = useState("");
     const [phoneNumber, setPhoneNumber] = useState("");
@@ -36,10 +41,6 @@ const ProfileProvider = ({children}) => {
     const [heading, setHeading] = useState(heading);
     const [errorMessage, setErrorMessage] = useState('');
 
-    // // Amplify states
-    // const [authUser, setAuthUser] = useState(null);
-    // const [dbUser, setDbUser] = useState(null);
-    // const [sub, setSub] = useState(null); 
 
     // Courier Function Validation
     const validateCourierInput = () =>{
@@ -72,10 +73,6 @@ const ProfileProvider = ({children}) => {
           setErrorMessage('Your NIN is required')
           return false;
         }
-        // if(!courierBVN){
-        //   setErrorMessage('Your BVN is required')
-        //   return false;
-        // }
         if(!bankName){
           setErrorMessage('Bank name is required ')
           return false;
@@ -92,8 +89,49 @@ const ProfileProvider = ({children}) => {
         return true;
     }
 
+    const validatVehicleInfo =()=>{
+      setErrorMessage('')
+
+      // Moto
+      if (transportationType === 'Moto') {
+        if (!vehicleType) {
+          setErrorMessage('Vehicle type is required')
+          return false;
+        }
+        if (!model) {
+          setErrorMessage('Model is required')
+          return false;
+        }
+        if (!plateNumber) {
+          setErrorMessage('Plate number is required')
+          return false;
+        }
+      }
+
+      // maxi verfication
+      if (transportationType === 'Maxi') {
+        if (!vehicleType) {
+          setErrorMessage('Vehicle type is required')
+          return false;
+        }
+        if (!model) {
+          setErrorMessage('Model is required')
+          return false;
+        }
+        if (!plateNumber) {
+          setErrorMessage('Plate number is required')
+          return false;
+        }
+        if (images?.length < 3) {
+          setErrorMessage('Kindly select at least 3 images')
+          return false;
+        }
+      }
+      return true;
+    }
+
     const onValidateCourierInput = () =>{
-        if(validateCourierInput()){
+        if(validateCourierInput() && validatVehicleInfo()){
           return true;
         }else {
           return false;
@@ -137,75 +175,61 @@ const ProfileProvider = ({children}) => {
           return false;
         }
     }
+
+    // useEffect for setting transportation type
+    useEffect(() => {
+      if (transportationType === 'Micro'){
+        setVehicleType(null);
+        setModel(null);
+        setPlateNumber(null);
+        setImages(null);
+      }
+    
+      if (transportationType === 'Moto'){
+        setImages(null);
+      }
+    }, [transportationType]);
+    
+    // useEffect for setting dbUser
     useEffect(() => {
         if (dbUser) {
+            setIsOnline(dbUser?.isOnline || false)
             setProfilePic(dbUser?.profilePic);
-            setFirstName(dbUser.firstName || "");
-            setLastName(dbUser.lastName || "");
+            setFirstName(dbUser?.firstName || "");
+            setLastName(dbUser?.lastName || "");
             setTransportationType(dbUser.transportationType || "");
-            setAddress(dbUser.address || "");
-            setLandMark(dbUser.landMark || "");
-            setPhoneNumber(dbUser.phoneNumber || "");
-            setCourierNIN(dbUser.courierNIN || "");
-            setCourierBVN(dbUser.courierBVN || "");
-            setBankName(dbUser.bankName || "");
-            setAccountName(dbUser.accountName || "");
-            setAccountNumber(dbUser.accountNumber || "");
-            setGuarantorName(dbUser.guarantorName || "");
-            setGuarantorLastName(dbUser.guarantorLastName || "");
-            setGuarantorProfession(dbUser.guarantorProfession || "");
-            setGuarantorNumber(dbUser.guarantorNumber || "");
-            setGuarantorRelationship(dbUser.guarantorRelationship || "");
-            setGuarantorAddress(dbUser.guarantorAddress || "");
-            setGuarantorEmail(dbUser.guarantorEmail || "");
-            setGuarantorNIN(dbUser.guarantorNIN || "");
-            setLat(dbUser.lat.toString() || "0");
-            setLng(dbUser.lng.toString() || "0");
+            setVehicleType(dbUser?.vehicleType || "");
+            setModel(dbUser?.model || "");
+            setPlateNumber(dbUser.plateNumber || "");
+            setAddress(dbUser?.address || "");
+            setLandMark(dbUser?.landMark || "");
+            setPhoneNumber(dbUser?.phoneNumber || "");
+            setCourierNIN(dbUser?.courierNIN || "");
+            setCourierBVN(dbUser?.courierBVN || "");
+            setBankName(dbUser?.bankName || "");
+            setAccountName(dbUser?.accountName || "");
+            setAccountNumber(dbUser?.accountNumber || "");
+            setGuarantorName(dbUser?.guarantorName || "");
+            setGuarantorLastName(dbUser?.guarantorLastName || "");
+            setGuarantorProfession(dbUser?.guarantorProfession || "");
+            setGuarantorNumber(dbUser?.guarantorNumber || "");
+            setGuarantorRelationship(dbUser?.guarantorRelationship || "");
+            setGuarantorAddress(dbUser?.guarantorAddress || "");
+            setGuarantorEmail(dbUser?.guarantorEmail || "");
+            setGuarantorNIN(dbUser?.guarantorNIN || "");
+            setLat(dbUser?.lat?.toString() || "0");
+            setLng(dbUser?.lng?.toString() || "0");
             setHeading(dbUser.heading || heading);
         }
     }, [dbUser]); // This effect runs whenever dbUser changes
 
-
-  //   // Functions for useEffect
-  //   const currentAuthenticatedUser = async () =>{
-  //   try {
-  //     const user = await getCurrentUser();
-  //     setAuthUser(user)
-  //     console.log('This is authuser:',user)
-  //     const subId = authUser?.userId;
-  //     setSub(subId);
-  //     console.log('This is just subId raw:', subId);
-  //     console.log('This is sub:',sub)
-  //     console.log('This is dbuser from authcontext:', dbUser)
-  //   } catch (err) {
-  //     console.log(err);
-  //   }
-  // }
-
-  // const dbCurrentUser = async () =>{
-  //   try{
-  //     const dbusercurrent = await DataStore.query(Courier, (courier)=>courier.sub.eq(sub))
-  //     // DataStore.clear()
-      
-  //     setDbUser(dbusercurrent[0])
-  //     console.log('This is current dbuser:',dbusercurrent)
-  //   }catch(error){
-  //     console.error('Error getting dbuser: ', error)
-  //   }
-  // }
-
-  // useEffect(()=>{
-  //   currentAuthenticatedUser()
-  // },[sub])
-
-  // useEffect(()=>{
-  //   dbCurrentUser()
-  // }, [sub,])
-
   return (
     <ProfileContext.Provider value={{
-      firstName,setFirstName, lastName, setLastName, transportationType, setTransportationType, address, setAddress, phoneNumber, setPhoneNumber, errorMessage, setErrorMessage, profilePic, setProfilePic, landMark, setLandMark, courierNIN, setCourierNIN, courierBVN, setCourierBVN, bankName, setBankName, accountName, setAccountName, accountNumber, setAccountNumber, guarantorName, setGuarantorName, guarantorLastName, setGuarantorLastName, guarantorProfession, setGuarantorProfession, guarantorNumber, setGuarantorNumber, guarantorRelationship, setGuarantorRelationship, guarantorAddress, setGuarantorAddress, guarantorEmail, setGuarantorEmail, guarantorNIN, setGuarantorNIN, lat, setLat, lng, setLng, heading, setHeading,
-      onValidateCourierInput, onValidateGuarantorInput, 
+      isOnline, setIsOnline,
+      firstName, setFirstName, lastName, setLastName, transportationType, setTransportationType, vehicleType, setVehicleType, model, setModel, plateNumber, setPlateNumber,
+      images, setImages, validatVehicleInfo,
+      address, setAddress, phoneNumber, setPhoneNumber, errorMessage, setErrorMessage, profilePic, setProfilePic, landMark, setLandMark, courierNIN, setCourierNIN, courierBVN, setCourierBVN, bankName, setBankName, accountName, setAccountName, accountNumber, setAccountNumber, guarantorName, setGuarantorName, guarantorLastName, setGuarantorLastName, guarantorProfession, setGuarantorProfession, guarantorNumber, setGuarantorNumber, guarantorRelationship, setGuarantorRelationship, guarantorAddress, setGuarantorAddress, guarantorEmail, setGuarantorEmail, guarantorNIN, setGuarantorNIN, lat, setLat, lng, setLng, heading, setHeading,
+      onValidateCourierInput, onValidateGuarantorInput, validatVehicleInfo,
       }}>
         {children}
     </ProfileContext.Provider>

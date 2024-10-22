@@ -5,6 +5,7 @@ const styles = StyleSheet.create({
     container:{
         flex:1,
         marginTop:30,
+        marginHorizontal:10,
     },
     title: {
         fontSize: 30,
@@ -62,7 +63,7 @@ const styles = StyleSheet.create({
         color:'#07a830',
     },
     input: {
-        margin: 10,
+        marginBottom:10,
         backgroundColor: "white",
         padding: 15,
         borderRadius: 5,
@@ -116,6 +117,15 @@ const styles = StyleSheet.create({
         marginTop:30,
         marginHorizontal:10,
     },
+    maxiImages:{
+        height:300,
+        width:140,
+        borderRadius:20,
+    },
+    imageListContainer:{
+        marginVertical:10,
+        gap:10,
+    },
     addGuarantorSub:{
         marginHorizontal:10,
         fontSize:20,
@@ -134,6 +144,7 @@ const styles = StyleSheet.create({
         backgroundColor:'#3b3b3b',
         borderRadius:20,
     },
+
     inputReviewLast:{
         padding:5,
         fontSize:18,

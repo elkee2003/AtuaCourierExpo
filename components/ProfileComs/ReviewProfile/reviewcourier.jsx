@@ -8,7 +8,7 @@ import { router } from 'expo-router';
 
 const ReviewCourierCom = () => {
     const {
-        firstName, lastName, profilePic, transportationType, address, phoneNumber, landMark, courierNIN, courierBVN, bankName, accountName, accountNumber,
+        firstName, lastName, profilePic, transportationType, vehicleType, model, plateNumber, images, address, phoneNumber, landMark, courierNIN, courierBVN, bankName, accountName, accountNumber,
     } = useProfileContext()
 
     // Navigation Function
@@ -39,6 +39,43 @@ const ReviewCourierCom = () => {
 
             <Text style={styles.subHeader}>Transportation Type:</Text>
             <Text style={styles.inputReview}>{transportationType}</Text>
+
+            {vehicleType && (
+                <>
+                    <Text style={styles.subHeader}>Vehicle Type:</Text>
+                    <Text style={styles.inputReview}>{vehicleType}</Text>
+                </>
+            )}
+
+            {model && (
+                <>
+                    <Text style={styles.subHeader}>Model:</Text>
+                    <Text style={styles.inputReview}>{model}</Text>
+                </>
+            )}
+            
+            {plateNumber && (
+                <>
+                    <Text style={styles.subHeader}>Plate Number:</Text>
+                    <Text style={styles.inputReview}>{plateNumber}</Text>
+                </>
+            )}
+
+{images && (
+                <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false} 
+                    contentContainerStyle={styles.imageListContainer}
+                >
+                    {images.map((item, index) => (
+                        <Image 
+                            key={index} 
+                            source={{ uri: item }} 
+                            style={styles.maxiImages} 
+                        />
+                    ))}
+                </ScrollView>
+            )}
 
             <Text style={styles.subHeader}>Address:</Text>
             <Text style={styles.inputReview}>{address}</Text>

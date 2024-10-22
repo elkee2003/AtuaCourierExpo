@@ -1,4 +1,4 @@
-import { View, Text, Pressable} from 'react-native'
+import { View, Text, Pressable, Alert} from 'react-native'
 import React, {useState, useRef, useMemo} from 'react'
 import BottomSheet, { BottomSheetView, BottomSheetFlatList} from '@gorhom/bottom-sheet';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -7,11 +7,18 @@ import HomeMap from '../HomeMap'
 import BottomContainer from '../BottomContainer'
 import OrderItem from '../../components/OrderItem'
 import {orders} from '../../assets/data/orders'
+import { useAuthContext } from '@/providers/AuthProvider';
+import { useProfileContext } from '@/providers/ProfileProvider';
+import {DataStore} from 'aws-amplify/datastore';
+
+import { Courier } from '@/src/models';
 
 const HomeComponent = () => {
+
+  const {dbUser} = useAuthContext();
+  const {isOnline, setIsOnline} = useProfileContext();
   // useState Hooks
-  const [isOnline, setIsOnline]= useState(false)
-  const [myPosition, setMyPosition] = useState(null)
+  const [location, setLocation] = useState(null);
   const [avaliableOrders, setAvaliableOrders]= useState (orders)
 
   const bottomSheetRef = useRef(null)
@@ -19,7 +26,18 @@ const HomeComponent = () => {
 
   // Refferenced functions
   const onGoPress = () => {
-    setIsOnline(!isOnline)
+    // try{
+    //   const onlineStatus = await DataStore.save(new Courier({
+    //     isOnline
+    //   }))
+    // }catch(e){
+    //   Alert.alert('Error', e.message)
+    // }
+    if(!location){
+      setIsOnline(false)
+    }else{
+      setIsOnline(!isOnline)
+    }
   }
 
   // Remove Order
@@ -32,7 +50,7 @@ const HomeComponent = () => {
     <GestureHandlerRootView style={styles.container}>
       
       {/* later check if availableorder prop is necessary */}
-      <HomeMap avaliableOrders={avaliableOrders}/>
+      <HomeMap avaliableOrders={avaliableOrders} location={location} setLocation={setLocation}/>
 
       {/* Money Balance */}
       <View style={styles.balance}>

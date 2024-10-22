@@ -51,6 +51,15 @@ const styles = StyleSheet.create({
         fontSize:60,
         color:'#07a830',
     },
+    maxiImages:{
+        height:300,
+        width:140,
+        borderRadius:20,
+    },
+    imageListContainer:{
+        marginVertical:10,
+        gap:10,
+    },
     doneBtn:{
         backgroundColor:'#1a1b1a',
         marginTop:10,

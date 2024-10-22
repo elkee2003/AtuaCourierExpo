@@ -3,7 +3,6 @@ import { StyleSheet, } from 'react-native'
 const styles = StyleSheet.create({
     container:{
         flex:1,
-        marginHorizontal:10,
     },
     dropdown: {
         height: 50,
@@ -12,7 +11,7 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         // borderRadius: 20,
         paddingHorizontal: 8,
-        marginVertical:10,
+        marginBottom:10,
     },
     label: {
         position: 'absolute',
@@ -49,14 +48,44 @@ const styles = StyleSheet.create({
     dropdownItem: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginHorizontal:10,
         alignItems: 'center',
         paddingVertical: 10,
     },
+    infoIcon:{
+        fontSize:20,
+        color:'grey',
+        marginRight:10,
+    },
     itemLabel: {
         fontSize: 16,
-        marginVertical:7,
-      },
+        margin:7,
+    },
+    input: {
+        backgroundColor: "white",
+        padding: 15,
+        borderRadius: 5,
+        fontSize:16,
+        marginBottom:10,
+    },
+    addPhotoCon:{
+        justifyContent:'center',
+        alignItems:'center',
+        alignSelf:'center',
+        padding: 7,
+        borderWidth:1,
+        borderColor:'black',
+        borderRadius:15,
+        marginBottom:10,
+    },
+    addPhotoTxt:{
+        fontSize:16,
+        fontWeight:'bold',
+        color:'#161616',
+    }
+    // addPhotoBtn:{
+    //     fontSize:30,
+    //     color:'#161616',
+    // }
 })
 
 export default styles;

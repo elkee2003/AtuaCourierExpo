@@ -1,13 +1,14 @@
-import { View, Text, Alert, TouchableOpacity } from 'react-native'
+import { View, Text, Alert, TouchableOpacity, TextInput } from 'react-native'
 import React, {useState} from 'react'
 import { Dropdown } from 'react-native-element-dropdown';
+import * as ImagePicker from 'expo-image-picker';
 import styles from './styles'
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useProfileContext } from '../../../providers/ProfileProvider'
 
 const TransportationTypeCom = () => {
 
-  const {transportationType, setTransportationType,} = useProfileContext()
+  const {transportationType, setTransportationType, vehicleType, setVehicleType, model, setModel, plateNumber, setPlateNumber, images, setImages} = useProfileContext()
 
   const [isFocus, setIsFocus] = useState(false);
 
@@ -27,6 +28,30 @@ const TransportationTypeCom = () => {
   // Function to handle icon press and show alert with description
   const handleInfoPress = (description) => {
     Alert.alert('Transportation Type Details', description);
+  };
+
+
+  const pickImages = async () => {
+    // No permissions request is necessary for launching the image library
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    console.log(result);
+
+    if (!result.canceled) {
+
+      if(result.assets.length < 3){
+        Alert.alert('Error', 'Please select at least 3 images');
+        return;
+      }
+
+      const selectedImages = result.assets.map((asset)=>asset.uri)
+      setImages(selectedImages);
+    }
   };
 
   return (
@@ -59,11 +84,63 @@ const TransportationTypeCom = () => {
   
               {/* Info Icon next to each label */}
               <TouchableOpacity onPress={() => handleInfoPress(item.description)}>
-                <AntDesign name="infocirlceo" size={20} color="gray" style={styles.infoIcon} />
+                <AntDesign name="infocirlceo" style={styles.infoIcon} />
               </TouchableOpacity>
             </View>
           )}
       />
+
+      {/* Moto */}
+      {(transportationType === "Moto") && (
+        <>
+          <TextInput
+          style={styles.input}
+          value={vehicleType}
+          onChangeText={setVehicleType}
+          placeholder='Vehicle type eg: Car, Bike, Cooling Van etc'
+          />
+          <TextInput
+            style={styles.input}
+            value={model}
+            onChangeText={setModel}
+            placeholder='Vehicle model eg: Audi, Toyota, etc'
+          />
+          <TextInput
+            style={styles.input}
+            value={plateNumber}
+            onChangeText={setPlateNumber}
+            placeholder='Plate Number eg: RIV-90909'
+          />
+        </>
+      )}
+
+      {/* Maxi */}
+      {(transportationType === 'Maxi') && (
+        <>
+          <TextInput
+          style={styles.input}
+          value={vehicleType}
+          onChangeText={setVehicleType}
+          placeholder='Vehicle type eg: Car, Bike, Cooling Van etc'
+          />
+          <TextInput
+            style={styles.input}
+            value={model}
+            onChangeText={setModel}
+            placeholder='Vehicle model eg: Audi, Toyota, etc'
+          />
+          <TextInput
+            style={styles.input}
+            value={plateNumber}
+            onChangeText={setPlateNumber}
+            placeholder='Plate Number eg: RIV-90909'
+          />
+          <TouchableOpacity style={styles.addPhotoCon} onPress={pickImages}>
+            <Text style={styles.addPhotoTxt}>Add Photos</Text>
+            {/* <AntDesign name="pluscircle" style={styles.plusIconBtn} /> */}
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   )
 }

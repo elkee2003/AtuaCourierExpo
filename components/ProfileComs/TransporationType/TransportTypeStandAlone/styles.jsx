@@ -20,7 +20,7 @@ const styles = StyleSheet.create({
         fontSize:16,
         padding:10,
         color:'white',
-        backgroundColor:'black',
+        backgroundColor:'#1f1e1e',
     },
     dropdown: {
         height: 50,
@@ -55,20 +55,6 @@ const styles = StyleSheet.create({
         height: 40,
         fontSize: 16,
     },
-    btnCon:{
-        marginTop:20,
-        backgroundColor:'#0de90d',
-        marginHorizontal:50,
-        padding:10,
-        justifyContent:'center',
-        alignItems:'center',
-        borderRadius:15,
-    },
-    btnTxt:{
-        fontSize:25,
-        fontWeight:'bold',
-        textAlign:'center',
-    },
     // labelTxt:{
     //     color:'#02061b',
     //     fontSize:15,
@@ -87,7 +73,50 @@ const styles = StyleSheet.create({
     itemLabel: {
         fontSize: 16,
         marginVertical:7,
-      },
+    },
+    input: {
+        backgroundColor: "white",
+        padding: 15,
+        borderRadius: 5,
+        fontSize:16,
+        marginBottom:10,
+    },
+    addPhotoCon:{
+        justifyContent:'center',
+        alignItems:'center',
+        alignSelf:'center',
+        padding: 7,
+        borderWidth:1,
+        borderColor:'black',
+        borderRadius:15,
+        marginBottom:10,
+    },
+    addPhotoTxt:{
+        fontSize:16,
+        fontWeight:'bold',
+        color:'#161616',
+    },
+    error:{
+        color:'#d80b0b',
+        fontSize:13,
+        marginTop:-10,
+        marginHorizontal:15,
+        marginBottom:5,
+    },
+    btnCon:{
+        marginTop:20,
+        backgroundColor:'#0de90d',
+        marginHorizontal:50,
+        padding:10,
+        justifyContent:'center',
+        alignItems:'center',
+        borderRadius:15,
+    },
+    btnTxt:{
+        fontSize:25,
+        fontWeight:'bold',
+        textAlign:'center',
+    },
 })
 
 export default styles;

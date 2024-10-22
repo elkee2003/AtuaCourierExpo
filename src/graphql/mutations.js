@@ -118,7 +118,7 @@ export const createCompanyVehicle = /* GraphQL */ `
       id
       vehicleType
       model
-      regNumber
+      plateNumber
       couriercompanyID
       createdAt
       updatedAt
@@ -138,7 +138,7 @@ export const updateCompanyVehicle = /* GraphQL */ `
       id
       vehicleType
       model
-      regNumber
+      plateNumber
       couriercompanyID
       createdAt
       updatedAt
@@ -158,146 +158,8 @@ export const deleteCompanyVehicle = /* GraphQL */ `
       id
       vehicleType
       model
-      regNumber
+      plateNumber
       couriercompanyID
-      createdAt
-      updatedAt
-      _version
-      _deleted
-      _lastChangedAt
-      __typename
-    }
-  }
-`;
-export const createCourier = /* GraphQL */ `
-  mutation CreateCourier(
-    $input: CreateCourierInput!
-    $condition: ModelCourierConditionInput
-  ) {
-    createCourier(input: $input, condition: $condition) {
-      id
-      sub
-      firstName
-      lastName
-      profilePic
-      address
-      landMark
-      phoneNumber
-      email
-      courierNIN
-      courierBVN
-      bankName
-      accountName
-      accountNumber
-      transportationType
-      guarantorName
-      guarantorLastName
-      guarantorProfession
-      guarantorNumber
-      guarantorRelationship
-      guarantorAddress
-      guarantorEmail
-      guarantorNIN
-      lat
-      lng
-      heading
-      Orders {
-        nextToken
-        startedAt
-        __typename
-      }
-      createdAt
-      updatedAt
-      _version
-      _deleted
-      _lastChangedAt
-      __typename
-    }
-  }
-`;
-export const updateCourier = /* GraphQL */ `
-  mutation UpdateCourier(
-    $input: UpdateCourierInput!
-    $condition: ModelCourierConditionInput
-  ) {
-    updateCourier(input: $input, condition: $condition) {
-      id
-      sub
-      firstName
-      lastName
-      profilePic
-      address
-      landMark
-      phoneNumber
-      email
-      courierNIN
-      courierBVN
-      bankName
-      accountName
-      accountNumber
-      transportationType
-      guarantorName
-      guarantorLastName
-      guarantorProfession
-      guarantorNumber
-      guarantorRelationship
-      guarantorAddress
-      guarantorEmail
-      guarantorNIN
-      lat
-      lng
-      heading
-      Orders {
-        nextToken
-        startedAt
-        __typename
-      }
-      createdAt
-      updatedAt
-      _version
-      _deleted
-      _lastChangedAt
-      __typename
-    }
-  }
-`;
-export const deleteCourier = /* GraphQL */ `
-  mutation DeleteCourier(
-    $input: DeleteCourierInput!
-    $condition: ModelCourierConditionInput
-  ) {
-    deleteCourier(input: $input, condition: $condition) {
-      id
-      sub
-      firstName
-      lastName
-      profilePic
-      address
-      landMark
-      phoneNumber
-      email
-      courierNIN
-      courierBVN
-      bankName
-      accountName
-      accountNumber
-      transportationType
-      guarantorName
-      guarantorLastName
-      guarantorProfession
-      guarantorNumber
-      guarantorRelationship
-      guarantorAddress
-      guarantorEmail
-      guarantorNIN
-      lat
-      lng
-      heading
-      Orders {
-        nextToken
-        startedAt
-        __typename
-      }
       createdAt
       updatedAt
       _version
@@ -317,21 +179,62 @@ export const createOrder = /* GraphQL */ `
       recipientName
       recipientNumber
       orderDetails
-      parcelOrgin
+      parcelOrigin
       parcelOriginLat
       parcelOriginLng
       parcelDestination
       parcelDestinationLat
       parcelDestinationLng
+      transportationType
       status
       price
       userID
-      courierID
+      Courier {
+        id
+        sub
+        isOnline
+        firstName
+        lastName
+        profilePic
+        address
+        landMark
+        phoneNumber
+        email
+        courierNIN
+        courierBVN
+        bankName
+        accountName
+        accountNumber
+        transportationType
+        vehicleType
+        model
+        plateNumber
+        maxiImages
+        maxiTransportPrice
+        guarantorName
+        guarantorLastName
+        guarantorProfession
+        guarantorNumber
+        guarantorRelationship
+        guarantorAddress
+        guarantorEmail
+        guarantorNIN
+        lat
+        lng
+        heading
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
       createdAt
       updatedAt
       _version
       _deleted
       _lastChangedAt
+      orderCourierId
       __typename
     }
   }
@@ -346,21 +249,62 @@ export const updateOrder = /* GraphQL */ `
       recipientName
       recipientNumber
       orderDetails
-      parcelOrgin
+      parcelOrigin
       parcelOriginLat
       parcelOriginLng
       parcelDestination
       parcelDestinationLat
       parcelDestinationLng
+      transportationType
       status
       price
       userID
-      courierID
+      Courier {
+        id
+        sub
+        isOnline
+        firstName
+        lastName
+        profilePic
+        address
+        landMark
+        phoneNumber
+        email
+        courierNIN
+        courierBVN
+        bankName
+        accountName
+        accountNumber
+        transportationType
+        vehicleType
+        model
+        plateNumber
+        maxiImages
+        maxiTransportPrice
+        guarantorName
+        guarantorLastName
+        guarantorProfession
+        guarantorNumber
+        guarantorRelationship
+        guarantorAddress
+        guarantorEmail
+        guarantorNIN
+        lat
+        lng
+        heading
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
       createdAt
       updatedAt
       _version
       _deleted
       _lastChangedAt
+      orderCourierId
       __typename
     }
   }
@@ -375,16 +319,198 @@ export const deleteOrder = /* GraphQL */ `
       recipientName
       recipientNumber
       orderDetails
-      parcelOrgin
+      parcelOrigin
       parcelOriginLat
       parcelOriginLng
       parcelDestination
       parcelDestinationLat
       parcelDestinationLng
+      transportationType
       status
       price
       userID
-      courierID
+      Courier {
+        id
+        sub
+        isOnline
+        firstName
+        lastName
+        profilePic
+        address
+        landMark
+        phoneNumber
+        email
+        courierNIN
+        courierBVN
+        bankName
+        accountName
+        accountNumber
+        transportationType
+        vehicleType
+        model
+        plateNumber
+        maxiImages
+        maxiTransportPrice
+        guarantorName
+        guarantorLastName
+        guarantorProfession
+        guarantorNumber
+        guarantorRelationship
+        guarantorAddress
+        guarantorEmail
+        guarantorNIN
+        lat
+        lng
+        heading
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      orderCourierId
+      __typename
+    }
+  }
+`;
+export const createCourier = /* GraphQL */ `
+  mutation CreateCourier(
+    $input: CreateCourierInput!
+    $condition: ModelCourierConditionInput
+  ) {
+    createCourier(input: $input, condition: $condition) {
+      id
+      sub
+      isOnline
+      firstName
+      lastName
+      profilePic
+      address
+      landMark
+      phoneNumber
+      email
+      courierNIN
+      courierBVN
+      bankName
+      accountName
+      accountNumber
+      transportationType
+      vehicleType
+      model
+      plateNumber
+      maxiImages
+      maxiTransportPrice
+      guarantorName
+      guarantorLastName
+      guarantorProfession
+      guarantorNumber
+      guarantorRelationship
+      guarantorAddress
+      guarantorEmail
+      guarantorNIN
+      lat
+      lng
+      heading
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const updateCourier = /* GraphQL */ `
+  mutation UpdateCourier(
+    $input: UpdateCourierInput!
+    $condition: ModelCourierConditionInput
+  ) {
+    updateCourier(input: $input, condition: $condition) {
+      id
+      sub
+      isOnline
+      firstName
+      lastName
+      profilePic
+      address
+      landMark
+      phoneNumber
+      email
+      courierNIN
+      courierBVN
+      bankName
+      accountName
+      accountNumber
+      transportationType
+      vehicleType
+      model
+      plateNumber
+      maxiImages
+      maxiTransportPrice
+      guarantorName
+      guarantorLastName
+      guarantorProfession
+      guarantorNumber
+      guarantorRelationship
+      guarantorAddress
+      guarantorEmail
+      guarantorNIN
+      lat
+      lng
+      heading
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const deleteCourier = /* GraphQL */ `
+  mutation DeleteCourier(
+    $input: DeleteCourierInput!
+    $condition: ModelCourierConditionInput
+  ) {
+    deleteCourier(input: $input, condition: $condition) {
+      id
+      sub
+      isOnline
+      firstName
+      lastName
+      profilePic
+      address
+      landMark
+      phoneNumber
+      email
+      courierNIN
+      courierBVN
+      bankName
+      accountName
+      accountNumber
+      transportationType
+      vehicleType
+      model
+      plateNumber
+      maxiImages
+      maxiTransportPrice
+      guarantorName
+      guarantorLastName
+      guarantorProfession
+      guarantorNumber
+      guarantorRelationship
+      guarantorAddress
+      guarantorEmail
+      guarantorNIN
+      lat
+      lng
+      heading
       createdAt
       updatedAt
       _version
@@ -404,15 +530,17 @@ export const createUser = /* GraphQL */ `
       sub
       firstName
       lastName
+      phoneNumber
       profilePic
       address
-      lat
-      lng
+      exactAddress
       Orders {
         nextToken
         startedAt
         __typename
       }
+      lat
+      lng
       createdAt
       updatedAt
       _version
@@ -432,15 +560,17 @@ export const updateUser = /* GraphQL */ `
       sub
       firstName
       lastName
+      phoneNumber
       profilePic
       address
-      lat
-      lng
+      exactAddress
       Orders {
         nextToken
         startedAt
         __typename
       }
+      lat
+      lng
       createdAt
       updatedAt
       _version
@@ -460,15 +590,17 @@ export const deleteUser = /* GraphQL */ `
       sub
       firstName
       lastName
+      phoneNumber
       profilePic
       address
-      lat
-      lng
+      exactAddress
       Orders {
         nextToken
         startedAt
         __typename
       }
+      lat
+      lng
       createdAt
       updatedAt
       _version

@@ -1,4 +1,4 @@
-import { View, Text, Alert, TouchableOpacity } from 'react-native'
+import { View, Text, TextInput, Alert, TouchableOpacity } from 'react-native'
 import React, {useState} from 'react'
 import { Dropdown } from 'react-native-element-dropdown';
 import styles from './styles'
@@ -11,7 +11,7 @@ import {Courier} from '../../../../src/models'
 
 const StandaloneTtypeCom = () => {
 
-  const {transportationType, setTransportationType} = useProfileContext()
+  const {transportationType, setTransportationType, vehicleType, setVehicleType, model, setModel, plateNumber, setPlateNumber, images, setImages, errorMessage,validatVehicleInfo} = useProfileContext()
   const {dbUser, setDbUser} = useAuthContext()
 
   const [isFocus, setIsFocus] = useState(false);
@@ -34,11 +34,46 @@ const StandaloneTtypeCom = () => {
     Alert.alert('Transportation Type Details', description);
   };
 
+  const pickImages = async () => {
+    // No permissions request is necessary for launching the image library
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    console.log(result);
+
+    if (!result.canceled) {
+
+      if(result.assets.length < 3){
+        Alert.alert('Error', 'Please select at least 3 images');
+        return;
+      }
+
+      const selectedImages = result.assets.map((asset)=>asset.uri)
+      setImages(selectedImages);
+    }
+  };
+
+
   const updateTransportType = async () => {
+
+    if (!validatVehicleInfo()) {
+      Alert.alert('Error', errorMessage); // Display the validation error message
+      return;
+    }
+
     try{
       const transportType = await DataStore.save(Courier.copyOf(dbUser, (updated)=>{
          
-        updated.transportationType = transportationType 
+        updated.transportationType = transportationType
+        updated.transportationType = transportationType;
+        updated.vehicleType = vehicleType;
+        updated.model = model;
+        updated.plateNumber = plateNumber;
+        updated.maxiImages = images;
       }))
       setDbUser(transportType)
       Alert.alert('Successful', 'Changed Successfully')
@@ -88,6 +123,60 @@ const StandaloneTtypeCom = () => {
             </View>
           )}
       />
+
+      {/* Moto */}
+      {(transportationType === "Moto") && (
+        <>
+          <TextInput
+          style={styles.input}
+          value={vehicleType}
+          onChangeText={setVehicleType}
+          placeholder='Vehicle type eg: Car, Bike, Cooling Van etc'
+          />
+          <TextInput
+            style={styles.input}
+            value={model}
+            onChangeText={setModel}
+            placeholder='Vehicle model eg: Audi, Toyota, etc'
+          />
+          <TextInput
+            style={styles.input}
+            value={plateNumber}
+            onChangeText={setPlateNumber}
+            placeholder='Plate Number eg: RIV-90909'
+          />
+        </>
+      )}
+
+      {/* Maxi */}
+      {(transportationType === 'Maxi') && (
+        <>
+          <TextInput
+          style={styles.input}
+          value={vehicleType}
+          onChangeText={setVehicleType}
+          placeholder='Vehicle type eg: Car, Bike, Cooling Van etc'
+          />
+          <TextInput
+            style={styles.input}
+            value={model}
+            onChangeText={setModel}
+            placeholder='Vehicle model eg: Audi, Toyota, etc'
+          />
+          <TextInput
+            style={styles.input}
+            value={plateNumber}
+            onChangeText={setPlateNumber}
+            placeholder='Plate Number eg: RIV-90909'
+          />
+          <TouchableOpacity style={styles.addPhotoCon} onPress={pickImages}>
+            <Text style={styles.addPhotoTxt}>Add Photos</Text>
+            {/* <AntDesign name="pluscircle" style={styles.plusIconBtn} /> */}
+          </TouchableOpacity>
+        </>
+      )}
+
+      <Text style={styles.error}>{errorMessage}</Text>
 
       <TouchableOpacity style={styles.btnCon} onPress={updateTransportType}>
         <Text style={styles.btnTxt}>Change</Text>
