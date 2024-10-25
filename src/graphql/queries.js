@@ -25,6 +25,7 @@ export const getCourierCompany = /* GraphQL */ `
         __typename
       }
       accountNumber
+      push_token
       createdAt
       updatedAt
       _version
@@ -62,6 +63,7 @@ export const listCourierCompanies = /* GraphQL */ `
         adminPhoneNumber
         bankName
         accountNumber
+        push_token
         createdAt
         updatedAt
         _version
@@ -105,6 +107,7 @@ export const syncCourierCompanies = /* GraphQL */ `
         adminPhoneNumber
         bankName
         accountNumber
+        push_token
         createdAt
         updatedAt
         _version
@@ -277,6 +280,7 @@ export const getOrder = /* GraphQL */ `
         lat
         lng
         heading
+        push_token
         createdAt
         updatedAt
         _version
@@ -451,6 +455,7 @@ export const getCourier = /* GraphQL */ `
       lat
       lng
       heading
+      push_token
       createdAt
       updatedAt
       _version
@@ -500,6 +505,7 @@ export const listCouriers = /* GraphQL */ `
         lat
         lng
         heading
+        push_token
         createdAt
         updatedAt
         _version
@@ -559,6 +565,7 @@ export const syncCouriers = /* GraphQL */ `
         lat
         lng
         heading
+        push_token
         createdAt
         updatedAt
         _version
@@ -590,6 +597,7 @@ export const getUser = /* GraphQL */ `
       }
       lat
       lng
+      push_token
       createdAt
       updatedAt
       _version
@@ -617,6 +625,7 @@ export const listUsers = /* GraphQL */ `
         exactAddress
         lat
         lng
+        push_token
         createdAt
         updatedAt
         _version
@@ -654,6 +663,7 @@ export const syncUsers = /* GraphQL */ `
         exactAddress
         lat
         lng
+        push_token
         createdAt
         updatedAt
         _version

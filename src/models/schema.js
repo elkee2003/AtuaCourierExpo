@@ -131,6 +131,13 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
+                "push_token": {
+                    "name": "push_token",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
                 "createdAt": {
                     "name": "createdAt",
                     "isArray": false,
@@ -669,6 +676,13 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
+                "push_token": {
+                    "name": "push_token",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
                 "createdAt": {
                     "name": "createdAt",
                     "isArray": false,
@@ -800,6 +814,13 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
+                "push_token": {
+                    "name": "push_token",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
                 "createdAt": {
                     "name": "createdAt",
                     "isArray": false,
@@ -856,5 +877,5 @@ export const schema = {
     },
     "nonModels": {},
     "codegenVersion": "3.4.4",
-    "version": "e7555801e616a92349552dc8261f9dab"
+    "version": "eca19d754883ae2d7ffc9fc814a278b8"
 };

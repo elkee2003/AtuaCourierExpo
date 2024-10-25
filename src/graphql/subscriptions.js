@@ -27,6 +27,7 @@ export const onCreateCourierCompany = /* GraphQL */ `
         __typename
       }
       accountNumber
+      push_token
       createdAt
       updatedAt
       _version
@@ -62,6 +63,7 @@ export const onUpdateCourierCompany = /* GraphQL */ `
         __typename
       }
       accountNumber
+      push_token
       createdAt
       updatedAt
       _version
@@ -97,6 +99,7 @@ export const onDeleteCourierCompany = /* GraphQL */ `
         __typename
       }
       accountNumber
+      push_token
       createdAt
       updatedAt
       _version
@@ -213,6 +216,7 @@ export const onCreateOrder = /* GraphQL */ `
         lat
         lng
         heading
+        push_token
         createdAt
         updatedAt
         _version
@@ -280,6 +284,7 @@ export const onUpdateOrder = /* GraphQL */ `
         lat
         lng
         heading
+        push_token
         createdAt
         updatedAt
         _version
@@ -347,6 +352,7 @@ export const onDeleteOrder = /* GraphQL */ `
         lat
         lng
         heading
+        push_token
         createdAt
         updatedAt
         _version
@@ -399,6 +405,7 @@ export const onCreateCourier = /* GraphQL */ `
       lat
       lng
       heading
+      push_token
       createdAt
       updatedAt
       _version
@@ -443,6 +450,7 @@ export const onUpdateCourier = /* GraphQL */ `
       lat
       lng
       heading
+      push_token
       createdAt
       updatedAt
       _version
@@ -487,6 +495,7 @@ export const onDeleteCourier = /* GraphQL */ `
       lat
       lng
       heading
+      push_token
       createdAt
       updatedAt
       _version
@@ -514,6 +523,7 @@ export const onCreateUser = /* GraphQL */ `
       }
       lat
       lng
+      push_token
       createdAt
       updatedAt
       _version
@@ -541,6 +551,7 @@ export const onUpdateUser = /* GraphQL */ `
       }
       lat
       lng
+      push_token
       createdAt
       updatedAt
       _version
@@ -568,6 +579,7 @@ export const onDeleteUser = /* GraphQL */ `
       }
       lat
       lng
+      push_token
       createdAt
       updatedAt
       _version

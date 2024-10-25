@@ -2,39 +2,16 @@ import { View, Text, Pressable, SafeAreaView, ActivityIndicator } from 'react-na
 import React, {useState, useEffect} from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import OrderDeliveryMainCom from '../../components/OrderDeliveryComp/OrderDeliveryMainCom';
-import {DataStore} from 'aws-amplify/datastore';
-import { Order, User } from '@/src/models';
+import {useOrderContext} from '@/providers/OrderProvider';
 
 const OrderDeliveryScreen = () => {
 
     const {id} = useLocalSearchParams()
-    const [order, setOrder] = useState(null);
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { order, user, loading, fetchOrder } = useOrderContext();
 
-    // Fetch the Order data based on the id
-    const fetchOrder = async () =>{
-      try{
-        if(id){
-          const foundOrder = await DataStore.query(Order, id);
-          
-          if (foundOrder){
-            setOrder(foundOrder);
-
-            // Fetch the User related to the Order
-            const foundUser = await DataStore.query(User, foundOrder.userID);
-            setUser(foundUser)
-          }
-        }
-      }catch(e){
-        console.error('Error fetching Order', e.message);
-      }finally{
-        setLoading(false);
-      }
-    };
 
     useEffect(()=>{
-      fetchOrder();
+      fetchOrder(id);
     },[id])
 
     if (loading) {
@@ -45,7 +22,7 @@ const OrderDeliveryScreen = () => {
       );
     }
 
-    if(!order){
+    if(!order || !user){
       return(
         <View style={{top:'50%', justifyContent:'center', alignItems:'center'}}>
           {/* <Text style={{fontSize:30, fontWeight:'bold', color:'#afadad'}}>

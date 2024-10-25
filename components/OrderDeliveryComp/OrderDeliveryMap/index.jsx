@@ -20,7 +20,9 @@ const OrderDeliveryMap = ({
         setLocation,
       
     }) => {
+
         const { width, height } = useWindowDimensions();
+        
         const [errorMsg, setErrorMsg] = useState(null);
 
         useEffect(() => {

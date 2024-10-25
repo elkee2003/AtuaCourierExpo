@@ -8,14 +8,7 @@ import styles from './styles'
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-
-
-const ORDER_STATUSES ={
-  READY_FOR_PICKUP:'Ready For Pickup',
-  ACCEPTED:'Accepted',
-  PICKEDUP: 'Picked Up',
-  DELIVERED:'Delivered'
-}
+import {useOrderContext} from '@/providers/OrderProvider'
 
 const OrderdeliveryMainCom = ({order, user}) => {
   
@@ -23,31 +16,18 @@ const OrderdeliveryMainCom = ({order, user}) => {
   const bottomSheetRef = useRef(null)
   const snapPoints = useMemo(()=>['15%', '75%', '95%'], [])
 
+  const {acceptOrder, isPickedUp, setIsPickedUp, pickUpOrder, completeOrder} = useOrderContext()
+
   const [location, setLocation] = useState(null);
   const [totalMins, setTotalMins]=useState(0);
   const [totalKm, setTotalKm]=useState(0);
-  const [deliveryStatus, setDeliveryStatus]= useState(ORDER_STATUSES.READY_FOR_PICKUP)
   const [isCourierclose, setIsCourierClose]= useState(false)
-  const [isPickedUp, setIsPickedUp]= useState(false)
 
-  const onRemoveOrder = (id)=>{
-    const filteredOrder = avaliableOrders.filter((order)=> order.id !== id)
-    setAvaliableOrders(filteredOrder)
-  }
 
   // Function of the Button on OrderDetails Screen when pressed
-  const onButtonPressed = ()=>{
+  const onButtonPressed = async ()=>{
 
-    // if (!location || !location.latitude || !location.longitude) {
-    //   console.error("Location or coordinates not available");
-    //   return;
-    // }
-    
-    console.log("There is location", location.latitude, location.longitude);
-
-    console.log('This is the almighty location:', location)
-  
-    if(deliveryStatus === ORDER_STATUSES.READY_FOR_PICKUP){
+    if(order?.status === 'READY_FOR_PICKUP'){
       bottomSheetRef.current?.collapse()
       mapRef.current.animateToRegion({
         latitude: location?.latitude,
@@ -55,10 +35,11 @@ const OrderdeliveryMainCom = ({order, user}) => {
         latitudeDelta:0.01,
         longitudeDelta:0.01
       })
-      setDeliveryStatus(ORDER_STATUSES.ACCEPTED)
+      // setDeliveryStatus(ORDER_STATUSES.ACCEPTED);
+      acceptOrder();
     }
 
-    if(deliveryStatus === ORDER_STATUSES.ACCEPTED){
+    if(order?.status === 'ACCEPTED'){
       bottomSheetRef.current?.collapse()
       mapRef.current.animateToRegion({
         latitude: location?.latitude,
@@ -66,10 +47,12 @@ const OrderdeliveryMainCom = ({order, user}) => {
         latitudeDelta:0.01,
         longitudeDelta:0.01
       })
-      setDeliveryStatus(ORDER_STATUSES.PICKEDUP)
+      // setDeliveryStatus(ORDER_STATUSES.PICKEDUP)
+      pickUpOrder();
       setIsPickedUp(true)
     }
-    if(deliveryStatus === ORDER_STATUSES.PICKEDUP && isPickedUp){
+
+    if(order?.status === 'PICKEDUP' && isPickedUp){
       bottomSheetRef.current?.collapse()
       mapRef.current.animateToRegion({
         latitude: location?.latitude,
@@ -77,41 +60,47 @@ const OrderdeliveryMainCom = ({order, user}) => {
         latitudeDelta:0.01,
         longitudeDelta:0.01
       })
-      setDeliveryStatus(ORDER_STATUSES.DELIVERED)
+      // setDeliveryStatus(ORDER_STATUSES.DELIVERED)
+      await completeOrder ();
       router.push('/home')
     }
   }
 
   // Function for Rendering button name in OrderDetails Screen
   const renderButtonTitle = ()=>{
-    if (deliveryStatus === ORDER_STATUSES.READY_FOR_PICKUP){
+
+    if (order?.status === 'READY_FOR_PICKUP'){
       return 'Accept Order'
     }
-    if (deliveryStatus === ORDER_STATUSES.ACCEPTED){
+
+    if (order?.status === 'ACCEPTED'){
       return 'Picked Up Order'
     }
-    if (deliveryStatus === ORDER_STATUSES.PICKEDUP){
+      
+    if (order?.status === 'PICKEDUP'){
       return 'Delivered!'
     }
   }
 
   // Function for Disabling the Button in OrderDetails Screen
   const isButtonDisabled =()=>{
-    if (deliveryStatus === ORDER_STATUSES.READY_FOR_PICKUP){
+
+    if (order?.status === 'READY_FOR_PICKUP'){
       return false;
     }
-    if (deliveryStatus === ORDER_STATUSES.ACCEPTED && isCourierclose){
+
+    if (order?.status === 'ACCEPTED' && isCourierclose){
       return false;
     }
-    if (deliveryStatus === ORDER_STATUSES.PICKEDUP && isCourierclose){
+
+    if (order?.status === 'PICKEDUP' && isCourierclose){
       return false;
     }
     return true;
   }
 
-  // Function to show in Order Details Screen
-  // const deliveryAccepted = deliveryStatus === ORDER_STATUSES.ACCEPTED
-  const deliveryPickedUp = deliveryStatus === ORDER_STATUSES.PICKEDUP
+  // variable to show in Order Details Screen
+  const deliveryPickedUp = order?.status === 'PICKEDUP';
 
   return (
     <GestureHandlerRootView style={styles.container}>
@@ -131,7 +120,7 @@ const OrderdeliveryMainCom = ({order, user}) => {
 
       {/* Back Button */}
       {
-        deliveryStatus === ORDER_STATUSES.READY_FOR_PICKUP &&
+        order?.status === 'READY_FOR_PICKUP' &&
         <Pressable onPress={()=>router.back()} style={styles.bckBtn}>
           <Ionicons name="arrow-back" style={styles.bckBtnIcon} />
         </Pressable>

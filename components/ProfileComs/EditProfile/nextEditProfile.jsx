@@ -93,6 +93,7 @@ const NextEditProfile = () => {
           value={guarantorEmail}
           onChangeText={setGuarantorEmail}
           placeholder="Guarantor's email (Optional)"
+          autoCapitalize="none"
           style={styles.input}
         />
         <TextInput

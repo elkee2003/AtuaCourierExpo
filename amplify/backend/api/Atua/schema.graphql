@@ -16,6 +16,7 @@ type CourierCompany @model @auth(rules: [{allow: public}]) {
   bankName: String
   CompanyVehicles: [CompanyVehicle] @hasMany(indexName: "byCourierCompany", fields: ["id"])
   accountNumber: String
+  push_token: String
 }
 
 type CompanyVehicle @model @auth(rules: [{allow: public}]) {
@@ -84,6 +85,7 @@ type Courier @model @auth(rules: [{allow: public}]) {
   lat: Float
   lng: Float
   heading: Float
+  push_token: String
 }
 
 type User @model @auth(rules: [{allow: public}]) {
@@ -98,5 +100,6 @@ type User @model @auth(rules: [{allow: public}]) {
   Orders: [Order] @hasMany(indexName: "byUser", fields: ["id"])
   lat: Float
   lng: Float
+  push_token: String
 }
  

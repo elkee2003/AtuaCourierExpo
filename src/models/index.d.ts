@@ -33,6 +33,7 @@ type EagerCourierCompany = {
   readonly bankName?: string | null;
   readonly CompanyVehicles?: (CompanyVehicle | null)[] | null;
   readonly accountNumber?: string | null;
+  readonly push_token?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -59,6 +60,7 @@ type LazyCourierCompany = {
   readonly bankName?: string | null;
   readonly CompanyVehicles: AsyncCollection<CompanyVehicle>;
   readonly accountNumber?: string | null;
+  readonly push_token?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -196,6 +198,7 @@ type EagerCourier = {
   readonly lat?: number | null;
   readonly lng?: number | null;
   readonly heading?: number | null;
+  readonly push_token?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -237,6 +240,7 @@ type LazyCourier = {
   readonly lat?: number | null;
   readonly lng?: number | null;
   readonly heading?: number | null;
+  readonly push_token?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -263,6 +267,7 @@ type EagerUser = {
   readonly Orders?: (Order | null)[] | null;
   readonly lat?: number | null;
   readonly lng?: number | null;
+  readonly push_token?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -283,6 +288,7 @@ type LazyUser = {
   readonly Orders: AsyncCollection<Order>;
   readonly lat?: number | null;
   readonly lng?: number | null;
+  readonly push_token?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }

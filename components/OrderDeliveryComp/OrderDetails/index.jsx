@@ -1,10 +1,11 @@
-import { View, Text, TouchableOpacity } from 'react-native'
-import React from 'react'
-import styles from './styles'
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
-import Entypo from 'react-native-vector-icons/Entypo'
-import Ionicons from 'react-native-vector-icons/Ionicons'
-import FontAwesome from 'react-native-vector-icons/FontAwesome'
+import { View, Text, TouchableOpacity } from 'react-native';
+import React from 'react';
+import styles from './styles';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import Entypo from 'react-native-vector-icons/Entypo';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import {useOrderContext} from '@/providers/OrderProvider'
 
 const OrderDetails = ({
   onButtonPressed, 
@@ -14,6 +15,9 @@ const OrderDetails = ({
   order,
   user,
 }) => {
+
+  console.log(order.status)
+  console.log('hi',deliveryPickedUp)
 
   return (
     <View style={styles.container}>
@@ -86,8 +90,8 @@ const OrderDetails = ({
       <TouchableOpacity 
       onPress={onButtonPressed} 
       disabled={isButtonDisabled()}
-      style={{...styles.acceptBtn, backgroundColor: isButtonDisabled() ? 'grey' : '#6bff08'}}>
-        <Text style={styles.tBtn}>{renderButtonTitle()}</Text>
+      style={{...styles.acceptBtn, backgroundColor: isButtonDisabled() ? '#bbbbbb' : '#6bff08'}}>
+        <Text style={{...styles.tBtn, color: isButtonDisabled() ? '#727272' : '#222222'}}>{renderButtonTitle()}</Text>
        </TouchableOpacity>
     </View>
   )

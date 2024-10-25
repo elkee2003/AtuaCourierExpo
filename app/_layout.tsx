@@ -7,13 +7,13 @@ const RootLayout = () => {
   return (
     <AuthProvider>
       <ProfileProvider>
-        {/* <OrderProvider> */}
+        <OrderProvider>
           <Stack screenOptions={{
             headerShown:false
           }}>
               <Stack.Screen name="(tabs)" />
           </Stack>
-        {/* </OrderProvider> */}
+        </OrderProvider>
       </ProfileProvider>
     </AuthProvider>
   );

@@ -1,38 +1,73 @@
 import { View, Text } from 'react-native'
-import React, {useState, useEffect, useContext, createContext} from 'react'
+import React, {useState, useEffect, useContext, createContext} from 'react';
 import { DataStore } from 'aws-amplify/datastore';
-import { Order, User } from '@/src/models';
+import { Courier, Order, User } from '@/src/models';
+import { useAuthContext } from './AuthProvider';
 
 const OrderContext = createContext({})
 
 const OrderProvider = ({children}) => {
 
-    const [location, setLocation] = useState(null);
-    const [order, setOrder] = useState(null);
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+  const {dbUser} = useAuthContext();
+  const [order, setOrder] = useState()
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isPickedUp, setIsPickedUp]= useState(false)
+  const [isCourierclose, setIsCourierClose]= useState(false)
 
-    const fetchOrder = async (id) => {
-      try {
-        setLoading(true);
-        if (id) {
+    // Fetch Order and User
+    const fetchOrder = async (id) =>{
+      setLoading(true);
+      try{
+        if(id){
           const foundOrder = await DataStore.query(Order, id);
-          if (foundOrder) {
+          
+          if (foundOrder){
             setOrder(foundOrder);
+
+            // Fetch the User related to the Order
             const foundUser = await DataStore.query(User, foundOrder.userID);
-            setUser(foundUser);
+            setUser(foundUser)
           }
         }
-      } catch (error) {
-        console.error('Error fetching order data:', error);
-      } finally {
+      }catch(e){
+        console.error('Error fetching Order', e.message);
+      }finally{
         setLoading(false);
       }
     };
-    
+
+    // Function to accept order
+    const acceptOrder = () => {
+      // update the order, and change status, and assign the courier
+      DataStore.save(
+        Order.copyOf(order, (updated)=>{
+          updated.status = "ACCEPTED",
+          updated.Courier = dbUser
+        })
+      ).then(setOrder);
+    };
+
+    const pickUpOrder = () => {
+      // update the order, and change status, and assign the courier
+      DataStore.save(
+        Order.copyOf(order, (updated)=>{
+          updated.status = "PICKEDUP"
+        })
+      ).then(setOrder);
+    };
+
+    const completeOrder = () => {
+      // update the order, and change status, and assign the courier
+      DataStore.save(
+        Order.copyOf(order, (updated)=>{
+          updated.status = "DELIVERED"
+        })
+      ).then(setOrder);
+    }
 
   return (
-    <OrderContext.Provider value={{location, setLocation, order, user, fetchOrder, loading}}>
+    <OrderContext.Provider value={{acceptOrder, pickUpOrder, completeOrder, order, user, loading,  fetchOrder, isPickedUp, setIsPickedUp, }}>
       {children}
     </OrderContext.Provider>
   )
@@ -40,4 +75,4 @@ const OrderProvider = ({children}) => {
 
 export default OrderProvider;
 
-export const useOrderContext = useContext(OrderContext);
+export const useOrderContext = () => useContext(OrderContext);
