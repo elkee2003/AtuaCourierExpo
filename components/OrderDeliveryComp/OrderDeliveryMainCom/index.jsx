@@ -3,7 +3,6 @@ import React, { useState, useRef, useMemo } from 'react'
 import BottomSheet, { BottomSheetScrollView,} from '@gorhom/bottom-sheet';
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import OrderDeliveryMap from '../OrderDeliveryMap'
-import { orders } from '../../assets/data/orders'
 import OrderDetails from  '../OrderDetails'
 import styles from './styles'
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -18,16 +17,13 @@ const ORDER_STATUSES ={
   DELIVERED:'Delivered'
 }
 
-const OrderdeliveryMapCom = ({order}) => {
+const OrderdeliveryMainCom = ({order, user}) => {
   
   const mapRef = useRef(null);
   const bottomSheetRef = useRef(null)
   const snapPoints = useMemo(()=>['15%', '75%', '95%'], [])
 
-  const [avaliableOrders, setAvaliableOrders] = useState(orders)
-  const [location, setLocation] = useState({
-            coords: { latitude: null, longitude: null }
-        });
+  const [location, setLocation] = useState(null);
   const [totalMins, setTotalMins]=useState(0);
   const [totalKm, setTotalKm]=useState(0);
   const [deliveryStatus, setDeliveryStatus]= useState(ORDER_STATUSES.READY_FOR_PICKUP)
@@ -41,11 +37,21 @@ const OrderdeliveryMapCom = ({order}) => {
 
   // Function of the Button on OrderDetails Screen when pressed
   const onButtonPressed = ()=>{
+
+    // if (!location || !location.latitude || !location.longitude) {
+    //   console.error("Location or coordinates not available");
+    //   return;
+    // }
+    
+    console.log("There is location", location.latitude, location.longitude);
+
+    console.log('This is the almighty location:', location)
+  
     if(deliveryStatus === ORDER_STATUSES.READY_FOR_PICKUP){
       bottomSheetRef.current?.collapse()
       mapRef.current.animateToRegion({
-        latitude: location.coords.latitude,
-        longitude:location.coords.longitude,
+        latitude: location?.latitude,
+        longitude:location?.longitude,
         latitudeDelta:0.01,
         longitudeDelta:0.01
       })
@@ -55,8 +61,8 @@ const OrderdeliveryMapCom = ({order}) => {
     if(deliveryStatus === ORDER_STATUSES.ACCEPTED){
       bottomSheetRef.current?.collapse()
       mapRef.current.animateToRegion({
-        latitude: location.coords.latitude,
-        longitude:location.coords.longitude,
+        latitude: location?.latitude,
+        longitude:location?.longitude,
         latitudeDelta:0.01,
         longitudeDelta:0.01
       })
@@ -66,8 +72,8 @@ const OrderdeliveryMapCom = ({order}) => {
     if(deliveryStatus === ORDER_STATUSES.PICKEDUP && isPickedUp){
       bottomSheetRef.current?.collapse()
       mapRef.current.animateToRegion({
-        latitude: location.coords.latitude,
-        longitude:location.coords.longitude,
+        latitude: location?.latitude,
+        longitude:location?.longitude,
         latitudeDelta:0.01,
         longitudeDelta:0.01
       })
@@ -115,6 +121,7 @@ const OrderdeliveryMapCom = ({order}) => {
       setTotalKm={setTotalKm} 
       setTotalMins={setTotalMins} 
       order={order}
+      user={user}
       location={location}
       setLocation={setLocation}
       setIsCourierClose={setIsCourierClose}
@@ -146,11 +153,12 @@ const OrderdeliveryMapCom = ({order}) => {
               </View>
               <Text style={styles.bottomText}>{totalKm.toFixed(1)} km</Text>
             </View>
-            <Text style={styles.bottomTextStat}>{ isPickedUp ? 'Dropping Parcel' : 'Picking Up Parcel of'} {order.User.name.length > 10 ? `${order.User.name.substring(0, 10)}...` : order.User.name}</Text>
+            <Text style={styles.bottomTextStat}>{ isPickedUp ? 'Dropping Parcel' : 'Picking Up Parcel of'} {user?.firstName.length > 10 ? `${user?.firstName.substring(0, 10)}...` : user?.firstName}</Text>
           </View>
 
           <OrderDetails
           order={order}
+          user={user}
           deliveryPickedUp={deliveryPickedUp}
           isButtonDisabled={isButtonDisabled}
           renderButtonTitle={renderButtonTitle}
@@ -163,4 +171,4 @@ const OrderdeliveryMapCom = ({order}) => {
   )
 }
 
-export default OrderdeliveryMapCom;
+export default OrderdeliveryMainCom;

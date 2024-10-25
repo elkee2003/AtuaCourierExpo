@@ -23,10 +23,6 @@ const styles = StyleSheet.create({
         width:35,
         height:35,
     },
-
-    senderDetails:{
-        marginBottom:20
-    },
     rIcon:{
         backgroundColor:'#dae4e2',
         borderRadius:25,
@@ -43,7 +39,16 @@ const styles = StyleSheet.create({
         fontWeight:'bold',
         color:'#1d1b1b',
     },
-
+    divider:{
+        borderTopWidth:1,
+        borderColor:'#333333',
+        marginVertical:20,
+    },
+    receipientCard:{
+        padding:5,
+        borderRadius:10,
+        backgroundColor:'#c0bfbf',
+    },
     recipientHeader:{
         fontSize:30,
         fontWeight:'bold',
@@ -52,11 +57,6 @@ const styles = StyleSheet.create({
         marginBottom:15,
         marginLeft:15,
         color:'#474646',
-    },
-
-    recipientDetails:{
-        borderTopWidth:1,
-        borderColor:'grey',
     },
     acceptBtn:{
         marginVertical:30,

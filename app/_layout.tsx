@@ -1,18 +1,19 @@
-navigator.geolocation = require('@react-native-community/geolocation');
 import { Stack } from "expo-router";
 import ProfileProvider from '@/providers/ProfileProvider';
-import AuthProvider from '@/providers/AuthProvider'
-
+import AuthProvider from '@/providers/AuthProvider';
+import OrderProvider from '@/providers/OrderProvider';
 const RootLayout = () => {
 
   return (
     <AuthProvider>
       <ProfileProvider>
-        <Stack screenOptions={{
-          headerShown:false
-        }}>
-            <Stack.Screen name="(tabs)" />
-        </Stack>
+        {/* <OrderProvider> */}
+          <Stack screenOptions={{
+            headerShown:false
+          }}>
+              <Stack.Screen name="(tabs)" />
+          </Stack>
+        {/* </OrderProvider> */}
       </ProfileProvider>
     </AuthProvider>
   );

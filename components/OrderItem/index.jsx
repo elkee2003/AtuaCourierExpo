@@ -1,20 +1,37 @@
 import { View, Text, Pressable, ScrollView } from 'react-native'
-import React from 'react'
+import React, {useState, useEffect} from 'react'
 import styles from './styles'
 import FontAwesome from 'react-native-vector-icons/FontAwesome'
 import { router } from 'expo-router'
+import {DataStore} from 'aws-amplify/datastore';
+import { User} from '@/src/models';
 
 
 const OrderItem = ({order, onAccept, onRemoveOrder}) => {
 
-    // const goToOrderDelivery = ()=>{
-    //     navigation.navigate("OrderDeliveryMap", {id: order.id})
-    // }
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     const goToTestOrder= () =>{
-        router.push(`/orders/${order.User.id}`)
+        router.push(`/orders/${order.id}`)
     }
 
+    const fetchUser = async ()=>{
+        setLoading(true)
+        try{
+            const singleUser = await DataStore.query(User, order.userID)
+            setUser(singleUser)
+
+        }catch(e){
+            Alert.alert('Error', e.message)
+        }finally{
+            setLoading(false);
+        }
+    }
+
+    useEffect(()=>{
+        fetchUser()
+    }, [])
 
   return (
 
@@ -28,10 +45,10 @@ const OrderItem = ({order, onAccept, onRemoveOrder}) => {
                     <Text style={styles.subHeader}>Name:{" "}</Text>   
                     <Text style={styles.txt}>
                         {
-                            order.User.name.length > 10 ?
-                            `${order.User.name.substring(0,16)}...`
+                            user?.firstName?.length > 10 ?
+                            `${user?.firstName.substring(0,16)}...`
                             :
-                            order.User.name
+                            user?.firstName
                         }
                     </Text> 
                 </ScrollView>
@@ -39,10 +56,10 @@ const OrderItem = ({order, onAccept, onRemoveOrder}) => {
                     <Text style={styles.subHeader}>Address:{" "}</Text>
                     <Text style={styles.txt}>
                         {
-                            order.User.address.length > 10 ?
-                            `${order.User.address.substring(0,16)}...`
+                            order?.parcelOrigin?.length > 10 ?
+                            `${order?.parcelOrigin?.substring(0,16)}...`
                             :
-                            order.User.address
+                            order?.parcelOrigin
                         }
                     </Text> 
                 </ScrollView>
@@ -56,7 +73,7 @@ const OrderItem = ({order, onAccept, onRemoveOrder}) => {
                     name={'thumbs-up'} 
                     size={30} color={'white'}/>    
                 </Pressable>
-                <Pressable  onPress={()=> onRemoveOrder(order.User.id)} style={styles.thumbsDown}>
+                <Pressable  onPress={()=> onRemoveOrder(order?.id)} style={styles.thumbsDown}>
                     <FontAwesome 
                     name={'thumbs-down'} 
                     size={30} color={'white'}/>    

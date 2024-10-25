@@ -12,17 +12,18 @@ const OrderDetails = ({
   renderButtonTitle,
   deliveryPickedUp,
   order,
+  user,
 }) => {
 
   return (
     <View style={styles.container}>
-        <View style={styles.senderDetails}>
+        <View style={styles.receipientCard}>
           <View style={styles.details}>
             <View style={styles.icon}>
               <FontAwesome name={'user'} size={30} color={'#021d46'}/>
             </View>
             <Text style={styles.tDetails}>
-              {order.User.name}
+              {user?.firstName}
             </Text>
           </View>
           <View style={styles.details}>
@@ -30,7 +31,7 @@ const OrderDetails = ({
               <Ionicons name={'call'} size={30} color={'#021d46'}/>
             </View>
             <Text style={styles.tDetails}>
-              {order.User.phoneNumber}
+              {user.phoneNumber}
             </Text>
           </View>
           <View style={styles.details}>
@@ -38,19 +39,21 @@ const OrderDetails = ({
               <Entypo name={'location'} size={30} color={'#021d46'}/>
             </View>
             <Text style={styles.tDetails}>
-              {order.User.address}
+              {order.parcelOrigin}
             </Text>
           </View>
         </View>
 
-        {deliveryPickedUp && <View style={styles.recipientDetails}>
+        <View style={styles.divider}/>
+
+        {deliveryPickedUp && <View style={ styles.receipientCard}>
           <Text style={styles.recipientHeader}>Recipient Details:</Text>
           <View style={styles.details}>
             <View style={styles.rIcon}>
               <FontAwesome name={'user'} size={30} color={'#021d46'}/>
             </View>
             <Text style={styles.tDetails}>
-              {order.Order.recipientName}
+              {order.recipientName}
             </Text>
           </View>
           <View style={styles.details}>
@@ -58,7 +61,7 @@ const OrderDetails = ({
               <Ionicons name={'call'} size={40} color={'#021d46'}/>
             </View>
             <Text style={styles.tDetails}>
-              {order.Order.recipientNumber}
+              {order.recipientNumber}
             </Text>
             
           </View>
@@ -67,7 +70,7 @@ const OrderDetails = ({
               <Entypo name={'location'} size={40} color={'#021d46'}/>
             </View>
             <Text style={styles.tDetails}>
-              {order.Order.recipientAddress}
+              {order.parcelDestination}
             </Text>
           </View>
           <View style={styles.details}>
@@ -75,7 +78,7 @@ const OrderDetails = ({
               <MaterialIcons name={'details'} size={40} color={'#021d46'}/>
             </View>            
               <Text style={styles.tDetails}>
-                {order.Order.detailsOfOrder}
+                {order.orderDetails}
               </Text>
           </View>
         </View>}

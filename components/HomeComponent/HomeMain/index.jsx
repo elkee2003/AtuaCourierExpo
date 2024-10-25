@@ -1,17 +1,15 @@
-import { View, Text, Pressable, Alert} from 'react-native'
-import React, {useState, useRef, useMemo} from 'react'
+import { View, Text, Pressable, Alert, ActivityIndicator} from 'react-native'
+import React, {useState, useEffect, useRef, useMemo} from 'react'
 import BottomSheet, { BottomSheetView, BottomSheetFlatList} from '@gorhom/bottom-sheet';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import styles from './styles';
 import HomeMap from '../HomeMap'
 import BottomContainer from '../BottomContainer'
-import OrderItem from '../../components/OrderItem'
-import {orders} from '../../assets/data/orders'
+import OrderItem from '../../OrderItem';
 import { useAuthContext } from '@/providers/AuthProvider';
 import { useProfileContext } from '@/providers/ProfileProvider';
 import {DataStore} from 'aws-amplify/datastore';
-
-import { Courier } from '@/src/models';
+import { Order, Courier } from '@/src/models';
 
 const HomeComponent = () => {
 
@@ -19,7 +17,8 @@ const HomeComponent = () => {
   const {isOnline, setIsOnline} = useProfileContext();
   // useState Hooks
   const [location, setLocation] = useState(null);
-  const [avaliableOrders, setAvaliableOrders]= useState (orders)
+  const [orders, setOrders]= useState ([])
+  const [loading, setLoading] = useState(true);
 
   const bottomSheetRef = useRef(null)
   const snapPoints = useMemo(()=>['15%', '85%', '100%'], [])
@@ -42,15 +41,35 @@ const HomeComponent = () => {
 
   // Remove Order
   const onRemoveOrder = (id)=>{
-    const filteredOrder = avaliableOrders.filter((order)=> order.id !== id)
-    setAvaliableOrders(filteredOrder)
+    const filteredOrder = orders.filter((order)=> order.id !== id)
+    setOrders(filteredOrder)
+  }
+
+  const fetchOrders = async () =>{
+    setLoading(true)
+    try{
+      const availableOrders = await DataStore.query(Order, (o)=> o.status.eq("READY_FOR_PICKUP"))
+      setOrders(availableOrders)
+    }catch(e){
+      Alert.alert('Error', e.message)
+    }finally{
+      setLoading(false);
+    }
+  }
+
+  useEffect(()=>{
+    fetchOrders();
+  },[])
+
+  if(loading){
+    return <ActivityIndicator size={'large'} style={styles.loading}/>
   }
 
   return (
     <GestureHandlerRootView style={styles.container}>
       
       {/* later check if availableorder prop is necessary */}
-      <HomeMap avaliableOrders={avaliableOrders} location={location} setLocation={setLocation}/>
+      <HomeMap orders={orders} location={location} setLocation={setLocation}/>
 
       {/* Money Balance */}
       <View style={styles.balance}>
@@ -81,10 +100,12 @@ const HomeComponent = () => {
       index={0} 
       topInset={0} // Ensure no inset from the top
       handleIndicatorStyle={{backgroundColor:'#666768', width:80}}>
-        <BottomContainer isOnline={isOnline}/>
+        <BottomContainer isOnline={isOnline} orders={orders}/>
+
+        {/* Different Orders */}
         {isOnline && 
         <BottomSheetFlatList
-        data={avaliableOrders}
+        data={orders}
         renderItem={({item})=><OrderItem 
             order={item} 
             // onAccept={onAccept}
@@ -97,4 +118,4 @@ const HomeComponent = () => {
   )
 }
 
-export default HomeComponent
+export default HomeComponent;
