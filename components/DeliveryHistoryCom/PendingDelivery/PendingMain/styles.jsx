@@ -3,7 +3,7 @@ import { StyleSheet,} from 'react-native'
 const styles = StyleSheet.create({
     container:{
         flex:1,
-        marginTop:40,
+        marginTop:10,
         marginHorizontal:10,
     },
     title:{
@@ -13,4 +13,4 @@ const styles = StyleSheet.create({
     }
 })
 
-export default styles
+export default styles;

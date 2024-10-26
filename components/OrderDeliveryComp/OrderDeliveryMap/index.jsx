@@ -2,28 +2,22 @@ import { View, Text, useWindowDimensions, ActivityIndicator, PermissionsAndroid,
 import React, { useState, useEffect, } from 'react';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import {GOOGLE_API_KEY} from '../../../keys'
-// import Geolocation from '@react-native-community/geolocation';
 import MapViewDirections from 'react-native-maps-directions';
 import * as Location from 'expo-location';
 import Entypo from '@expo/vector-icons/Entypo';
 import styles from './styles';
+import {useOrderContext} from '@/providers/OrderProvider';
+
 
 const OrderDeliveryMap = ({
-        mapRef, 
-        setTotalKm, 
-        setTotalMins,
-        order,
-        user, 
-        setIsCourierClose,
-        isPickedUp,
-        location,
-        setLocation,
-      
+        order,user, 
     }) => {
 
         const { width, height } = useWindowDimensions();
         
         const [errorMsg, setErrorMsg] = useState(null);
+
+        const {mapRef, setTotalKm, setTotalMins, setIsCourierClose, isPickedUp, location, setLocation} = useOrderContext()
 
         useEffect(() => {
             const requestLocationPermission = async () => {
@@ -69,12 +63,6 @@ const OrderDeliveryMap = ({
         if (!location || !location.latitude || !location.longitude) {
             return <ActivityIndicator style={{ marginTop: 90 }} size="large" />;
         }
-
-        // For Order coordinates
-        // const userLocationCoords = {
-        //     latitude: order.User.originLat,
-        //     longitude: order.User.originLng,
-        // };
 
         // Function to Change the Latitude and Longitude of MapDirection
         const getDestination=()=>{

@@ -10,20 +10,6 @@ const styles = StyleSheet.create({
         flex:1,
         backgroundColor:"#c2c0c0"
     },
-    bottomText:{
-        fontSize:24,
-        fontWeight:'bold',
-        color:'#111111'
-    },
-    bottomTextStat:{
-        fontSize:22,
-        color:'#c01c10'
-    },
-    bottomTextOff:{
-        fontSize:24,
-        fontWeight:'bold',
-        color:'#f80b0b'
-    },
     bckBtn:{
         position:'absolute',
         top:25,
@@ -46,10 +32,6 @@ const styles = StyleSheet.create({
         textAlign:'center',
         fontWeight:'bold',
     },
-    pickUpInfo:{
-        flexDirection:'row',
-        alignItems:"center",
-    },
     isFinished:{
         flexDirection:'row',
         alignItems:"center",
@@ -65,25 +47,17 @@ const styles = StyleSheet.create({
         fontWeight:'bold',
         color:'white',
     },
-    userBackground:{
-        backgroundColor:'#07e5f5',
-        borderRadius:70,
-        width:30,
-        height:30,
-        alignItems:'center',
-        justifyContent:'center',
-        marginHorizontal:10,
-    },
-    userBackgroundDrop:{
-        backgroundColor:'#09ff00',
-        borderRadius:70,
-        width:30,
-        height:30,
-        alignItems:'center',
-        justifyContent:'center',
-        marginHorizontal:10,
-    },
+
+    // userBackgroundDrop:{
+    //     backgroundColor:'#09ff00',
+    //     borderRadius:70,
+    //     width:30,
+    //     height:30,
+    //     alignItems:'center',
+    //     justifyContent:'center',
+    //     marginHorizontal:10,
+    // },
    
 })
 
-export default styles 
+export default styles;

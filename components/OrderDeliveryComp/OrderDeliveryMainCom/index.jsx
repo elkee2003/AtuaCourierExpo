@@ -1,27 +1,21 @@
 import { View, Text, Pressable} from 'react-native'
-import React, { useState, useRef, useMemo } from 'react'
+import React, { useRef, useMemo } from 'react'
 import BottomSheet, { BottomSheetScrollView,} from '@gorhom/bottom-sheet';
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import OrderDeliveryMap from '../OrderDeliveryMap'
-import OrderDetails from  '../OrderDetails'
-import styles from './styles'
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import OrderDeliveryMap from '../OrderDeliveryMap';
+import BottomSheetHeader from '../BottomSheetOrderHeader';
+import OrderDetails from  '../OrderDetails';
+import styles from './styles';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import {useOrderContext} from '@/providers/OrderProvider'
+import {useOrderContext} from '@/providers/OrderProvider';
 
 const OrderdeliveryMainCom = ({order, user}) => {
   
-  const mapRef = useRef(null);
   const bottomSheetRef = useRef(null)
   const snapPoints = useMemo(()=>['15%', '75%', '95%'], [])
 
-  const {acceptOrder, isPickedUp, setIsPickedUp, pickUpOrder, completeOrder} = useOrderContext()
-
-  const [location, setLocation] = useState(null);
-  const [totalMins, setTotalMins]=useState(0);
-  const [totalKm, setTotalKm]=useState(0);
-  const [isCourierclose, setIsCourierClose]= useState(false)
+  const {mapRef, location,isCourierclose, isPickedUp, setIsPickedUp, acceptOrder, pickUpOrder, completeOrder} = useOrderContext()
 
 
   // Function of the Button on OrderDetails Screen when pressed
@@ -35,7 +29,6 @@ const OrderdeliveryMainCom = ({order, user}) => {
         latitudeDelta:0.01,
         longitudeDelta:0.01
       })
-      // setDeliveryStatus(ORDER_STATUSES.ACCEPTED);
       acceptOrder();
     }
 
@@ -60,8 +53,7 @@ const OrderdeliveryMainCom = ({order, user}) => {
         latitudeDelta:0.01,
         longitudeDelta:0.01
       })
-      // setDeliveryStatus(ORDER_STATUSES.DELIVERED)
-      await completeOrder ();
+      await completeOrder();
       router.push('/home')
     }
   }
@@ -106,16 +98,8 @@ const OrderdeliveryMainCom = ({order, user}) => {
     <GestureHandlerRootView style={styles.container}>
 
       <OrderDeliveryMap 
-      mapRef={mapRef}
-      setTotalKm={setTotalKm} 
-      setTotalMins={setTotalMins} 
-      order={order}
-      user={user}
-      location={location}
-      setLocation={setLocation}
-      setIsCourierClose={setIsCourierClose}
-      isPickedUp={isPickedUp}
-      
+        order={order}
+        user={user}
       />
 
       {/* Back Button */}
@@ -134,16 +118,7 @@ const OrderdeliveryMainCom = ({order, user}) => {
       handleIndicatorStyle={{backgroundColor:'#666768', width:80}}>
         <BottomSheetScrollView>
 
-          <View style={{alignItems:'center'}}>
-            <View style={styles.pickUpInfo}>
-              <Text style={styles.bottomText}>{totalMins.toFixed(0)} {""}min</Text>
-              <View style={styles.userBackground}>
-                <FontAwesome name={'user'} color={'white'} size={20}/>
-              </View>
-              <Text style={styles.bottomText}>{totalKm.toFixed(1)} km</Text>
-            </View>
-            <Text style={styles.bottomTextStat}>{ isPickedUp ? 'Dropping Parcel' : 'Picking Up Parcel of'} {user?.firstName.length > 10 ? `${user?.firstName.substring(0, 10)}...` : user?.firstName}</Text>
-          </View>
+          <BottomSheetHeader/>
 
           <OrderDetails
           order={order}

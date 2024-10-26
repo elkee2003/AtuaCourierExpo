@@ -16,6 +16,7 @@ const OrderItem = ({order, onAccept, onRemoveOrder}) => {
         router.push(`/orders/${order.id}`)
     }
 
+    // This fetchUser is incase I want to display something relating to a user
     const fetchUser = async ()=>{
         setLoading(true)
         try{
@@ -42,14 +43,9 @@ const OrderItem = ({order, onAccept, onRemoveOrder}) => {
                     Delivery Details:
                 </Text>
                 <ScrollView  style={styles.details}>
-                    <Text style={styles.subHeader}>Name:{" "}</Text>   
+                    <Text style={styles.subHeader}>Transportation Type:{" "}</Text>   
                     <Text style={styles.txt}>
-                        {
-                            user?.firstName?.length > 10 ?
-                            `${user?.firstName.substring(0,16)}...`
-                            :
-                            user?.firstName
-                        }
+                        {order.transportationType}
                     </Text> 
                 </ScrollView>
                 <ScrollView style={styles.details}>

@@ -2,9 +2,9 @@ import { View, Text } from 'react-native'
 import React, { useEffect } from 'react'
 import { router } from 'expo-router'
 import { useAuthContext } from '@/providers/AuthProvider'
-import OrderHistoryCom from '../../../components/OrderHistoryCom'
+import PendingMain from '../../../components/DeliveryHistoryCom/PendingDelivery/PendingMain'
 
-const Orders = () => {
+const PendingOrdersScreen = () => {
 
   const {dbUser} = useAuthContext()
 
@@ -24,9 +24,9 @@ const Orders = () => {
 
   return (
     <View style={{flex:1}}>
-      <OrderHistoryCom/>
+      <PendingMain/>
     </View>
   )
 }
 
-export default Orders;
+export default PendingOrdersScreen;

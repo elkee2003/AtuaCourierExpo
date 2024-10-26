@@ -5,7 +5,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import styles from './styles';
 import HomeMap from '../HomeMap'
 import BottomContainer from '../BottomContainer'
-import OrderItem from '../../OrderItem';
+import OrderItem from '../OrderItem';
 import { useAuthContext } from '@/providers/AuthProvider';
 import { useProfileContext } from '@/providers/ProfileProvider';
 import {DataStore} from 'aws-amplify/datastore';

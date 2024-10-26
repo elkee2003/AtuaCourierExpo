@@ -26,9 +26,9 @@ const TabsLayout = () => {
               }}
             />
             <Tabs.Screen
-              name="ordersHistory"
+              name="deliveryhistory"
               options={{
-                tabBarLabel: 'Order History',
+                tabBarLabel: 'Delivery History',
                 tabBarIcon: ({ color }) => <FontAwesome5 name="clipboard-list" size={24} color={color} />
               }}
             />

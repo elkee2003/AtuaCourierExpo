@@ -1,5 +1,5 @@
 import { View, Text } from 'react-native'
-import React, {useState, useEffect, useContext, createContext} from 'react';
+import React, {useRef, useState, useEffect, useContext, createContext,} from 'react';
 import { DataStore } from 'aws-amplify/datastore';
 import { Courier, Order, User } from '@/src/models';
 import { useAuthContext } from './AuthProvider';
@@ -13,6 +13,10 @@ const OrderProvider = ({children}) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isPickedUp, setIsPickedUp]= useState(false)
+  const mapRef = useRef(null);
+  const [location, setLocation] = useState(null);
+  const [totalMins, setTotalMins]=useState(0);
+  const [totalKm, setTotalKm]=useState(0);
   const [isCourierclose, setIsCourierClose]= useState(false)
 
     // Fetch Order and User
@@ -67,7 +71,7 @@ const OrderProvider = ({children}) => {
     }
 
   return (
-    <OrderContext.Provider value={{acceptOrder, pickUpOrder, completeOrder, order, user, loading,  fetchOrder, isPickedUp, setIsPickedUp, }}>
+    <OrderContext.Provider value={{acceptOrder, pickUpOrder, completeOrder, order, user, loading,  fetchOrder, isPickedUp, setIsPickedUp, mapRef, location, setLocation, totalMins, setTotalMins, totalKm, setTotalKm, isCourierclose, setIsCourierClose }}>
       {children}
     </OrderContext.Provider>
   )
