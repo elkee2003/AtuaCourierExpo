@@ -24,18 +24,25 @@ const HomeComponent = () => {
   const snapPoints = useMemo(()=>['15%', '85%', '100%'], [])
 
   // Refferenced functions
-  const onGoPress = () => {
-    // try{
-    //   const onlineStatus = await DataStore.save(new Courier({
-    //     isOnline
-    //   }))
-    // }catch(e){
-    //   Alert.alert('Error', e.message)
-    // }
-    if(!location){
-      setIsOnline(false)
-    }else{
-      setIsOnline(!isOnline)
+  const onGoPress = async () => {
+    if (!location) {
+      setIsOnline(false);
+      return;
+    }
+  
+    try {
+      // Toggle the isOnline state in local state
+      const newStatus = !isOnline;
+      setIsOnline(newStatus);
+  
+      // Update the isOnline field in DataStore
+      await DataStore.save(
+        Courier.copyOf(dbUser, updated => {
+          updated.isOnline = newStatus;
+        })
+      );
+    } catch (e) {
+      Alert.alert('Error', e.message);
     }
   }
 
@@ -59,6 +66,14 @@ const HomeComponent = () => {
 
   useEffect(()=>{
     fetchOrders();
+
+    const subscription = DataStore.observe(Order).subscribe(({opType})=>{
+      if(opType === "UPDATE"){
+        fetchOrders();
+      }
+    });
+
+    return () => subscription.unsubscribe();
   },[])
 
   if(loading){
@@ -72,13 +87,15 @@ const HomeComponent = () => {
       <HomeMap orders={orders} location={location} setLocation={setLocation}/>
 
       {/* Money Balance */}
-      <View style={styles.balance}>
+      {/* Will show when I find out how to display the price of courier */}
+      
+      {/* <View style={styles.balance}>
         <Text style={styles.balanceText}>
           <Text style={{color:'green'}}>₦</Text>
           {" "}
           0.00
         </Text>
-      </View>
+      </View> */}
 
 
       {/* Go/End button */}

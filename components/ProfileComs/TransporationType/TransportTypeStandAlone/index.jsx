@@ -161,7 +161,7 @@ const StandaloneTtypeCom = () => {
             style={styles.input}
             value={model}
             onChangeText={setModel}
-            placeholder='Vehicle model eg: Audi, Toyota, etc'
+            placeholder='Eg: Moving Van, Pickup Van, Cooling Van'
           />
           <TextInput
             style={styles.input}

@@ -191,7 +191,7 @@ export const createOrder = /* GraphQL */ `
       transportationType
       status
       price
-      userID
+      courierFee
       Courier {
         id
         sub
@@ -233,6 +233,7 @@ export const createOrder = /* GraphQL */ `
         _lastChangedAt
         __typename
       }
+      userID
       createdAt
       updatedAt
       _version
@@ -262,7 +263,7 @@ export const updateOrder = /* GraphQL */ `
       transportationType
       status
       price
-      userID
+      courierFee
       Courier {
         id
         sub
@@ -304,6 +305,7 @@ export const updateOrder = /* GraphQL */ `
         _lastChangedAt
         __typename
       }
+      userID
       createdAt
       updatedAt
       _version
@@ -333,7 +335,7 @@ export const deleteOrder = /* GraphQL */ `
       transportationType
       status
       price
-      userID
+      courierFee
       Courier {
         id
         sub
@@ -375,6 +377,7 @@ export const deleteOrder = /* GraphQL */ `
         _lastChangedAt
         __typename
       }
+      userID
       createdAt
       updatedAt
       _version

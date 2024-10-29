@@ -6,7 +6,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import styles from './styles'
 import { router } from 'expo-router';
 import { DataStore } from 'aws-amplify/datastore';
-import {Courier} from '../../../src/models'
+import {Courier} from '../../../src/models';
 
 const ReviewGuarantorCom = () => {
     const {

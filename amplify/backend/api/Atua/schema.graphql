@@ -48,8 +48,9 @@ type Order @model @auth(rules: [{allow: public}]) {
   transportationType: String
   status: OrderStatus
   price: Float
-  userID: ID! @index(name: "byUser")
+  courierFee: Float
   Courier: Courier @hasOne
+  userID: ID! @index(name: "byUser")
 }
 
 type Courier @model @auth(rules: [{allow: public}]) {

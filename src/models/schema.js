@@ -365,11 +365,11 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
-                "userID": {
-                    "name": "userID",
+                "courierFee": {
+                    "name": "courierFee",
                     "isArray": false,
-                    "type": "ID",
-                    "isRequired": true,
+                    "type": "Float",
+                    "isRequired": false,
                     "attributes": []
                 },
                 "Courier": {
@@ -389,6 +389,13 @@ export const schema = {
                             "orderCourierId"
                         ]
                     }
+                },
+                "userID": {
+                    "name": "userID",
+                    "isArray": false,
+                    "type": "ID",
+                    "isRequired": true,
+                    "attributes": []
                 },
                 "createdAt": {
                     "name": "createdAt",
@@ -877,5 +884,5 @@ export const schema = {
     },
     "nonModels": {},
     "codegenVersion": "3.4.4",
-    "version": "eca19d754883ae2d7ffc9fc814a278b8"
+    "version": "3434900c7e63d7cbb9ceec44be23b816"
 };

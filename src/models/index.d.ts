@@ -123,8 +123,9 @@ type EagerOrder = {
   readonly transportationType?: string | null;
   readonly status?: OrderStatus | keyof typeof OrderStatus | null;
   readonly price?: number | null;
-  readonly userID: string;
+  readonly courierFee?: number | null;
   readonly Courier?: Courier | null;
+  readonly userID: string;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
   readonly orderCourierId?: string | null;
@@ -148,8 +149,9 @@ type LazyOrder = {
   readonly transportationType?: string | null;
   readonly status?: OrderStatus | keyof typeof OrderStatus | null;
   readonly price?: number | null;
-  readonly userID: string;
+  readonly courierFee?: number | null;
   readonly Courier: AsyncItem<Courier | undefined>;
+  readonly userID: string;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
   readonly orderCourierId?: string | null;

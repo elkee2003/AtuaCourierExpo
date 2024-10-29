@@ -7,6 +7,9 @@ import * as Location from 'expo-location';
 import Entypo from '@expo/vector-icons/Entypo';
 import styles from './styles';
 import {useOrderContext} from '@/providers/OrderProvider';
+import {useAuthContext} from '@/providers/AuthProvider';
+import { DataStore } from 'aws-amplify/datastore';
+import {Courier} from '../../../src/models';
 
 
 const OrderDeliveryMap = ({
@@ -17,29 +20,56 @@ const OrderDeliveryMap = ({
         
         const [errorMsg, setErrorMsg] = useState(null);
 
-        const {mapRef, setTotalKm, setTotalMins, setIsCourierClose, isPickedUp, location, setLocation} = useOrderContext()
+        const {mapRef, setTotalKm, setTotalMins, setIsCourierClose, isPickedUp, location, setLocation} = useOrderContext();
+
+        const {dbUser} = useAuthContext()
+
+        // useEffect for updating Courier Location in the database
+        useEffect(()=>{
+            if(!location){
+                return;
+            }
+
+            DataStore.save(Courier.copyOf(dbUser, (updated)=>{
+                updated.lat = location.latitude,
+                updated.lng = location.longitude
+                // updated.heading = location.heading
+            }))
+        },[location])
 
         useEffect(() => {
+            let locationSubscription;
+        
             const requestLocationPermission = async () => {
                 try {
-                    // Request location permissions from expo-location
+                    // Request location permissions
                     let { status } = await Location.requestForegroundPermissionsAsync();
                     if (status !== 'granted') {
-                        setErrorMsg('Location permission denied');
+                        setErrorMsg('Permission to access location was denied');
                         return;
                     }
-    
-                    // Watch the user's location and update it continuously
-                    Location.watchPositionAsync(
+        
+                    // Get the current location once
+                    let initialLocation = await Location.getCurrentPositionAsync({});
+                    setLocation({
+                        latitude: initialLocation.coords.latitude,
+                        longitude: initialLocation.coords.longitude,
+                    });
+        
+                    // Watch location with updates every 20 seconds or every 500 meters
+                    locationSubscription = await Location.watchPositionAsync(
                         {
                             accuracy: Location.Accuracy.High,
-                            timeInterval: 20000, // Update location every 20 seconds
-                            distanceInterval: 500, // Update location every 500 meters
+                            timeInterval: 20000, // 20 seconds
+                            distanceInterval: 200, // 500 meters
                         },
                         (position) => {
                             const { latitude, longitude } = position.coords;
-                            setLocation({ latitude, longitude });
+                            setLocation({ latitude, longitude,
+                            // heading: heading || 0,
+                            });
                             console.log('Updated Location:', position);
+                            // console.log(location.heading)
                         }
                     );
                 } catch (error) {
@@ -47,16 +77,14 @@ const OrderDeliveryMap = ({
                     setErrorMsg('Failed to request location permission');
                 }
             };
-    
+        
             requestLocationPermission();
-    
-            // Cleanup when the component unmounts
+        
+            // Cleanup the watcher when the component unmounts
             return () => {
-                Location.hasServicesEnabledAsync().then((enabled) => {
-                    if (enabled) {
-                        Location.stopLocationUpdatesAsync();
-                    }
-                });
+                if (locationSubscription) {
+                    locationSubscription.remove();
+                }
             };
         }, [setLocation]);
 
@@ -146,3 +174,44 @@ const OrderDeliveryMap = ({
 }
 
 export default OrderDeliveryMap;
+
+    // useEffect(() => {
+        //     const requestLocationPermission = async () => {
+        //         try {
+        //             // Request location permissions from expo-location
+        //             let { status } = await Location.requestForegroundPermissionsAsync();
+        //             if (status !== 'granted') {
+        //                 setErrorMsg('Location permission denied');
+        //                 return;
+        //             }
+    
+        //             // Watch the user's location and update it continuously
+        //             Location.watchPositionAsync(
+        //                 {
+        //                     accuracy: Location.Accuracy.High,
+        //                     timeInterval: 20000, // Update location every 20 seconds
+        //                     distanceInterval: 500, // Update location every 500 meters
+        //                 },
+        //                 (position) => {
+        //                     const { latitude, longitude } = position.coords;
+        //                     setLocation({ latitude, longitude });
+        //                     console.log('Updated Location:', position);
+        //                 }
+        //             );
+        //         } catch (error) {
+        //             console.error('Location permission error:', error);
+        //             setErrorMsg('Failed to request location permission');
+        //         }
+        //     };
+    
+        //     requestLocationPermission();
+    
+        //     // Cleanup when the component unmounts
+        //     return () => {
+        //         Location.hasServicesEnabledAsync().then((enabled) => {
+        //             if (enabled) {
+        //                 Location.stopLocationUpdatesAsync();
+        //             }
+        //         });
+        //     };
+    // }, [setLocation]);

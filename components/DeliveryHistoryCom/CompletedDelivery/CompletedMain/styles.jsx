@@ -6,10 +6,26 @@ const styles = StyleSheet.create({
         marginTop:10,
         marginHorizontal:10,
     },
+    loading:{
+        flex:1,
+        color:'#3cff00',
+        justifyContent:'center',
+        alignItems:'center',
+    },
     title:{
         fontSize:30,
         fontWeight:'bold',
         textAlign:'center',
+    },
+    noCompletedOrdersCon:{
+        flex:1, 
+        justifyContent:'center', 
+        alignItems:'center',
+    },
+    noCompletedOrders:{
+        fontSize:30, 
+        fontWeight:'bold', 
+        color:'#afadad',
     }
 })
 

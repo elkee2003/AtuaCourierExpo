@@ -121,7 +121,7 @@ const TransportationTypeCom = () => {
           style={styles.input}
           value={vehicleType}
           onChangeText={setVehicleType}
-          placeholder='Vehicle type eg: Car, Bike, Cooling Van etc'
+          placeholder='Eg: Moving Van, Pickup Van, Cooling Van'
           />
           <TextInput
             style={styles.input}

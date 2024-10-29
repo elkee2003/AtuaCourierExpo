@@ -12,7 +12,7 @@ const OrderItem = ({order, onAccept, onRemoveOrder}) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    const goToTestOrder= () =>{
+    const goToOrderDelivery= () =>{
         router.push(`/orders/${order.id}`)
     }
 
@@ -37,7 +37,7 @@ const OrderItem = ({order, onAccept, onRemoveOrder}) => {
   return (
 
         <View>
-            <Pressable style={styles.orderContainer} onPress={goToTestOrder}>
+            <Pressable style={styles.orderContainer} onPress={goToOrderDelivery}>
             <View style={styles.detailsContainer}>
                 <Text style={styles.header}>
                     Delivery Details:

@@ -29,7 +29,7 @@ const AuthProvider = ({children}) => {
         try{
           const dbusercurrent = await DataStore.query(Courier, (courier)=>courier.sub.eq(sub))
         //   DataStore.delete(Courier, Predicates.ALL)
-        //   DataStore.clear()
+          // DataStore.clear()
           
           setDbUser(dbusercurrent[0])
         }catch(error){
@@ -37,11 +37,30 @@ const AuthProvider = ({children}) => {
         }
     }
 
+    // Set up a subscription to listen to changes on the current user's Courier instance
+    useEffect(() => {
+      if (!dbUser) return;
+  
+      const subscription = DataStore.observe(Courier, dbUser.id).subscribe(
+        ({ element, opType }) => {
+          if (opType === 'UPDATE') {
+            setDbUser(element);
+          }
+        }
+      );
+  
+      return () => subscription.unsubscribe();
+    }, [dbUser]);
+
     useEffect(()=>{
         currentAuthenticatedUser()
     },[sub])
 
     useEffect(()=>{
+        if(!sub){
+          return;
+        }
+
         dbCurrentUser()
     }, [sub])
 

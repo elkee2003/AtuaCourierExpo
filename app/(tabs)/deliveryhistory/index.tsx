@@ -2,9 +2,9 @@ import { View, Text } from 'react-native'
 import React, { useEffect } from 'react'
 import { router } from 'expo-router'
 import { useAuthContext } from '@/providers/AuthProvider'
-import CompletedMain from '../../../components/DeliveryHistoryCom/CompletedDelivery/CompletedMain'
+import PendingMain from '../../../components/DeliveryHistoryCom/PendingDelivery/PendingMain';
 
-const CompletedOrdersScreen = () => {
+const PendingOrdersScreen = () => {
 
   const {dbUser} = useAuthContext()
 
@@ -24,9 +24,9 @@ const CompletedOrdersScreen = () => {
 
   return (
     <View style={{flex:1}}>
-      <CompletedMain/>
+      <PendingMain/>
     </View>
   )
 }
 
-export default CompletedOrdersScreen;
+export default PendingOrdersScreen;

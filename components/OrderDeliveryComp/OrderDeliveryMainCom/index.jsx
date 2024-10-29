@@ -10,6 +10,13 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import {useOrderContext} from '@/providers/OrderProvider';
 
+// Variable to show button name in OrderDetails Screen
+const STATUS_TO_TITLE = {
+  READY_FOR_PICKUP: 'Accept Order',
+  ACCEPTED: 'Picked Up Order',
+  PICKEDUP: 'Delivered!'
+}
+
 const OrderdeliveryMainCom = ({order, user}) => {
   
   const bottomSheetRef = useRef(null)
@@ -29,7 +36,7 @@ const OrderdeliveryMainCom = ({order, user}) => {
         latitudeDelta:0.01,
         longitudeDelta:0.01
       })
-      acceptOrder();
+      await acceptOrder();
     }
 
     if(order?.status === 'ACCEPTED'){
@@ -41,8 +48,8 @@ const OrderdeliveryMainCom = ({order, user}) => {
         longitudeDelta:0.01
       })
       // setDeliveryStatus(ORDER_STATUSES.PICKEDUP)
-      pickUpOrder();
-      setIsPickedUp(true)
+      await pickUpOrder();
+      setIsPickedUp(true);
     }
 
     if(order?.status === 'PICKEDUP' && isPickedUp){
@@ -54,23 +61,7 @@ const OrderdeliveryMainCom = ({order, user}) => {
         longitudeDelta:0.01
       })
       await completeOrder();
-      router.push('/home')
-    }
-  }
-
-  // Function for Rendering button name in OrderDetails Screen
-  const renderButtonTitle = ()=>{
-
-    if (order?.status === 'READY_FOR_PICKUP'){
-      return 'Accept Order'
-    }
-
-    if (order?.status === 'ACCEPTED'){
-      return 'Picked Up Order'
-    }
-      
-    if (order?.status === 'PICKEDUP'){
-      return 'Delivered!'
+      router.push('/home');
     }
   }
 
@@ -125,7 +116,8 @@ const OrderdeliveryMainCom = ({order, user}) => {
           user={user}
           deliveryPickedUp={deliveryPickedUp}
           isButtonDisabled={isButtonDisabled}
-          renderButtonTitle={renderButtonTitle}
+          statusTitle = {STATUS_TO_TITLE}
+          // renderButtonTitle={renderButtonTitle}
           onButtonPressed={onButtonPressed}
           />
 

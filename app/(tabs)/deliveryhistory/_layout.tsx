@@ -14,7 +14,7 @@ const OrdersLayout = () => {
     <MaterialTobTabs screenOptions={{
       tabBarLabelStyle:{fontWeight:'bold', textTransform:'capitalize'},
       tabBarStyle: {
-        marginTop: 20,
+        marginTop: 40,
         paddingTop: 10,
       },
       // tabBarIndicatorStyle: {
@@ -22,8 +22,8 @@ const OrdersLayout = () => {
       //   borderRadius: 1.5,
       // },
     }}>
-      <MaterialTobTabs.Screen name='index' options={{title:'completed'}}/>
-      <MaterialTobTabs.Screen name='pendingorders' options={{title:'pending'}}/>
+      <MaterialTobTabs.Screen name='index' options={{title:'pending'}}/>
+      <MaterialTobTabs.Screen name='completedorders' options={{title:'completed'}}/>
     </MaterialTobTabs>
   )
 }

@@ -10,14 +10,12 @@ import {useOrderContext} from '@/providers/OrderProvider'
 const OrderDetails = ({
   onButtonPressed, 
   isButtonDisabled,
-  renderButtonTitle,
+  statusTitle,
+  // renderButtonTitle,
   deliveryPickedUp,
   order,
   user,
 }) => {
-
-  console.log(order.status)
-  console.log('hi',deliveryPickedUp)
 
   return (
     <View style={styles.container}>
@@ -91,7 +89,7 @@ const OrderDetails = ({
       onPress={onButtonPressed} 
       disabled={isButtonDisabled()}
       style={{...styles.acceptBtn, backgroundColor: isButtonDisabled() ? '#bbbbbb' : '#6bff08'}}>
-        <Text style={{...styles.tBtn, color: isButtonDisabled() ? '#727272' : '#222222'}}>{renderButtonTitle()}</Text>
+        <Text style={{...styles.tBtn, color: isButtonDisabled() ? '#727272' : '#222222'}}>{statusTitle[order.status]}</Text>
        </TouchableOpacity>
     </View>
   )

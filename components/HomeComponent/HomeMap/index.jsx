@@ -14,45 +14,25 @@ const Map = ({location, setLocation, orders}) => {
   const [errorMsg, setErrorMsg] = useState(null);
 
   useEffect(() => {
-    const requestLocationPermission = async () => {
+    (async () => {
       try {
-        // Request location permissions
         let { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
-          setErrorMsg('Location permission denied');
+          setErrorMsg('Permission to access location was denied');
           return;
         }
-
-        // Watch the user's location and update it continuously
-        Location.watchPositionAsync(
-          {
-            accuracy: Location.Accuracy.High,
-            timeInterval: 20000, // Update location every 20 seconds
-            distanceInterval: 300, // Update location every 300 meters
-          },
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            setLocation({ latitude, longitude });
-            console.log('Updated Location:', position);
-          }
-        );
+  
+        let location = await Location.getCurrentPositionAsync({});
+        setLocation({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
       } catch (error) {
-        console.error('Location permission error:', error);
-        setErrorMsg('Failed to request location permission');
+        console.error('Error fetching location:', error);
+        setErrorMsg('Failed to fetch location');
       }
-    };
-
-    requestLocationPermission();
-
-    // Cleanup when the component unmounts
-    return () => {
-      Location.hasServicesEnabledAsync().then((enabled) => {
-        if (enabled) {
-          Location.stopLocationUpdatesAsync();
-        }
-      });
-    };
-  }, [setLocation]);
+    })();
+  }, []);
 
   if (!location || !location.latitude || !location.longitude) {
     return <ActivityIndicator style={{ marginTop: 90 }} size="large" />;

@@ -1,10 +1,10 @@
-import { View, Text, Alert, FlatList } from 'react-native'
+import { View, Text, Alert, FlatList, ActivityIndicator } from 'react-native'
 import React, {useState, useEffect} from 'react';
 import styles from './styles';
 import { DataStore } from 'aws-amplify/datastore';
 import {  Order,} from '@/src/models';
 import { useAuthContext } from '@/providers/AuthProvider';
-// import { useProfileContext } from '@/providers/ProfileProvider';
+import PendingSingle from '../PendingSingle';
 
 const PendingDeliveryMain = () => {
 
@@ -20,9 +20,12 @@ const PendingDeliveryMain = () => {
     setLoading(true);
     try{
       const fetchedOrders = await DataStore.query(Order,(o)=> o.orderCourierId.eq(dbUser.id));
-      const sortedOrders = fetchedOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      setOrders(sortedOrders)
-      console.log('This is:',fetchedOrders)
+
+      const filteredOrders = fetchedOrders.filter((order)=> order.status === 'ACCEPTED' || order.status === 'PICKEDUP').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      // const sortedOrders = fetchedOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      setOrders(filteredOrders)
     }catch(e){
       Alert.alert('Error', e.message)
     }finally{
@@ -32,13 +35,37 @@ const PendingDeliveryMain = () => {
 
   useEffect(()=>{
     fetchOrders();
+
+    const subscription = DataStore.observe(Order).subscribe(({opType})=>{
+      if(opType === 'INSERT' || opType === 'UPDATE' || opType === 'DELETE'){
+        fetchOrders();
+      }
+    });
+
+    return () => subscription.unsubscribe();
   },[])
+
+  if(loading){
+    return <ActivityIndicator size={'large'} style={styles.loading}/>
+  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Pending Delivery</Text>
-      <Text>hel</Text>
-      <Text>Amount: ₦1500 (pending)</Text>
+      {orders.length === 0 ? (
+        <View style={styles.noPendingOrdersCon}>
+          <Text style={styles.noPendingOrders}>
+            No Pending Orders
+          </Text>
+        </View>
+      ) :(
+        <FlatList
+          data={orders}
+          showsVerticalScrollIndicator={false}
+          keyExtractor = {(item, index)=>item.id.toString()}
+          renderItem={({item})=><PendingSingle item={item}/>}
+        />
+      )}
     </View>
   )
 }
