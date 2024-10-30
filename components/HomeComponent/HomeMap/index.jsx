@@ -1,17 +1,33 @@
-import { View,  useWindowDimensions, ActivityIndicator, PermissionsAndroid, Platform, } from 'react-native'
+import { View,  useWindowDimensions, ActivityIndicator, Alert } from 'react-native'
 import React, {useState, useEffect} from 'react'
 import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
-import Geolocation from '@react-native-community/geolocation';
-// import Geolocation from 'react-native-geolocation-service';
 import * as Location from 'expo-location';
-import Entypo from '@expo/vector-icons/Entypo';
-import styles from './styles'
+import Feather from '@expo/vector-icons/Feather';
+import styles from './styles';
+import { DataStore } from 'aws-amplify/datastore';
+import {Order} from '@/src/models';
 
-const Map = ({location, setLocation, orders}) => {
+const Map = ({location, setLocation}) => {
 
-  const {width, height} = useWindowDimensions()
+  const {width, height} = useWindowDimensions();
   
   const [errorMsg, setErrorMsg] = useState(null);
+  
+  const [orders, setOrders] = useState([])
+
+
+  const fetchOrders = async () =>{
+    try{
+      const availableOrders = await DataStore.query(Order)
+      setOrders(availableOrders);
+    }catch(e){
+      Alert.alert('Error', e.message)
+    }
+  }
+
+  useEffect(()=>{
+    fetchOrders();
+  },[])
 
   useEffect(() => {
     (async () => {
@@ -51,9 +67,17 @@ const Map = ({location, setLocation, orders}) => {
       }}
       showsUserLocation
       followsUserLocation
-      />
+      >
+        {orders.map((order)=>{
+          return <Marker 
+                  key={order.id}
+                  coordinate={{latitude: order.parcelOriginLat, longitude:order.parcelOriginLng}}>
+                    <Feather name="box" size={30} color="black" />
+                </Marker>
+        })}
+      </MapView>
     </View>
   )
 }
 
-export default Map
+export default Map;

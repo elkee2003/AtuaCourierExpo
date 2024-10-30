@@ -2,16 +2,14 @@ import { View, Text, Alert, FlatList, ActivityIndicator } from 'react-native'
 import React, {useState, useEffect} from 'react';
 import styles from './styles';
 import { DataStore } from 'aws-amplify/datastore';
-import {  Order,} from '@/src/models';
+import {Order,} from '@/src/models';
 import { useAuthContext } from '@/providers/AuthProvider';
 import PendingSingle from '../PendingSingle';
 
 const PendingDeliveryMain = () => {
 
   const {dbUser} = useAuthContext()
-  // console.log('sub from ordrer:',sub)
-  // const {firstName} = useProfileContext()
-
+  
   const [orders, setOrders] = useState(null);
   const [courier, setCourier] = useState(null);
   const [loading, setLoading] = useState(true)

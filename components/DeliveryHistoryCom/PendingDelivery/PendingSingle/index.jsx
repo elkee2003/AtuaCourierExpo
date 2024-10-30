@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import React from 'react';
+import * as Clipboard from 'expo-clipboard';
 import styles from './styles'
 import { router } from 'expo-router';
 
@@ -8,6 +9,13 @@ const PendingDeliverySingle = ({item}) => {
   const deductedFixedFee = item.price - 300;
   const formattedCourierPrice= (deductedFixedFee * 0.85).toFixed(2);
   const courierPrice = Number(formattedCourierPrice).toLocaleString();
+
+  const handleCopyRecipientNumber = async () => {
+    if (user.phoneNumber) {
+      await Clipboard.setStringAsync(user.phoneNumber);
+      Alert.alert('Phone Number Copied', 'You can paste it into the dialer to make a call.');
+    }
+  };
 
   const goToOrderDelivery= () =>{
     router.push(`/orders/${item.id}`)
@@ -39,7 +47,9 @@ const PendingDeliverySingle = ({item}) => {
       <Text style={styles.details}>{item.transportationType}</Text>
 
       <Text style={styles.subHeader}>Recipient Number:</Text>
-      <Text style={styles.details}>{item.recipientNumber}</Text>
+      <TouchableOpacity onPress={handleCopyRecipientNumber}>
+        <Text style={styles.details}>{item.recipientNumber}</Text>
+      </TouchableOpacity>
 
       <Text style={styles.subHeader}>Order Details:</Text>
       <Text style={styles.details}>{item.orderDetails}</Text>
