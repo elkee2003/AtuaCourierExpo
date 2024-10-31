@@ -9,7 +9,7 @@ const OrderContext = createContext({})
 const OrderProvider = ({children}) => {
 
   const {dbUser} = useAuthContext();
-  const [order, setOrder] = useState()
+  const [order, setOrder] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isPickedUp, setIsPickedUp]= useState(false)

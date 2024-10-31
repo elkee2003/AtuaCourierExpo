@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import React from 'react';
 import * as Clipboard from 'expo-clipboard';
 import styles from './styles'
@@ -6,13 +6,11 @@ import { router } from 'expo-router';
 
 const PendingDeliverySingle = ({item}) => {
 
-  const deductedFixedFee = item.price - 300;
-  const formattedCourierPrice= (deductedFixedFee * 0.85).toFixed(2);
-  const courierPrice = Number(formattedCourierPrice).toLocaleString();
+  const courierPrice = Number(item.courierFee).toLocaleString();
 
   const handleCopyRecipientNumber = async () => {
-    if (user.phoneNumber) {
-      await Clipboard.setStringAsync(user.phoneNumber);
+    if (item.recipientNumber) {
+      await Clipboard.setStringAsync(item.recipientNumber);
       Alert.alert('Phone Number Copied', 'You can paste it into the dialer to make a call.');
     }
   };

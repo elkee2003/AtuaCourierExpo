@@ -3,10 +3,7 @@ import React from 'react'
 import styles from './styles';
 
 const CompletedDeliverySingle = ({item}) => {
-
-  const deductedFixedFee = item.price - 300;
-  const formattedCourierPrice= (deductedFixedFee * 0.85).toFixed(2);
-  const courierPrice = Number(formattedCourierPrice).toLocaleString();
+  const courierPrice = Number(item.courierFee).toLocaleString();
 
   return (
     <View style={styles.card}>

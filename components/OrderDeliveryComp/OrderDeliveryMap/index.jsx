@@ -4,7 +4,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import {GOOGLE_API_KEY} from '../../../keys'
 import MapViewDirections from 'react-native-maps-directions';
 import * as Location from 'expo-location';
-import Entypo from '@expo/vector-icons/Entypo';
+import Feather from '@expo/vector-icons/Feather';
 import styles from './styles';
 import {useOrderContext} from '@/providers/OrderProvider';
 import {useAuthContext} from '@/providers/AuthProvider';
@@ -150,7 +150,7 @@ const OrderDeliveryMap = ({
                     }}
                 >
                     <View style={{ backgroundColor: '#04b831', padding: 5, borderRadius: 20 }}>
-                        <Entypo name={'location-pin'} color={'white'} size={24} />
+                        <Feather name="box" size={30} color="black" />
                     </View>
                 </Marker>
 
@@ -165,7 +165,7 @@ const OrderDeliveryMap = ({
                     }}
                 >
                     <View style={{ backgroundColor: 'red', padding: 5, borderRadius: 20 }}>
-                        <Entypo name={'location-pin'} color={'white'} size={24} />
+                        <Feather name="box" size={30} color="black" />
                     </View>
                 </Marker>
             </MapView>

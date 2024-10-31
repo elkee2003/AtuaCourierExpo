@@ -56,7 +56,8 @@ const HomeComponent = () => {
     setLoading(true)
     try{
       const availableOrders = await DataStore.query(Order, (o)=> o.status.eq("READY_FOR_PICKUP"))
-      setOrders(availableOrders)
+      const sortedAvailableOrders = availableOrders.sort((a,b)=> new Date(b.createdAt) - new Date(a.createdAt));
+      setOrders(sortedAvailableOrders);
     }catch(e){
       Alert.alert('Error', e.message)
     }finally{
