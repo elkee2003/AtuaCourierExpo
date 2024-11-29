@@ -3,6 +3,8 @@ import React, {useState} from 'react'
 import { Dropdown } from 'react-native-element-dropdown';
 import styles from './styles'
 import AntDesign from '@expo/vector-icons/AntDesign';
+import * as Crypto from 'expo-crypto';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { router } from 'expo-router';
 import { useProfileContext } from '../../../../providers/ProfileProvider'
 import { useAuthContext } from '../../../../providers/AuthProvider';

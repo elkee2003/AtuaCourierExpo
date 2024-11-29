@@ -22,13 +22,21 @@ const OrderdeliveryMainCom = ({order, user}) => {
   const bottomSheetRef = useRef(null)
   const snapPoints = useMemo(()=>['15%', '75%', '95%'], [])
 
-  const {mapRef, location,isCourierclose, isPickedUp, setIsPickedUp, acceptOrder, pickUpOrder, completeOrder} = useOrderContext()
-
+  const {mapRef, location,isCourierclose, isPickedUp, setIsPickedUp, acceptOrder, pickUpOrder, completeOrder} = useOrderContext();
 
   // Function of the Button on OrderDetails Screen when pressed
   const onButtonPressed = async ()=>{
 
+    if (!order) {
+      console.warn("Order not available");
+      return;
+    }
+
     if(order?.status === 'READY_FOR_PICKUP'){
+      const accepted = await acceptOrder(order);
+
+      if (!accepted) return; // If order was not accepted due to restrictions, exit function
+
       bottomSheetRef.current?.collapse()
       mapRef.current.animateToRegion({
         latitude: location?.latitude,
@@ -36,7 +44,7 @@ const OrderdeliveryMainCom = ({order, user}) => {
         latitudeDelta:0.01,
         longitudeDelta:0.01
       })
-      await acceptOrder();
+      
     }
 
     if(order?.status === 'ACCEPTED'){
@@ -60,7 +68,7 @@ const OrderdeliveryMainCom = ({order, user}) => {
         latitudeDelta:0.01,
         longitudeDelta:0.01
       })
-      await completeOrder();
+      await completeOrder(order.id);
       router.push('/home');
     }
   }
@@ -79,6 +87,7 @@ const OrderdeliveryMainCom = ({order, user}) => {
     if (order?.status === 'PICKEDUP' && isCourierclose){
       return false;
     }
+
     return true;
   }
 

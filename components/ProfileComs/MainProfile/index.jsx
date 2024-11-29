@@ -1,17 +1,24 @@
 import { View, Text, Image, TouchableOpacity, Alert, ScrollView } from 'react-native'
-import React from 'react'
+import React, {useState, useEffect} from 'react'
 import { useProfileContext } from '../../../providers/ProfileProvider';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import {useAuthContext} from '@/providers/AuthProvider';
 import Placeholder from '../../../assets/images/placeholder.png'
+import { DataStore } from 'aws-amplify/datastore';
+import {Courier} from '@/src/models';
+import { getUrl } from 'aws-amplify/storage';
 import styles from './styles';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { signOut } from 'aws-amplify/auth';
 
 const MainProfile = () => {
 
     const {
-      firstName, lastName, profilePic,  address, phoneNumber, landMark, courierNIN, courierBVN, bankName, accountName, accountNumber, guarantorName, guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN,
+      firstName, lastName, profilePic, setProfilePic,  address, phoneNumber, landMark, courierNIN, courierBVN, bankName, accountName, accountNumber, guarantorName, guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN,
     } = useProfileContext()
+
+    const {dbUser} = useAuthContext();
+    const [loading, setLoading]= useState(true);
 
     async function handleSignOut() {
       try {
@@ -40,14 +47,50 @@ const MainProfile = () => {
       )
     }
 
+    // Fetch signed URL for profile picture
+    const fetchImageUrl = async () => {
+      setLoading(true);
+      try {
+        const result = await getUrl({
+          path: dbUser.profilePic,
+          options: {
+            validateObjectExistence: true, 
+            expiresIn: null, // No expiration limit
+          },
+        });
+
+        if (result.url) {
+          setProfilePic(result.url.toString());
+        }
+      } catch (error) {
+        console.error('Error fetching profile pic URL:', error);
+      }finally {
+        setLoading(false);
+      }
+    };
+
+    useEffect(() => {
+      if (dbUser.profilePic) {
+        fetchImageUrl();
+      }
+  
+      const subscription = DataStore.observe(Courier).subscribe(({opType})=>{
+        if(opType === 'INSERT' || opType === 'UPDATE' || opType === 'DELETE'){
+          fetchImageUrl();
+        }
+      });
+  
+      return () => subscription.unsubscribe();
+    }, [dbUser.profilePic]);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Profile</Text>
 
       {/* Back Button */}
-      <TouchableOpacity onPress={()=>router.back()} style={styles.bckBtnCon}>
+      {/* <TouchableOpacity onPress={()=>router.back()} style={styles.bckBtnCon}>
             <Ionicons name={'arrow-back'} style={styles.bckBtnIcon}/>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       {/* Sign out button */}
       <TouchableOpacity style={styles.signoutBtn} onPress={onSignout}>
@@ -58,11 +101,14 @@ const MainProfile = () => {
 
         {/* Profile Picture */}
         <View style={styles.profilePicContainer}>
-            {profilePic ? (
-                <Image source={{ uri: profilePic }} style={styles.img} />
-            ) : (
-                <Image source={Placeholder} style={styles.img} />
-            )}
+          {loading ? (
+            <Image 
+              source={Placeholder} 
+              style={styles.img} 
+            /> // Show placeholder while loading
+          ) : (
+            <Image source={{ uri: profilePic }} style={styles.img} onError={() => setProfilePic(null)} />
+          )}
         </View>
 
         {/* Relevant Info section */}

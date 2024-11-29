@@ -23,6 +23,7 @@ const OrdersLayout = () => {
       // },
     }}>
       <MaterialTobTabs.Screen name='index' options={{title:'pending'}}/>
+      
       <MaterialTobTabs.Screen name='completedorders' options={{title:'completed'}}/>
     </MaterialTobTabs>
   )

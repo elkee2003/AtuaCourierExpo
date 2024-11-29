@@ -58,7 +58,7 @@ const index = () => {
         {/* Header */}
         <View style={styles.titleCon}>
             <Text style={styles.title}>
-                Sign In
+                Sign In (Courier App)
             </Text>
         </View>
         <ScrollView showsVerticalScrollIndicator={false}>
@@ -116,7 +116,7 @@ const index = () => {
             />
 
             {/* Social Signin Buttons */}
-            <SocialSigninButtons/>
+            {/* <SocialSigninButtons/> */}
 
             {/* Forgot Password & Create Account Btns */}
             <View style={styles.secBtnSection}>

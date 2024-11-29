@@ -48,7 +48,7 @@ const EditProfile = () => {
     const onSignout = ()=>{
       Alert.alert(
         'Sign Out',
-        'Are you sure you want to sign out? Click on YES, then refresh the App',
+        'Are you sure you want to sign out?',
         [
           {
             text: "Cancel",

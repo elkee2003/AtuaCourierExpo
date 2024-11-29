@@ -214,7 +214,7 @@ const SignupCom = () => {
             </TouchableOpacity>
 
             {/* Social Signins */}
-            <SocialSigninButtons/>
+            {/* <SocialSigninButtons/> */}
 
             <TouchableOpacity style={styles.secBtnCon} onPress={()=>router.push('/login')}>
                 <Text style={styles.secBtnTxt}>Sign In</Text>
