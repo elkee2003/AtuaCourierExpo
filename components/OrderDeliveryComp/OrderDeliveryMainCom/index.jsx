@@ -1,5 +1,5 @@
 import { View, Text, Pressable} from 'react-native'
-import React, { useRef, useMemo } from 'react'
+import React, { useState, useRef, useMemo } from 'react'
 import BottomSheet, { BottomSheetScrollView,} from '@gorhom/bottom-sheet';
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import OrderDeliveryMap from '../OrderDeliveryMap';
@@ -18,7 +18,8 @@ const STATUS_TO_TITLE = {
 }
 
 const OrderdeliveryMainCom = ({order, user}) => {
-  
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
+
   const bottomSheetRef = useRef(null)
   const snapPoints = useMemo(()=>['15%', '75%', '95%'], [])
 
@@ -76,6 +77,10 @@ const OrderdeliveryMainCom = ({order, user}) => {
   // Function for Disabling the Button in OrderDetails Screen
   const isButtonDisabled =()=>{
 
+    if (!isMapLoaded) {
+      return true; // Disable if map hasn't loaded
+    }
+
     if (order?.status === 'READY_FOR_PICKUP'){
       return false;
     }
@@ -92,7 +97,7 @@ const OrderdeliveryMainCom = ({order, user}) => {
   }
 
   // variable to show in Order Details Screen
-  const deliveryPickedUp = order?.status === 'PICKEDUP';
+  const deliveryPickedUp = useMemo(() => order?.status === 'PICKEDUP', [order?.status]);
 
   return (
     <GestureHandlerRootView style={styles.container}>
@@ -100,6 +105,7 @@ const OrderdeliveryMainCom = ({order, user}) => {
       <OrderDeliveryMap 
         order={order}
         user={user}
+        onMapReady={() => setIsMapLoaded(true)} 
       />
 
       {/* Back Button */}

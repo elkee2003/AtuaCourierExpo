@@ -1,12 +1,16 @@
 import { View, Text, Image, ScrollView, TouchableOpacity } from 'react-native'
-import React from 'react'
+import React, {useState, useEffect} from 'react'
 import { useProfileContext } from '../../../providers/ProfileProvider'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import styles from './styles'
 import { router } from 'expo-router';
+import { getUrl } from 'aws-amplify/storage';
 
 const ReviewCourierCom = () => {
+
+    const [imageUris, setImageUris] = useState([]);
+    
     const {
         firstName, lastName, profilePic, transportationType, vehicleType, model, plateNumber, images, address, phoneNumber, landMark, courierNIN, courierBVN, bankName, accountName, accountNumber,
     } = useProfileContext()
@@ -61,7 +65,7 @@ const ReviewCourierCom = () => {
                 </>
             )}
 
-{images && (
+            {images && (
                 <ScrollView 
                     horizontal 
                     showsHorizontalScrollIndicator={false} 

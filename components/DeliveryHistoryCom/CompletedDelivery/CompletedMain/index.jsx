@@ -2,7 +2,7 @@ import { View, Text, Alert, FlatList, ActivityIndicator } from 'react-native'
 import React, {useState, useEffect} from 'react';
 import styles from './styles';
 import { DataStore } from 'aws-amplify/datastore';
-import {  Order,} from '@/src/models';
+import { Order,} from '@/src/models';
 import { useAuthContext } from '@/providers/AuthProvider';
 import CompletedSingle from '../CompletedSingle';
 
@@ -19,7 +19,7 @@ const CompletedDeliveryMain = () => {
   const fetchOrders = async () =>{
     setLoading(true);
     try{
-      const fetchedOrders = await DataStore.query(Order,(o)=> o.courierID.eq(dbUser.id));
+      const fetchedOrders = await DataStore.query(Order,(o)=> o.orderCourierId.eq(dbUser.id));
 
       const filteredOrders = fetchedOrders.filter((order)=> order.status === 'DELIVERED').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 

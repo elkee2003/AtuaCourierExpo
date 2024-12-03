@@ -4,8 +4,10 @@ import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
 import * as Location from 'expo-location';
 import Feather from '@expo/vector-icons/Feather';
 import styles from './styles';
+import {useAuthContext} from '@/providers/AuthProvider';
 import { DataStore } from 'aws-amplify/datastore';
-import {Order} from '@/src/models';
+import {Order, Courier} from '@/src/models';
+
 
 const Map = ({location, setLocation}) => {
 
@@ -13,7 +15,8 @@ const Map = ({location, setLocation}) => {
   
   const [errorMsg, setErrorMsg] = useState(null);
   
-  const [orders, setOrders] = useState([])
+  const [orders, setOrders] = useState([]);
+  const {dbUser} = useAuthContext();
 
 
   const fetchOrders = async () =>{
@@ -49,6 +52,19 @@ const Map = ({location, setLocation}) => {
       }
     })();
   }, []);
+
+  // useEffect for updating Courier Location in the database
+  useEffect(()=>{
+    if(!location){
+        return;
+    }
+
+    DataStore.save(Courier.copyOf(dbUser, (updated)=>{
+        updated.lat = location.latitude,
+        updated.lng = location.longitude
+        // updated.heading = location.heading
+    }))
+  },[location])
 
   if (!location || !location.latitude || !location.longitude) {
     return <ActivityIndicator style={{ marginTop: 90 }} size="large" />;

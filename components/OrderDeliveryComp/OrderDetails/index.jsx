@@ -42,6 +42,8 @@ const OrderDetails = ({
           <>
             <View style={ styles.receipientCard}>
               <Text style={styles.recipientHeader}>Recipient Details:</Text>
+
+              {/* Recipients name */}
               <View style={styles.details}>
                 <View style={styles.rIcon}>
                   <FontAwesome name={'user'} size={30} color={'#021d46'}/>
@@ -50,6 +52,8 @@ const OrderDetails = ({
                   {order.recipientName}
                 </Text>
               </View>
+
+              {/* Recipient details */}
               <View style={styles.details}>
                 <View style={styles.rIcon}>
                   <Ionicons name={'call'} size={40} color={'#021d46'}/>
@@ -59,8 +63,9 @@ const OrderDetails = ({
                     {order.recipientNumber}
                   </Text>
                 </TouchableOpacity>
-                
               </View>
+
+              {/* Parcel destination */}
               <View style={styles.details}>
                 <View style={styles.rIcon}>
                   <Entypo name={'location'} size={40} color={'#021d46'}/>
@@ -69,6 +74,8 @@ const OrderDetails = ({
                   {order.parcelDestination}
                 </Text>
               </View>
+
+              {/* Order details */}
               <View style={styles.details}>
                 <View style={styles.rIcon}>
                   <MaterialIcons name={'details'} size={40} color={'#021d46'}/>

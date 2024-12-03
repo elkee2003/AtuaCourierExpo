@@ -17,7 +17,7 @@ const PendingDeliveryMain = () => {
   const fetchOrders = async () =>{
     setLoading(true);
     try{
-      const fetchedOrders = await DataStore.query(Order,(o)=> o.courierID.eq(dbUser.id));
+      const fetchedOrders = await DataStore.query(Order,(o)=> o.orderCourierId.eq(dbUser.id));
 
       const filteredOrders = fetchedOrders.filter((order)=> order.status === 'ACCEPTED' || order.status === 'PICKEDUP').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 

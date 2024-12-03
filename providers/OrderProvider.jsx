@@ -1,6 +1,5 @@
-import { View, Text } from 'react-native'
+import { View, Text, Alert } from 'react-native'
 import React, {useRef, useState, useEffect, useContext, createContext,} from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DataStore } from 'aws-amplify/datastore';
 import { Courier, Order, User } from '@/src/models';
 import { useAuthContext } from './AuthProvider';
@@ -20,54 +19,6 @@ const OrderProvider = ({children}) => {
   const [totalKm, setTotalKm]=useState(0);
   const [isCourierclose, setIsCourierClose]= useState(false);
   const [activeOrders, setActiveOrders] = useState([]);
-
-    // Save active orders to AsyncStorage
-    const saveActiveOrders = async (orders) => {
-      try {
-        await AsyncStorage.setItem('activeOrders', JSON.stringify(orders));
-      } catch (error) {
-        console.error('Error saving active orders:', error);
-      }
-    };
-
-    // Fetch active orders from backend
-    const fetchActiveOrders = async () => {
-      try {
-        const activeOrdersFromBackend = await DataStore.query(Order, (o) =>
-          o.and((c) => [
-            c.status.ne('DELIVERED'), // Status should not be "DELIVERED"
-            c.courierID.eq(dbUser?.id), // Must belong to the current courier
-          ])
-        );
-        setActiveOrders(activeOrdersFromBackend);
-        saveActiveOrders(activeOrdersFromBackend);
-      } catch (error) {
-        console.error('Error fetching active orders from backend:', error);
-      }
-    };
-
-    // Load active orders from AsyncStorage
-    const loadActiveOrders = async () => {
-      try {
-        const storedOrders = await AsyncStorage.getItem('activeOrders');
-        if (storedOrders) {
-          setActiveOrders(JSON.parse(storedOrders));
-        } else {
-          // If no data in AsyncStorage, fetch from backend
-          await fetchActiveOrders();
-        }
-      } catch (error) {
-        console.error('Error loading active orders:', error);
-      }
-    };
-
-    // Call `loadActiveOrders` when provider is initialized
-    useEffect(() => {
-      if (dbUser) {
-        loadActiveOrders();
-      }
-    }, [dbUser]);
-
 
     // Fetch Order and User
     const fetchOrder = async (id) =>{
@@ -91,6 +42,7 @@ const OrderProvider = ({children}) => {
       }
     };
 
+    // useEffect to observe updates
     useEffect(()=>{
       if(!order){
         return;
@@ -125,28 +77,25 @@ const OrderProvider = ({children}) => {
       const { transportationType } = order;
   
       const isExpress = ['Moto X', 'Micro X', 'Maxi'].includes(transportationType);
+
       const isBatch = ['Micro Batch', 'Moto Batch'].includes(transportationType);
-  
-       // Only consider active orders (not delivered)
-      const activeExpressOrders = activeOrders.filter((o) =>
-        ['Moto X', 'Micro X', 'Maxi'].includes(o.transportationType) &&
-        o.status !== 'DELIVERED' // Exclude delivered orders
+
+      const pickedUpExpressOrders = activeOrders.filter((o) =>
+        ['Moto X', 'Micro X', 'Maxi'].includes(o.transportationType)
       );
   
-      // Check batch order count
-      const activeBatchOrdersCount = activeOrders.filter((o) =>
-        ['Micro Batch', 'Moto Batch'].includes(o.transportationType) &&
-        o.status !== 'DELIVERED' // Exclude delivered orders
+      const pickedUpBatchOrdersCount = activeOrders.filter((o) =>
+        ['Micro Batch', 'Moto Batch'].includes(o.transportationType)
       ).length;
-  
+
       // Business Rules
-      if (isExpress && (activeExpressOrders.length > 0 || activeBatchOrdersCount > 0)) {
-        alert('You cannot accept any other deliveries while handling X/Maxi orders or batch deliveries.');
+      if (isExpress && (pickedUpExpressOrders.length > 0 || pickedUpBatchOrdersCount > 0)) {
+        Alert.alert('Error', 'You cannot accept any other deliveries while handling X/Maxi delivery or batch deliveries.');
         return false;
       }
   
-      if (isBatch && (activeExpressOrders.length > 0 || activeBatchOrdersCount >= 7)) {
-        alert('You cannot accept beyond 7 batch orders or X deliveries.');
+      if (isBatch && (pickedUpExpressOrders.length > 0 || pickedUpBatchOrdersCount >= 7)) {
+        Alert.alert('Error', 'You cannot accept beyond 7 batch deliveries or X deliveries.');
         return false;
       }
   
@@ -160,15 +109,17 @@ const OrderProvider = ({children}) => {
         );
     
         // Update the local state
-        setActiveOrders((prevOrders) => [...prevOrders, updatedOrder]);
-        setOrder(updatedOrder); // Update the current order context
-        return true;
+        const newPickedUpOrders = [...activeOrders, updatedOrder];
+        setActiveOrders(newPickedUpOrders);
+        setOrder(updatedOrder);
+      return true;
       } catch (error) {
         console.error('Error accepting order:', error.message);
         return false;
       }
     };
 
+    // Pick up order function
     const pickUpOrder = async () => {
       try {
         const updatedOrder = await DataStore.save(
@@ -176,6 +127,8 @@ const OrderProvider = ({children}) => {
             updated.status = 'PICKEDUP';
           })
         );
+        const newPickedUpOrders = [...activeOrders, updatedOrder];
+        setActiveOrders(newPickedUpOrders);
         setOrder(updatedOrder);
       } catch (error) {
         console.error('Error picking up order:', error.message);
@@ -184,12 +137,13 @@ const OrderProvider = ({children}) => {
 
     const completeOrder = async (orderId) => {
       try {
-        // Find the order to update
-        const orderToComplete = activeOrders.find((o) => o.id === orderId);
-    
+
+        // Fetch the latest order instance from DataStore
+        const orderToComplete = await DataStore.query(Order, orderId);
+
         if (!orderToComplete) {
-          console.error('Order not found');
-          return false;
+            console.error("Order not found in DataStore:", orderId);
+            return false;
         }
     
         // Update the order's status in the database

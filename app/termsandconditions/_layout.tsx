@@ -2,12 +2,10 @@ import { View, Text } from 'react-native'
 import React from 'react'
 import { Stack } from 'expo-router'
 
-const PolicyLayout = () => {
+const TermsLayout = () => {
   return (
-    <Stack screenOptions={{
-        headerShown:false
-    }}/>
+    <Stack screenOptions={{headerShown:false}}/>
   )
 }
 
-export default PolicyLayout
+export default TermsLayout;

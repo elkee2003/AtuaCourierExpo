@@ -165,18 +165,15 @@ const EditProfile = () => {
           style={styles.input}
           keyboardType='numeric'
         />
-
-
-        {/* Error Message */}
-        <Text style={styles.error}>{errorMessage}</Text>
       </ScrollView>
+
+      {/* Error Message */}
+      <Text style={styles.error}>{errorMessage}</Text>
       
-        {/* Button */}
-      <View>
-        <TouchableOpacity onPress={handleNxtPage} style={styles.nxtBtn}>
-            <MaterialIcons name="navigate-next" style={styles.nxtBtnIcon} />
-        </TouchableOpacity>
-      </View>
+      {/* Button */}
+      <TouchableOpacity onPress={handleNxtPage} style={styles.nxtBtn}>
+          <MaterialIcons name="navigate-next" style={styles.nxtBtnIcon} />
+      </TouchableOpacity>
     </View>
   )
 }

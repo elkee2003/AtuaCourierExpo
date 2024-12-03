@@ -9,11 +9,11 @@ import styles from './styles';
 import {useOrderContext} from '@/providers/OrderProvider';
 import {useAuthContext} from '@/providers/AuthProvider';
 import { DataStore } from 'aws-amplify/datastore';
-import {Courier} from '../../../src/models';
+import {Courier} from '@/src/models';
 
 
 const OrderDeliveryMap = ({
-        order,user, 
+        order,user, onMapReady
     }) => {
 
         const { width, height } = useWindowDimensions();
@@ -22,7 +22,7 @@ const OrderDeliveryMap = ({
 
         const {mapRef, setTotalKm, setTotalMins, setIsCourierClose, isPickedUp, location, setLocation} = useOrderContext();
 
-        const {dbUser} = useAuthContext()
+        const {dbUser} = useAuthContext();
 
         // useEffect for updating Courier Location in the database
         useEffect(()=>{
@@ -60,8 +60,8 @@ const OrderDeliveryMap = ({
                     locationSubscription = await Location.watchPositionAsync(
                         {
                             accuracy: Location.Accuracy.High,
-                            timeInterval: 20000, // 20 seconds
-                            distanceInterval: 200, // 500 meters
+                            timeInterval: 60000, // 20 seconds
+                            distanceInterval: 200, // 200 meters
                         },
                         (position) => {
                             const { latitude, longitude } = position.coords;
@@ -119,6 +119,7 @@ const OrderDeliveryMap = ({
                     latitudeDelta: 0.0922,
                     longitudeDelta: 0.0421,
               }}
+              onMapReady={onMapReady} // Notify parent when map is ready
               showsUserLocation
               followsUserLocation
             >
