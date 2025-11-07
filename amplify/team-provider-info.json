@@ -1,25 +1,37 @@
 {
   "staging": {
     "awscloudformation": {
-      "AuthRoleName": "amplify-atua-staging-9f9e1-authRole",
-      "UnauthRoleArn": "arn:aws:iam::340752822026:role/amplify-atua-staging-9f9e1-unauthRole",
-      "AuthRoleArn": "arn:aws:iam::340752822026:role/amplify-atua-staging-9f9e1-authRole",
+      "AuthRoleName": "amplify-atua-staging-19d66-authRole",
+      "UnauthRoleArn": "arn:aws:iam::703145406670:role/amplify-atua-staging-19d66-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::703145406670:role/amplify-atua-staging-19d66-authRole",
       "Region": "eu-north-1",
-      "DeploymentBucketName": "amplify-atua-staging-9f9e1-deployment",
-      "UnauthRoleName": "amplify-atua-staging-9f9e1-unauthRole",
-      "StackName": "amplify-atua-staging-9f9e1",
-      "StackId": "arn:aws:cloudformation:eu-north-1:340752822026:stack/amplify-atua-staging-9f9e1/a5999cf0-6bc2-11ef-9881-069deacde931",
-      "AmplifyAppId": "d3o1u590cjdy9d"
+      "DeploymentBucketName": "amplify-atua-staging-19d66-deployment",
+      "UnauthRoleName": "amplify-atua-staging-19d66-unauthRole",
+      "StackName": "amplify-atua-staging-19d66",
+      "StackId": "arn:aws:cloudformation:eu-north-1:703145406670:stack/amplify-atua-staging-19d66/26011ef0-a979-11f0-9b40-0ea2af258faf",
+      "AmplifyAppId": "d4d2e6dwzso4a",
+      "AuthTriggerTemplateURL": "https://s3.amazonaws.com/amplify-atua-staging-19d66-deployment/amplify-cfn-templates/auth/auth-trigger-cloudformation-template.json"
     },
     "categories": {
       "auth": {
-        "Atua": {}
+        "Atua": {},
+        "atuac06ab999c06ab999": {}
       },
       "api": {
         "Atua": {}
       },
       "storage": {
         "s3atuastorage10235b9d": {}
+      },
+      "function": {
+        "atuac06ab999c06ab999PostConfirmation": {
+          "deploymentBucketName": "amplify-atua-staging-19d66-deployment",
+          "s3Key": "amplify-builds/atuac06ab999c06ab999PostConfirmation-47377754567756757449-build.zip"
+        },
+        "checkUserGroup": {
+          "deploymentBucketName": "amplify-atua-staging-19d66-deployment",
+          "s3Key": "amplify-builds/checkUserGroup-2f6574796b694d494e4a-build.zip"
+        }
       }
     }
   }

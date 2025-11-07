@@ -120,7 +120,7 @@ const StandaloneTtypeCom = () => {
   
               {/* Info Icon next to each label */}
               <TouchableOpacity onPress={() => handleInfoPress(item.description)}>
-                <AntDesign name="infocirlceo" size={20} color="gray" style={styles.infoIcon} />
+                <AntDesign name="info-cirlce" size={20} color="gray" style={styles.infoIcon} />
               </TouchableOpacity>
             </View>
           )}

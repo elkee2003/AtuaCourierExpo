@@ -14,9 +14,6 @@ export const createCompanyVehicle = /* GraphQL */ `
       couriercompanyID
       createdAt
       updatedAt
-      _version
-      _deleted
-      _lastChangedAt
       __typename
     }
   }
@@ -34,9 +31,6 @@ export const updateCompanyVehicle = /* GraphQL */ `
       couriercompanyID
       createdAt
       updatedAt
-      _version
-      _deleted
-      _lastChangedAt
       __typename
     }
   }
@@ -54,9 +48,6 @@ export const deleteCompanyVehicle = /* GraphQL */ `
       couriercompanyID
       createdAt
       updatedAt
-      _version
-      _deleted
-      _lastChangedAt
       __typename
     }
   }
@@ -84,16 +75,12 @@ export const createCourierCompany = /* GraphQL */ `
       bankName
       CompanyVehicles {
         nextToken
-        startedAt
         __typename
       }
       accountNumber
       push_token
       createdAt
       updatedAt
-      _version
-      _deleted
-      _lastChangedAt
       __typename
     }
   }
@@ -121,16 +108,12 @@ export const updateCourierCompany = /* GraphQL */ `
       bankName
       CompanyVehicles {
         nextToken
-        startedAt
         __typename
       }
       accountNumber
       push_token
       createdAt
       updatedAt
-      _version
-      _deleted
-      _lastChangedAt
       __typename
     }
   }
@@ -158,16 +141,12 @@ export const deleteCourierCompany = /* GraphQL */ `
       bankName
       CompanyVehicles {
         nextToken
-        startedAt
         __typename
       }
       accountNumber
       push_token
       createdAt
       updatedAt
-      _version
-      _deleted
-      _lastChangedAt
       __typename
     }
   }
@@ -181,6 +160,7 @@ export const createOrder = /* GraphQL */ `
       id
       recipientName
       recipientNumber
+      recipientNumber2
       orderDetails
       parcelOrigin
       parcelOriginLat
@@ -229,16 +209,10 @@ export const createOrder = /* GraphQL */ `
         push_token
         createdAt
         updatedAt
-        _version
-        _deleted
-        _lastChangedAt
         __typename
       }
       createdAt
       updatedAt
-      _version
-      _deleted
-      _lastChangedAt
       orderCourierId
       __typename
     }
@@ -253,6 +227,7 @@ export const updateOrder = /* GraphQL */ `
       id
       recipientName
       recipientNumber
+      recipientNumber2
       orderDetails
       parcelOrigin
       parcelOriginLat
@@ -301,16 +276,10 @@ export const updateOrder = /* GraphQL */ `
         push_token
         createdAt
         updatedAt
-        _version
-        _deleted
-        _lastChangedAt
         __typename
       }
       createdAt
       updatedAt
-      _version
-      _deleted
-      _lastChangedAt
       orderCourierId
       __typename
     }
@@ -325,6 +294,7 @@ export const deleteOrder = /* GraphQL */ `
       id
       recipientName
       recipientNumber
+      recipientNumber2
       orderDetails
       parcelOrigin
       parcelOriginLat
@@ -373,16 +343,10 @@ export const deleteOrder = /* GraphQL */ `
         push_token
         createdAt
         updatedAt
-        _version
-        _deleted
-        _lastChangedAt
         __typename
       }
       createdAt
       updatedAt
-      _version
-      _deleted
-      _lastChangedAt
       orderCourierId
       __typename
     }
@@ -429,9 +393,6 @@ export const createCourier = /* GraphQL */ `
       push_token
       createdAt
       updatedAt
-      _version
-      _deleted
-      _lastChangedAt
       __typename
     }
   }
@@ -477,9 +438,6 @@ export const updateCourier = /* GraphQL */ `
       push_token
       createdAt
       updatedAt
-      _version
-      _deleted
-      _lastChangedAt
       __typename
     }
   }
@@ -525,9 +483,6 @@ export const deleteCourier = /* GraphQL */ `
       push_token
       createdAt
       updatedAt
-      _version
-      _deleted
-      _lastChangedAt
       __typename
     }
   }
@@ -542,6 +497,7 @@ export const createUser = /* GraphQL */ `
       sub
       firstName
       lastName
+      email
       phoneNumber
       profilePic
       address
@@ -551,14 +507,10 @@ export const createUser = /* GraphQL */ `
       push_token
       Orders {
         nextToken
-        startedAt
         __typename
       }
       createdAt
       updatedAt
-      _version
-      _deleted
-      _lastChangedAt
       __typename
     }
   }
@@ -573,6 +525,7 @@ export const updateUser = /* GraphQL */ `
       sub
       firstName
       lastName
+      email
       phoneNumber
       profilePic
       address
@@ -582,14 +535,10 @@ export const updateUser = /* GraphQL */ `
       push_token
       Orders {
         nextToken
-        startedAt
         __typename
       }
       createdAt
       updatedAt
-      _version
-      _deleted
-      _lastChangedAt
       __typename
     }
   }
@@ -604,6 +553,7 @@ export const deleteUser = /* GraphQL */ `
       sub
       firstName
       lastName
+      email
       phoneNumber
       profilePic
       address
@@ -613,14 +563,10 @@ export const deleteUser = /* GraphQL */ `
       push_token
       Orders {
         nextToken
-        startedAt
         __typename
       }
       createdAt
       updatedAt
-      _version
-      _deleted
-      _lastChangedAt
       __typename
     }
   }

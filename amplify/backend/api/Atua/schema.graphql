@@ -38,6 +38,7 @@ type Order @model @auth(rules: [{allow: public}]) {
   id: ID!
   recipientName: String
   recipientNumber: String
+  recipientNumber2: String
   orderDetails: String
   parcelOrigin: String
   parcelOriginLat: Float
@@ -94,6 +95,7 @@ type User @model @auth(rules: [{allow: public}]) {
   sub: String!
   firstName: String!
   lastName: String
+  email: String
   phoneNumber: String
   profilePic: String
   address: String

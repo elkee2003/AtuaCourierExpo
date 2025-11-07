@@ -84,7 +84,7 @@ const TransportationTypeCom = () => {
   
               {/* Info Icon next to each label */}
               <TouchableOpacity onPress={() => handleInfoPress(item.description)}>
-                <AntDesign name="infocirlceo" style={styles.infoIcon} />
+                <AntDesign name="info-cirlce" style={styles.infoIcon} />
               </TouchableOpacity>
             </View>
           )}
