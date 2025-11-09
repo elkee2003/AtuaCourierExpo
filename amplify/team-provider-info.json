@@ -30,7 +30,7 @@
         },
         "checkUserGroup": {
           "deploymentBucketName": "amplify-atua-staging-19d66-deployment",
-          "s3Key": "amplify-builds/checkUserGroup-2f6574796b694d494e4a-build.zip"
+          "s3Key": "amplify-builds/checkUserGroup-654d4b456f634f666361-build.zip"
         }
       }
     }
