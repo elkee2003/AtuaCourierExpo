@@ -26,11 +26,11 @@
       "function": {
         "atuac06ab999c06ab999PostConfirmation": {
           "deploymentBucketName": "amplify-atua-staging-19d66-deployment",
-          "s3Key": "amplify-builds/atuac06ab999c06ab999PostConfirmation-47377754567756757449-build.zip"
+          "s3Key": "amplify-builds/atuac06ab999c06ab999PostConfirmation-61467a4a527272717730-build.zip"
         },
         "checkUserGroup": {
           "deploymentBucketName": "amplify-atua-staging-19d66-deployment",
-          "s3Key": "amplify-builds/checkUserGroup-654d4b456f634f666361-build.zip"
+          "s3Key": "amplify-builds/checkUserGroup-546d484f346867625832-build.zip"
         }
       }
     }

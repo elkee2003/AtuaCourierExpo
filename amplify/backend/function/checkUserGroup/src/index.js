@@ -39,7 +39,8 @@ exports.handler = async (event) => {
     }
 
     console.log("✅ Email is unique — signup allowed.");
-    event.response.autoConfirmUser = true;
+    // Commented out the bottom code because I don't want to auto confirm user, I might have as well deleted the line of code
+    // event.response.autoConfirmUser = true;
     return event;
   } catch (error) {
     console.error("❌ Error checking user groups:", error);
