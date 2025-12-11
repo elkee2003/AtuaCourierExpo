@@ -113,15 +113,15 @@ const HomeComponent = () => {
           </Text>
         </Pressable>
       }
-      <BottomSheet ref={bottomSheetRef}
+      {/* <BottomSheet ref={bottomSheetRef}
       snapPoints={snapPoints} 
       index={0} 
       topInset={0} // Ensure no inset from the top
-      handleIndicatorStyle={{backgroundColor:'#666768', width:80}}>
-        <BottomContainer isOnline={isOnline} orders={orders}/>
+      handleIndicatorStyle={{backgroundColor:'#666768', width:80}}> */}
+        {/* <BottomContainer isOnline={isOnline} orders={orders}/> */}
 
         {/* Different Orders */}
-        {isOnline && 
+        {/* {isOnline && 
         <BottomSheetFlatList
         data={orders}
         renderItem={({item})=><OrderItem 
@@ -130,8 +130,8 @@ const HomeComponent = () => {
             onRemoveOrder={onRemoveOrder}
         />}
         />
-        }
-      </BottomSheet>  
+        } */}
+      {/* </BottomSheet>   */}
     </GestureHandlerRootView>
   )
 }
