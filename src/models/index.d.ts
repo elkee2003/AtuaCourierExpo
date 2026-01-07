@@ -113,6 +113,7 @@ type EagerOrder = {
   readonly id: string;
   readonly recipientName?: string | null;
   readonly recipientNumber?: string | null;
+  readonly recipientNumber2?: string | null;
   readonly orderDetails?: string | null;
   readonly parcelOrigin?: string | null;
   readonly parcelOriginLat?: number | null;
@@ -139,6 +140,7 @@ type LazyOrder = {
   readonly id: string;
   readonly recipientName?: string | null;
   readonly recipientNumber?: string | null;
+  readonly recipientNumber2?: string | null;
   readonly orderDetails?: string | null;
   readonly parcelOrigin?: string | null;
   readonly parcelOriginLat?: number | null;
@@ -201,6 +203,8 @@ type EagerCourier = {
   readonly lng?: number | null;
   readonly heading?: number | null;
   readonly push_token?: string | null;
+  readonly isApproved?: boolean | null;
+  readonly approvedBy?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -243,6 +247,8 @@ type LazyCourier = {
   readonly lng?: number | null;
   readonly heading?: number | null;
   readonly push_token?: string | null;
+  readonly isApproved?: boolean | null;
+  readonly approvedBy?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -262,6 +268,7 @@ type EagerUser = {
   readonly sub: string;
   readonly firstName: string;
   readonly lastName?: string | null;
+  readonly email?: string | null;
   readonly phoneNumber?: string | null;
   readonly profilePic?: string | null;
   readonly address?: string | null;
@@ -283,6 +290,7 @@ type LazyUser = {
   readonly sub: string;
   readonly firstName: string;
   readonly lastName?: string | null;
+  readonly email?: string | null;
   readonly phoneNumber?: string | null;
   readonly profilePic?: string | null;
   readonly address?: string | null;

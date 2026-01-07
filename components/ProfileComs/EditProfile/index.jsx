@@ -7,6 +7,7 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import TranportionType from '../TransporationType'
+import BankDetails from './bankDetails';
 import { signOut } from 'aws-amplify/auth';
 import { useProfileContext } from '../../../providers/ProfileProvider';
 
@@ -15,7 +16,7 @@ const EditProfile = () => {
 
     const {
       firstName,setFirstName, lastName, setLastName, profilePic, setProfilePic, address, setAddress, phoneNumber, setPhoneNumber, landMark, setLandMark, courierNIN, setCourierNIN, courierBVN, setCourierBVN, bankName, setBankName, accountName, setAccountName, accountNumber, setAccountNumber,errorMessage, onValidateCourierInput,
-    } = useProfileContext()
+    } = useProfileContext();
 
     const pickImage = async () => {
       // No permissions request is necessary for launching the image library
@@ -146,7 +147,11 @@ const EditProfile = () => {
           style={styles.input}
           keyboardType='numeric'
         />
-        <TextInput
+
+        {/* BankDetails */}
+        <BankDetails/>
+
+        {/* <TextInput
           value={bankName}
           onChangeText={setBankName}
           placeholder='Enter your bank name'
@@ -164,7 +169,7 @@ const EditProfile = () => {
           placeholder='Enter your account number'
           style={styles.input}
           keyboardType='numeric'
-        />
+        /> */}
       </ScrollView>
 
       {/* Error Message */}

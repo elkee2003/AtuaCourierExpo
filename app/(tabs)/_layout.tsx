@@ -1,22 +1,15 @@
 import { Tabs } from 'expo-router';
 import { Entypo, Ionicons, FontAwesome5 } from '@expo/vector-icons';
+import AuthProvider from '@/providers/AuthProvider';
+import ProfileProvider from '@/providers/ProfileProvider';
 import NotificationProvider from '@/providers/NotificationProvider';
-// import ProfileProvider from '@/providers/ProfileProvider';
-// import AuthProvider from '@/providers/AuthProvider'
-import {
-  withAuthenticator,
-  useAuthenticator
-} from '@aws-amplify/ui-react-native';
-import { Amplify } from 'aws-amplify';
-import amplifyconfig from '../../src/amplifyconfiguration.json'
 
-Amplify.configure(amplifyconfig);
 
 const TabsLayout = () => {
   return (
     // <AuthProvider>
-      <NotificationProvider>
-        {/* <ProfileProvider> */}
+    //   <NotificationProvider>
+    //     <ProfileProvider>
           <Tabs screenOptions={{ headerShown: false }}>
             <Tabs.Screen
               name="home"
@@ -40,8 +33,8 @@ const TabsLayout = () => {
               }}
             />
           </Tabs>
-        {/* </ProfileProvider> */}
-      </NotificationProvider>
+    //     </ProfileProvider>
+    //   </NotificationProvider>
     // </AuthProvider>
   );
 };

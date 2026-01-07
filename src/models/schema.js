@@ -293,6 +293,13 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
+                "recipientNumber2": {
+                    "name": "recipientNumber2",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
                 "orderDetails": {
                     "name": "orderDetails",
                     "isArray": false,
@@ -690,6 +697,20 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
+                "isApproved": {
+                    "name": "isApproved",
+                    "isArray": false,
+                    "type": "Boolean",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "approvedBy": {
+                    "name": "approvedBy",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
                 "createdAt": {
                     "name": "createdAt",
                     "isArray": false,
@@ -758,6 +779,13 @@ export const schema = {
                 },
                 "lastName": {
                     "name": "lastName",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "email": {
+                    "name": "email",
                     "isArray": false,
                     "type": "String",
                     "isRequired": false,
@@ -884,5 +912,5 @@ export const schema = {
     },
     "nonModels": {},
     "codegenVersion": "3.4.4",
-    "version": "3434900c7e63d7cbb9ceec44be23b816"
+    "version": "136b77b926be85ccd96038fd9e99c3e3"
 };

@@ -13,6 +13,9 @@ export const onCreateCompanyVehicle = /* GraphQL */ `
       couriercompanyID
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
       __typename
     }
   }
@@ -29,6 +32,9 @@ export const onUpdateCompanyVehicle = /* GraphQL */ `
       couriercompanyID
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
       __typename
     }
   }
@@ -45,6 +51,9 @@ export const onDeleteCompanyVehicle = /* GraphQL */ `
       couriercompanyID
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
       __typename
     }
   }
@@ -71,12 +80,16 @@ export const onCreateCourierCompany = /* GraphQL */ `
       bankName
       CompanyVehicles {
         nextToken
+        startedAt
         __typename
       }
       accountNumber
       push_token
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
       __typename
     }
   }
@@ -103,12 +116,16 @@ export const onUpdateCourierCompany = /* GraphQL */ `
       bankName
       CompanyVehicles {
         nextToken
+        startedAt
         __typename
       }
       accountNumber
       push_token
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
       __typename
     }
   }
@@ -135,12 +152,16 @@ export const onDeleteCourierCompany = /* GraphQL */ `
       bankName
       CompanyVehicles {
         nextToken
+        startedAt
         __typename
       }
       accountNumber
       push_token
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
       __typename
     }
   }
@@ -198,12 +219,20 @@ export const onCreateOrder = /* GraphQL */ `
         lng
         heading
         push_token
+        isApproved
+        approvedBy
         createdAt
         updatedAt
+        _version
+        _deleted
+        _lastChangedAt
         __typename
       }
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
       orderCourierId
       __typename
     }
@@ -262,12 +291,20 @@ export const onUpdateOrder = /* GraphQL */ `
         lng
         heading
         push_token
+        isApproved
+        approvedBy
         createdAt
         updatedAt
+        _version
+        _deleted
+        _lastChangedAt
         __typename
       }
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
       orderCourierId
       __typename
     }
@@ -326,12 +363,20 @@ export const onDeleteOrder = /* GraphQL */ `
         lng
         heading
         push_token
+        isApproved
+        approvedBy
         createdAt
         updatedAt
+        _version
+        _deleted
+        _lastChangedAt
         __typename
       }
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
       orderCourierId
       __typename
     }
@@ -373,8 +418,13 @@ export const onCreateCourier = /* GraphQL */ `
       lng
       heading
       push_token
+      isApproved
+      approvedBy
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
       __typename
     }
   }
@@ -415,8 +465,13 @@ export const onUpdateCourier = /* GraphQL */ `
       lng
       heading
       push_token
+      isApproved
+      approvedBy
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
       __typename
     }
   }
@@ -457,8 +512,13 @@ export const onDeleteCourier = /* GraphQL */ `
       lng
       heading
       push_token
+      isApproved
+      approvedBy
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
       __typename
     }
   }
@@ -480,10 +540,14 @@ export const onCreateUser = /* GraphQL */ `
       push_token
       Orders {
         nextToken
+        startedAt
         __typename
       }
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
       __typename
     }
   }
@@ -505,10 +569,14 @@ export const onUpdateUser = /* GraphQL */ `
       push_token
       Orders {
         nextToken
+        startedAt
         __typename
       }
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
       __typename
     }
   }
@@ -530,10 +598,14 @@ export const onDeleteUser = /* GraphQL */ `
       push_token
       Orders {
         nextToken
+        startedAt
         __typename
       }
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
       __typename
     }
   }

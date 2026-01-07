@@ -112,5 +112,12 @@
         }
       ]
     }
+  },
+  "storage": {
+    "atuaStorage": {
+      "dependsOn": [],
+      "providerPlugin": "awscloudformation",
+      "service": "S3"
+    }
   }
 }

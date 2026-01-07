@@ -3,7 +3,7 @@ import React, {useState, useEffect} from 'react'
 import { useProfileContext } from '../../../providers/ProfileProvider';
 import {useAuthContext} from '@/providers/AuthProvider';
 import Placeholder from '../../../assets/images/placeholder.png'
-import { DataStore } from 'aws-amplify/datastore';
+import { DataStore } from '@aws-amplify/datastore';
 import {Courier} from '@/src/models';
 import { getUrl } from 'aws-amplify/storage';
 import styles from './styles';
@@ -18,6 +18,7 @@ const MainProfile = () => {
     } = useProfileContext()
 
     const {dbUser} = useAuthContext();
+    console.log(dbUser)
     const [loading, setLoading]= useState(true);
 
     async function handleSignOut() {
@@ -74,14 +75,39 @@ const MainProfile = () => {
         fetchImageUrl();
       }
   
-      const subscription = DataStore.observe(Courier).subscribe(({opType})=>{
+      const subscription = DataStore?.observe(Courier).subscribe(({opType})=>{
         if(opType === 'INSERT' || opType === 'UPDATE' || opType === 'DELETE'){
           fetchImageUrl();
         }
       });
   
-      return () => subscription.unsubscribe();
+      return () => subscription?.unsubscribe();
     }, [dbUser.profilePic]);
+
+    // Fetching all couriers:
+    // delete later from here
+    const fetchCouriers = async () => {
+      try {
+        const couriers = await DataStore.query(Courier);
+        console.log("All Couriers:", couriers);
+      } catch (error) {
+        console.error("Error fetching couriers:", error);
+      }
+    };
+
+    useEffect(() => {
+      fetchCouriers();
+
+      // Optional: observe changes
+      const subscription = DataStore.observe(Courier).subscribe(({ opType, element }) => {
+        console.log("DataStore Event:", opType, element);
+        fetchCouriers(); // Refetch after changes
+      });
+
+      return () => subscription.unsubscribe();
+    }, []);
+
+    // ...............To here.........
 
   return (
     <View style={styles.container}>

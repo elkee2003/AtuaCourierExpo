@@ -25,6 +25,7 @@ const ProfileProvider = ({children}) => {
     const [phoneNumber, setPhoneNumber] = useState("");
     const [courierNIN, setCourierNIN] = useState("");
     const [courierBVN, setCourierBVN] = useState("");
+    const [bankCode, setBankCode] = useState("");
     const [bankName, setBankName] = useState("");
     const [accountName, setAccountName] = useState("");
     const [accountNumber, setAccountNumber] = useState("");
@@ -228,7 +229,7 @@ const ProfileProvider = ({children}) => {
       isOnline, setIsOnline,
       firstName, setFirstName, lastName, setLastName, transportationType, setTransportationType, vehicleType, setVehicleType, model, setModel, plateNumber, setPlateNumber,
       images, setImages, validatVehicleInfo,
-      address, setAddress, phoneNumber, setPhoneNumber, errorMessage, setErrorMessage, profilePic, setProfilePic, landMark, setLandMark, courierNIN, setCourierNIN, courierBVN, setCourierBVN, bankName, setBankName, accountName, setAccountName, accountNumber, setAccountNumber, guarantorName, setGuarantorName, guarantorLastName, setGuarantorLastName, guarantorProfession, setGuarantorProfession, guarantorNumber, setGuarantorNumber, guarantorRelationship, setGuarantorRelationship, guarantorAddress, setGuarantorAddress, guarantorEmail, setGuarantorEmail, guarantorNIN, setGuarantorNIN, lat, setLat, lng, setLng, heading, setHeading,
+      address, setAddress, phoneNumber, setPhoneNumber, errorMessage, setErrorMessage, profilePic, setProfilePic, landMark, setLandMark, courierNIN, setCourierNIN, courierBVN, setCourierBVN,bankCode, setBankCode,  bankName, setBankName, accountName, setAccountName, accountNumber, setAccountNumber, guarantorName, setGuarantorName, guarantorLastName, setGuarantorLastName, guarantorProfession, setGuarantorProfession, guarantorNumber, setGuarantorNumber, guarantorRelationship, setGuarantorRelationship, guarantorAddress, setGuarantorAddress, guarantorEmail, setGuarantorEmail, guarantorNIN, setGuarantorNIN, lat, setLat, lng, setLng, heading, setHeading,
       onValidateCourierInput, onValidateGuarantorInput, validatVehicleInfo,
       }}>
         {children}

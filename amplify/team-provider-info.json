@@ -21,7 +21,8 @@
         "Atua": {}
       },
       "storage": {
-        "s3atuastorage10235b9d": {}
+        "s3atuastorage10235b9d": {},
+        "atuaStorage": {}
       },
       "function": {
         "atuac06ab999c06ab999PostConfirmation": {

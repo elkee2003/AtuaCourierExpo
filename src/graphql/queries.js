@@ -11,6 +11,9 @@ export const getCompanyVehicle = /* GraphQL */ `
       couriercompanyID
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
       __typename
     }
   }
@@ -30,9 +33,45 @@ export const listCompanyVehicles = /* GraphQL */ `
         couriercompanyID
         createdAt
         updatedAt
+        _version
+        _deleted
+        _lastChangedAt
         __typename
       }
       nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const syncCompanyVehicles = /* GraphQL */ `
+  query SyncCompanyVehicles(
+    $filter: ModelCompanyVehicleFilterInput
+    $limit: Int
+    $nextToken: String
+    $lastSync: AWSTimestamp
+  ) {
+    syncCompanyVehicles(
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+      lastSync: $lastSync
+    ) {
+      items {
+        id
+        vehicleType
+        model
+        plateNumber
+        couriercompanyID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
       __typename
     }
   }
@@ -60,9 +99,13 @@ export const companyVehiclesByCouriercompanyID = /* GraphQL */ `
         couriercompanyID
         createdAt
         updatedAt
+        _version
+        _deleted
+        _lastChangedAt
         __typename
       }
       nextToken
+      startedAt
       __typename
     }
   }
@@ -87,12 +130,16 @@ export const getCourierCompany = /* GraphQL */ `
       bankName
       CompanyVehicles {
         nextToken
+        startedAt
         __typename
       }
       accountNumber
       push_token
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
       __typename
     }
   }
@@ -128,9 +175,57 @@ export const listCourierCompanies = /* GraphQL */ `
         push_token
         createdAt
         updatedAt
+        _version
+        _deleted
+        _lastChangedAt
         __typename
       }
       nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const syncCourierCompanies = /* GraphQL */ `
+  query SyncCourierCompanies(
+    $filter: ModelCourierCompanyFilterInput
+    $limit: Int
+    $nextToken: String
+    $lastSync: AWSTimestamp
+  ) {
+    syncCourierCompanies(
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+      lastSync: $lastSync
+    ) {
+      items {
+        id
+        sub
+        firstName
+        lastName
+        profilePic
+        address
+        lat
+        lng
+        landmark
+        phoneNumber
+        email
+        adminFirstName
+        adminLastName
+        adminPhoneNumber
+        bankName
+        accountNumber
+        push_token
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
       __typename
     }
   }
@@ -188,12 +283,20 @@ export const getOrder = /* GraphQL */ `
         lng
         heading
         push_token
+        isApproved
+        approvedBy
         createdAt
         updatedAt
+        _version
+        _deleted
+        _lastChangedAt
         __typename
       }
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
       orderCourierId
       __typename
     }
@@ -225,10 +328,58 @@ export const listOrders = /* GraphQL */ `
         userID
         createdAt
         updatedAt
+        _version
+        _deleted
+        _lastChangedAt
         orderCourierId
         __typename
       }
       nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const syncOrders = /* GraphQL */ `
+  query SyncOrders(
+    $filter: ModelOrderFilterInput
+    $limit: Int
+    $nextToken: String
+    $lastSync: AWSTimestamp
+  ) {
+    syncOrders(
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+      lastSync: $lastSync
+    ) {
+      items {
+        id
+        recipientName
+        recipientNumber
+        recipientNumber2
+        orderDetails
+        parcelOrigin
+        parcelOriginLat
+        parcelOriginLng
+        parcelDestination
+        parcelDestinationLat
+        parcelDestinationLng
+        transportationType
+        status
+        price
+        courierFee
+        userID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        orderCourierId
+        __typename
+      }
+      nextToken
+      startedAt
       __typename
     }
   }
@@ -267,10 +418,14 @@ export const ordersByUserID = /* GraphQL */ `
         userID
         createdAt
         updatedAt
+        _version
+        _deleted
+        _lastChangedAt
         orderCourierId
         __typename
       }
       nextToken
+      startedAt
       __typename
     }
   }
@@ -311,8 +466,13 @@ export const getCourier = /* GraphQL */ `
       lng
       heading
       push_token
+      isApproved
+      approvedBy
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
       __typename
     }
   }
@@ -358,11 +518,79 @@ export const listCouriers = /* GraphQL */ `
         lng
         heading
         push_token
+        isApproved
+        approvedBy
         createdAt
         updatedAt
+        _version
+        _deleted
+        _lastChangedAt
         __typename
       }
       nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const syncCouriers = /* GraphQL */ `
+  query SyncCouriers(
+    $filter: ModelCourierFilterInput
+    $limit: Int
+    $nextToken: String
+    $lastSync: AWSTimestamp
+  ) {
+    syncCouriers(
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+      lastSync: $lastSync
+    ) {
+      items {
+        id
+        sub
+        isOnline
+        firstName
+        lastName
+        profilePic
+        address
+        landMark
+        phoneNumber
+        email
+        courierNIN
+        courierBVN
+        bankName
+        accountName
+        accountNumber
+        transportationType
+        vehicleType
+        model
+        plateNumber
+        maxiImages
+        maxiTransportPrice
+        guarantorName
+        guarantorLastName
+        guarantorProfession
+        guarantorNumber
+        guarantorRelationship
+        guarantorAddress
+        guarantorEmail
+        guarantorNIN
+        lat
+        lng
+        heading
+        push_token
+        isApproved
+        approvedBy
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
       __typename
     }
   }
@@ -384,10 +612,14 @@ export const getUser = /* GraphQL */ `
       push_token
       Orders {
         nextToken
+        startedAt
         __typename
       }
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
       __typename
     }
   }
@@ -414,9 +646,52 @@ export const listUsers = /* GraphQL */ `
         push_token
         createdAt
         updatedAt
+        _version
+        _deleted
+        _lastChangedAt
         __typename
       }
       nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const syncUsers = /* GraphQL */ `
+  query SyncUsers(
+    $filter: ModelUserFilterInput
+    $limit: Int
+    $nextToken: String
+    $lastSync: AWSTimestamp
+  ) {
+    syncUsers(
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+      lastSync: $lastSync
+    ) {
+      items {
+        id
+        sub
+        firstName
+        lastName
+        email
+        phoneNumber
+        profilePic
+        address
+        exactAddress
+        lat
+        lng
+        push_token
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
       __typename
     }
   }

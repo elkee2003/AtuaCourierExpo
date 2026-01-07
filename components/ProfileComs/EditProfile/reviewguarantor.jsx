@@ -7,7 +7,7 @@ import { useAuthContext } from '../../../providers/AuthProvider';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import styles from './styles'
 import { router } from 'expo-router';
-import { DataStore } from 'aws-amplify/datastore';
+import { DataStore } from '@aws-amplify/datastore';
 import { uploadData, remove } from 'aws-amplify/storage';
 import {Courier} from '../../../src/models';
 
@@ -17,9 +17,9 @@ const ReviewGuarantorCom = () => {
         guarantorName, guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN,
     } = useProfileContext()
 
-    console.log(transportationType)
+    const {dbUser, setDbUser, sub} = useAuthContext();
 
-    const {dbUser, setDbUser, sub} = useAuthContext()
+    console.log(dbUser, firstName, lastName)
 
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -143,11 +143,13 @@ const ReviewGuarantorCom = () => {
             const uploadedMaxiImages = await uploadMaxiImages(); // Upload Maxi Images
 
             const courier = await DataStore.save(new Courier({
-            firstName, lastName, transportationType, vehicleType, model, plateNumber,
-            profilePic: uploadedImagePath,
-            maxiImages: uploadedMaxiImages,
-            address, landMark, phoneNumber, courierNIN, courierBVN, bankName, accountName, accountNumber, guarantorName,guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN, 
-            sub,
+                firstName, lastName, transportationType, vehicleType, model, plateNumber,
+                profilePic: uploadedImagePath,
+                maxiImages: uploadedMaxiImages,
+                address, landMark, phoneNumber, courierNIN, courierBVN, bankName, accountName, accountNumber, guarantorName,guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN, 
+                sub,
+                isOnline:false,
+                isApproved:false,
             })
             );
             setDbUser(courier)
