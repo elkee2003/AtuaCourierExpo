@@ -64,12 +64,11 @@ const AuthProvider = ({children}) => {
           // DataStore.clear()
           
           // If statement to check dbuser in the database
-          if (dbusercurrent.length === 0) {
-            // If no user data is found in the cloud, clear the local DataStore
-            await DataStore.clear();
-            setDbUser(null); // Set to null so the UI reflects it as blank
-          } else {
+          if (dbusercurrent.length > 0) {
             setDbUser(dbusercurrent[0]);
+          } else {
+            // DO NOTHING — wait for sync
+            console.log('Waiting for DataStore sync...');
           }
           
           // I commented this out because it is the same with the else if you look above. It was part of the old code before the if statement, therefore if I remove the if statement, I should uncomment setDbUser(dbusercurrent[0])

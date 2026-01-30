@@ -24,7 +24,6 @@ const ProfileProvider = ({children}) => {
     const [landMark, setLandMark] = useState("");
     const [phoneNumber, setPhoneNumber] = useState("");
     const [courierNIN, setCourierNIN] = useState("");
-    const [courierBVN, setCourierBVN] = useState("");
     const [bankCode, setBankCode] = useState("");
     const [bankName, setBankName] = useState("");
     const [accountName, setAccountName] = useState("");
@@ -70,7 +69,7 @@ const ProfileProvider = ({children}) => {
           setErrorMessage('Kindly fill in Phone Number')
           return false;
         }
-        if(!courierNIN){
+        if(courierNIN.length < 9){
           setErrorMessage('Your NIN is required')
           return false;
         }
@@ -162,6 +161,10 @@ const ProfileProvider = ({children}) => {
         setErrorMessage("Guarantor's number is required")
         return false;
       }
+      if(guarantorNIN.length < 9){
+        setErrorMessage("Guarantor NIN is required")
+        return false;
+      }
       if(!guarantorRelationship){
         setErrorMessage("Relationship with Guarantor is required")
         return false;
@@ -206,7 +209,7 @@ const ProfileProvider = ({children}) => {
             setLandMark(dbUser?.landMark || "");
             setPhoneNumber(dbUser?.phoneNumber || "");
             setCourierNIN(dbUser?.courierNIN || "");
-            setCourierBVN(dbUser?.courierBVN || "");
+            setBankCode(dbUser?.bankCode || "");
             setBankName(dbUser?.bankName || "");
             setAccountName(dbUser?.accountName || "");
             setAccountNumber(dbUser?.accountNumber || "");
@@ -229,7 +232,7 @@ const ProfileProvider = ({children}) => {
       isOnline, setIsOnline,
       firstName, setFirstName, lastName, setLastName, transportationType, setTransportationType, vehicleType, setVehicleType, model, setModel, plateNumber, setPlateNumber,
       images, setImages, validatVehicleInfo,
-      address, setAddress, phoneNumber, setPhoneNumber, errorMessage, setErrorMessage, profilePic, setProfilePic, landMark, setLandMark, courierNIN, setCourierNIN, courierBVN, setCourierBVN,bankCode, setBankCode,  bankName, setBankName, accountName, setAccountName, accountNumber, setAccountNumber, guarantorName, setGuarantorName, guarantorLastName, setGuarantorLastName, guarantorProfession, setGuarantorProfession, guarantorNumber, setGuarantorNumber, guarantorRelationship, setGuarantorRelationship, guarantorAddress, setGuarantorAddress, guarantorEmail, setGuarantorEmail, guarantorNIN, setGuarantorNIN, lat, setLat, lng, setLng, heading, setHeading,
+      address, setAddress, phoneNumber, setPhoneNumber, errorMessage, setErrorMessage, profilePic, setProfilePic, landMark, setLandMark, courierNIN, setCourierNIN, bankCode, setBankCode,  bankName, setBankName, accountName, setAccountName, accountNumber, setAccountNumber, guarantorName, setGuarantorName, guarantorLastName, setGuarantorLastName, guarantorProfession, setGuarantorProfession, guarantorNumber, setGuarantorNumber, guarantorRelationship, setGuarantorRelationship, guarantorAddress, setGuarantorAddress, guarantorEmail, setGuarantorEmail, guarantorNIN, setGuarantorNIN, lat, setLat, lng, setLng, heading, setHeading,
       onValidateCourierInput, onValidateGuarantorInput, validatVehicleInfo,
       }}>
         {children}

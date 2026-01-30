@@ -197,7 +197,7 @@ export const onCreateOrder = /* GraphQL */ `
         phoneNumber
         email
         courierNIN
-        courierBVN
+        bankCode
         bankName
         accountName
         accountNumber
@@ -269,7 +269,7 @@ export const onUpdateOrder = /* GraphQL */ `
         phoneNumber
         email
         courierNIN
-        courierBVN
+        bankCode
         bankName
         accountName
         accountNumber
@@ -341,7 +341,7 @@ export const onDeleteOrder = /* GraphQL */ `
         phoneNumber
         email
         courierNIN
-        courierBVN
+        bankCode
         bankName
         accountName
         accountNumber
@@ -396,7 +396,7 @@ export const onCreateCourier = /* GraphQL */ `
       phoneNumber
       email
       courierNIN
-      courierBVN
+      bankCode
       bankName
       accountName
       accountNumber
@@ -443,7 +443,7 @@ export const onUpdateCourier = /* GraphQL */ `
       phoneNumber
       email
       courierNIN
-      courierBVN
+      bankCode
       bankName
       accountName
       accountNumber
@@ -490,7 +490,7 @@ export const onDeleteCourier = /* GraphQL */ `
       phoneNumber
       email
       courierNIN
-      courierBVN
+      bankCode
       bankName
       accountName
       accountNumber

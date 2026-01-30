@@ -261,7 +261,7 @@ export const getOrder = /* GraphQL */ `
         phoneNumber
         email
         courierNIN
-        courierBVN
+        bankCode
         bankName
         accountName
         accountNumber
@@ -444,7 +444,7 @@ export const getCourier = /* GraphQL */ `
       phoneNumber
       email
       courierNIN
-      courierBVN
+      bankCode
       bankName
       accountName
       accountNumber
@@ -496,7 +496,7 @@ export const listCouriers = /* GraphQL */ `
         phoneNumber
         email
         courierNIN
-        courierBVN
+        bankCode
         bankName
         accountName
         accountNumber
@@ -558,7 +558,7 @@ export const syncCouriers = /* GraphQL */ `
         phoneNumber
         email
         courierNIN
-        courierBVN
+        bankCode
         bankName
         accountName
         accountNumber

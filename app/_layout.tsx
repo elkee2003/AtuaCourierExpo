@@ -1,10 +1,10 @@
-import '../src/amplify';
 // import { useEffect, useState } from 'react';
 // import { DataStore } from 'aws-amplify/datastore';
 import { Stack } from "expo-router";
 import ProfileProvider from '@/providers/ProfileProvider';
 import AuthProvider from '@/providers/AuthProvider';
 import OrderProvider from '@/providers/OrderProvider';
+import { AutocompleteDropdownContextProvider } from "react-native-autocomplete-dropdown";
 import {
   withAuthenticator,
   useAuthenticator
@@ -37,6 +37,7 @@ const RootLayout = () => {
 
   return (
     <AuthProvider>
+      <AutocompleteDropdownContextProvider>
       <ProfileProvider>
         <OrderProvider>
           <Stack screenOptions={{
@@ -46,6 +47,7 @@ const RootLayout = () => {
           </Stack>
         </OrderProvider>
       </ProfileProvider>
+      </AutocompleteDropdownContextProvider>
     </AuthProvider>
   );
 }

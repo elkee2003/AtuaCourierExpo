@@ -542,8 +542,8 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
-                "courierBVN": {
-                    "name": "courierBVN",
+                "bankCode": {
+                    "name": "bankCode",
                     "isArray": false,
                     "type": "String",
                     "isRequired": false,
@@ -912,5 +912,5 @@ export const schema = {
     },
     "nonModels": {},
     "codegenVersion": "3.4.4",
-    "version": "136b77b926be85ccd96038fd9e99c3e3"
+    "version": "cab1a2fdd1ee217b517e113c59a53dfd"
 };

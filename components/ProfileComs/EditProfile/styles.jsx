@@ -154,6 +154,55 @@ const styles = StyleSheet.create({
         borderRadius:20,
         marginBottom:20,
     },
+
+    // Bank styles
+    bankContainer: {
+        zIndex: 3000, // VERY IMPORTANT
+    },
+    autocompleteContainer: {
+        zIndex: 1000, 
+        backgroundColor: "#fff",
+        borderRadius: 5,
+        marginBottom:10,
+    },
+
+    inputContainerStyle:{
+        backgroundColor: "transparent",
+    },
+
+    autocompleteInput: {
+        borderColor: "#ccc",
+        borderRadius: 5,
+        padding: 12,
+        fontSize: 16,
+        backgroundColor: "#fff",
+        marginBottom:10,
+    },
+
+    autocompleteList: {
+        borderWidth: 1,
+        borderColor: "#ccc",
+        borderRadius: 5,
+        marginTop: 5,
+    },
+
+    rightButtonsContainerStyle:{
+        backgroundColor: "#fff",
+        borderRadius: 5,
+    },
+
+    bankLastInput: {
+        marginBottom:8,
+        backgroundColor: "white",
+        padding: 15,
+        borderRadius: 5,
+        fontSize:16,
+    },
+
+    success: {
+        color: "green",
+        marginTop: 10,
+    },
   
   })
 

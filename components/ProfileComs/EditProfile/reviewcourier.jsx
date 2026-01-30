@@ -8,7 +8,7 @@ import { router } from 'expo-router';
 
 const ReviewCourierCom = () => {
     const {
-        firstName, lastName, profilePic, transportationType, vehicleType, model, plateNumber, images, address, phoneNumber, landMark, courierNIN, courierBVN, bankName, accountName, accountNumber,
+        firstName, lastName, profilePic, transportationType, vehicleType, model, plateNumber, images, address, phoneNumber, landMark, courierNIN, bankName, accountName, accountNumber,
     } = useProfileContext()
 
     // Navigation Function
@@ -88,9 +88,6 @@ const ReviewCourierCom = () => {
 
             <Text style={styles.subHeader}>NIN:</Text>
             <Text style={styles.inputReview}>{courierNIN}</Text>
-
-            <Text style={styles.subHeader}>BVN:</Text>
-            <Text style={styles.inputReview}>{courierBVN}</Text>
 
             <Text style={styles.subHeader}>Bank Name:</Text>
             <Text style={styles.inputReview}>{bankName}</Text>

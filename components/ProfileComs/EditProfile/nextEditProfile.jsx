@@ -49,13 +49,13 @@ const NextEditProfile = () => {
         <TextInput 
         value={guarantorName}
         onChangeText={setGuarantorName}
-        placeholder="Guarantor's first Name"
+        placeholder="Guarantor's First Name"
         style={styles.input}
         />
         <TextInput 
         value={guarantorLastName}
         onChangeText={setGuarantorLastName}
-        placeholder="Guarantor's surname"
+        placeholder="Guarantor's Last Name"
         style={styles.input}
         />
         <TextInput 
@@ -90,19 +90,20 @@ const NextEditProfile = () => {
         />
 
         <TextInput
+          value={guarantorNIN}
+          onChangeText={setGuarantorNIN}
+          placeholder="Guarantor's NIN"
+          style={styles.input}
+          keyboardType='numeric'
+        />
+
+       <TextInput
           value={guarantorEmail}
           onChangeText={setGuarantorEmail}
           placeholder="Guarantor's email (Optional)"
           autoCapitalize="none"
           style={styles.input}
-        />
-        <TextInput
-          value={guarantorNIN}
-          onChangeText={setGuarantorNIN}
-          placeholder="Guarantor's NIN (Optional)"
-          style={styles.input}
-          keyboardType='numeric'
-        />
+        /> 
       </ScrollView>
 
       {/* Error Message */}

@@ -1,178 +1,174 @@
-import { View, Text, Image, TouchableOpacity, Alert, ScrollView } from 'react-native'
-import React, {useState, useEffect} from 'react'
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+} from 'react-native';
+import React, { useEffect, useState } from 'react';
 import { useProfileContext } from '../../../providers/ProfileProvider';
-import {useAuthContext} from '@/providers/AuthProvider';
-import Placeholder from '../../../assets/images/placeholder.png'
-import { DataStore } from '@aws-amplify/datastore';
-import {Courier} from '@/src/models';
+import { useAuthContext } from '@/providers/AuthProvider';
+import Placeholder from '../../../assets/images/placeholder.png';
 import { getUrl } from 'aws-amplify/storage';
-import styles from './styles';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
 import { signOut } from 'aws-amplify/auth';
+import { router } from 'expo-router';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import styles from './styles';
 
 const MainProfile = () => {
+  const {
+    firstName, lastName, phoneNumber, bankName, accountName, accountNumber, transportationType, profilePic, setProfilePic,
+  } = useProfileContext();
 
-    const {
-      firstName, lastName, profilePic, setProfilePic,  address, phoneNumber, landMark, courierNIN, courierBVN, bankName, accountName, accountNumber, guarantorName, guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN,
-    } = useProfileContext()
+  const { dbUser } = useAuthContext();
+  const [loading, setLoading] = useState(true);
 
-    const {dbUser} = useAuthContext();
-    console.log(dbUser)
-    const [loading, setLoading]= useState(true);
+  const onSignout = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Sign Out', style: 'destructive', onPress: signOut },
+      ],
+    );
+  };
 
-    async function handleSignOut() {
-      try {
-        await signOut();
-      } catch (error) {
-        console.log('error signing out: ', error);
-      }
+  const fetchImageUrl = async () => {
+    if (!dbUser?.profilePic || dbUser.profilePic.startsWith('http')) {
+      setProfilePic(dbUser?.profilePic || null);
+      setLoading(false);
+      return;
     }
 
-    const onSignout = ()=>{
-      Alert.alert(
-        'Sign Out',
-        'Are you sure you want to sign out?',
-        [
-          {
-            text: "Cancel",
-            style: "cancel",
-            
-          },
-          {
-            text: "Yes",
-            onPress: () => handleSignOut(),
-          },
-        ],
-        { cancelable: true }
-      )
+    setLoading(true);
+    try {
+      const result = await getUrl({
+        path: dbUser.profilePic,
+        options: { validateObjectExistence: true },
+      });
+      setProfilePic(result.url.toString());
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    // Fetch signed URL for profile picture
-    const fetchImageUrl = async () => {
-      setLoading(true);
-      try {
-        const result = await getUrl({
-          path: dbUser.profilePic,
-          options: {
-            validateObjectExistence: true, 
-            expiresIn: null, // No expiration limit
-          },
-        });
-
-        if (result.url) {
-          setProfilePic(result.url.toString());
-        }
-      } catch (error) {
-        console.error('Error fetching profile pic URL:', error);
-      }finally {
-        setLoading(false);
-      }
-    };
-
-    useEffect(() => {
-      if (dbUser.profilePic) {
-        fetchImageUrl();
-      }
-  
-      const subscription = DataStore?.observe(Courier).subscribe(({opType})=>{
-        if(opType === 'INSERT' || opType === 'UPDATE' || opType === 'DELETE'){
-          fetchImageUrl();
-        }
-      });
-  
-      return () => subscription?.unsubscribe();
-    }, [dbUser.profilePic]);
-
-    // Fetching all couriers:
-    // delete later from here
-    const fetchCouriers = async () => {
-      try {
-        const couriers = await DataStore.query(Courier);
-        console.log("All Couriers:", couriers);
-      } catch (error) {
-        console.error("Error fetching couriers:", error);
-      }
-    };
-
-    useEffect(() => {
-      fetchCouriers();
-
-      // Optional: observe changes
-      const subscription = DataStore.observe(Courier).subscribe(({ opType, element }) => {
-        console.log("DataStore Event:", opType, element);
-        fetchCouriers(); // Refetch after changes
-      });
-
-      return () => subscription.unsubscribe();
-    }, []);
-
-    // ...............To here.........
+  useEffect(() => {
+    fetchImageUrl();
+  }, [dbUser?.profilePic]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Profile</Text>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.signOutBtn} onPress={onSignout}>
+          <Ionicons name="log-out-outline" size={20} color="#fff" />
+          <Text style={styles.signOut}>Sign Out</Text>
+        </TouchableOpacity>
 
-      {/* Back Button */}
-      {/* <TouchableOpacity onPress={()=>router.back()} style={styles.bckBtnCon}>
-            <Ionicons name={'arrow-back'} style={styles.bckBtnIcon}/>
-      </TouchableOpacity> */}
-
-      {/* Sign out button */}
-      <TouchableOpacity style={styles.signoutBtn} onPress={onSignout}>
-        <Text style={styles.signoutTxt}>Sign Out</Text>
-      </TouchableOpacity>
-
-      <ScrollView contentContainerStyle={styles.centerCon} showsVerticalScrollIndicator={false}>
-
-        {/* Profile Picture */}
-        <View style={styles.profilePicContainer}>
-          {loading ? (
-            <Image 
-              source={Placeholder} 
-              style={styles.img} 
-            /> // Show placeholder while loading
-          ) : (
-            <Image source={{ uri: profilePic }} style={styles.img} onError={() => setProfilePic(null)} />
-          )}
+        <View style={styles.avatarWrapper}>
+          <Image
+            source={
+              loading || !profilePic
+                ? Placeholder
+                : { uri: profilePic }
+            }
+            style={styles.avatar}
+          />
         </View>
 
-        {/* Relevant Info section */}
-        <View>
-          <Text style={styles.details}>{firstName}</Text>
-          <Text style={styles.details}>{phoneNumber}</Text>
-          <Text style={styles.details}>{bankName}</Text>
-          <Text style={styles.details}>{accountName}</Text>
-          <Text style={styles.details}>{accountNumber}</Text>
-          <Text style={styles.details}>{guarantorName}</Text>
-        </View>
+        <Text style={styles.name}>
+          {firstName} {lastName}
+        </Text>
+        <Text style={styles.role}>Courier Partner</Text>
+      </View>
 
-        {/* Button Section */}
-        <View>
-          <View style={styles.mainBtnsCard}>
-            <TouchableOpacity style={styles.viewInfo} onPress={()=>router.push('/profile/reviewinfo/reviewcourier')}>
-                <Text style={styles.viewInfoText}>View Info</Text>
-            </TouchableOpacity>
+      {/* Info Card */}
+      <View style={styles.card}>
+        <InfoRow 
+          icon={<Ionicons name="call-outline" size={18} color="#6B7280" />}
+          label="Phone" 
+          value={phoneNumber} 
+        />
 
-            <TouchableOpacity style={styles.editProfile} onPress={()=>router.push('/profile/editprofile')}>
-                <Text style={styles.editProfileTxt}>Edit Profile</Text>
-            </TouchableOpacity>
-          </View>
+        <InfoRow
+          icon={<FontAwesome name="road" size={18} color="#6B7280" />}
+          label="Vehicle Type"
+          value={transportationType}
+        />
+        
+        <InfoRow 
+          icon={<Ionicons name="business-outline" size={18} color="#6B7280" />} 
+          label="Bank" 
+          value={bankName} 
+        />
 
-          {/* Cards container */}
-          <View style={styles.tetiaryCard}>
-            <TouchableOpacity style={styles.btnTetiary} onPress={()=>router.push('/transportationtype')}>
-              <Text style={styles.btnTetiaryTxt}>Transportation Type</Text>
-            </TouchableOpacity>
+        <InfoRow 
+          icon={<Ionicons name="person-outline" size={18} color="#6B7280" />}  
+          label="Account Name" 
+          value={accountName} 
+        />
 
-            <TouchableOpacity style={styles.btnTetiary} onPress={()=>router.push('/policies')}>
-              <Text style={styles.btnTetiaryTxt}>Policies</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
+        <InfoRow 
+          icon={<Ionicons name="card-outline"  size={18} color="#6B7280" />}  
+          label="Account Number" 
+          value={accountNumber} 
+        />
+      </View>
+
+      {/* Actions */}
+      <View style={styles.actions}>
+        <TouchableOpacity
+          style={styles.primaryBtn}
+          onPress={() => router.push('/profile/editprofile')}
+        >
+          <Text style={styles.primaryText}>Edit Profile</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.secondaryBtn}
+          onPress={() => router.push('/profile/reviewinfo/reviewcourier')}
+        >
+          <Text style={styles.secondaryText}>View Full Info</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Settings */}
+      <View style={styles.card}>
+        <SettingItem
+          label="Transportation Type"
+          onPress={() => router.push('/transportationtype')}
+        />
+        <SettingItem
+          label="Policies & Terms"
+          onPress={() => router.push('/policies')}
+        />
+      </View>
+    </ScrollView>
+  );
+};
+
+export default MainProfile;
+
+/* ---------- Small Components ---------- */
+
+const InfoRow = ({ icon, label, value }) => (
+  <View style={styles.infoRow}>
+    {icon}
+    <View style={{ marginLeft: 12 }}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoValue}>{value || '—'}</Text>
     </View>
-  )
-}
+  </View>
+);
 
-export default MainProfile
+const SettingItem = ({ label, onPress }) => (
+  <TouchableOpacity style={styles.settingItem} onPress={onPress}>
+    <Text style={styles.settingText}>{label}</Text>
+    <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+  </TouchableOpacity>
+);

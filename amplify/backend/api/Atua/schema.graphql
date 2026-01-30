@@ -66,7 +66,6 @@ type Courier @model @auth(rules: [{allow: public}]) {
   phoneNumber: String
   email: String
   courierNIN: String
-  courierBVN: String
   bankCode: String
   bankName: String
   accountName: String

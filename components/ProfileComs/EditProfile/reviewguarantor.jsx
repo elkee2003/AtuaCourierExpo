@@ -13,7 +13,7 @@ import {Courier} from '../../../src/models';
 
 const ReviewGuarantorCom = () => {
     const {
-        firstName, lastName, profilePic, transportationType, vehicleType, model, plateNumber, images,  address, phoneNumber, landMark, courierNIN, courierBVN, bankName, accountName, accountNumber,
+        firstName, lastName, profilePic, transportationType, vehicleType, model, plateNumber, images,  address, phoneNumber, landMark, courierNIN, bankCode, bankName, accountName, accountNumber,
         guarantorName, guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN,
     } = useProfileContext()
 
@@ -146,7 +146,7 @@ const ReviewGuarantorCom = () => {
                 firstName, lastName, transportationType, vehicleType, model, plateNumber,
                 profilePic: uploadedImagePath,
                 maxiImages: uploadedMaxiImages,
-                address, landMark, phoneNumber, courierNIN, courierBVN, bankName, accountName, accountNumber, guarantorName,guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN, 
+                address, landMark, phoneNumber, courierNIN,  bankCode, bankName, accountName, accountNumber, guarantorName,guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN, 
                 sub,
                 isOnline:false,
                 isApproved:false,
@@ -178,7 +178,7 @@ const ReviewGuarantorCom = () => {
                 updated.landMark = landMark, 
                 updated.phoneNumber = phoneNumber, 
                 updated.courierNIN = courierNIN, 
-                updated.courierBVN = courierBVN, 
+                updated.bankCode = bankCode,
                 updated.bankName = bankName, 
                 updated.accountName = accountName, 
                 updated.accountNumber = accountNumber, 

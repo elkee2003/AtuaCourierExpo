@@ -181,7 +181,7 @@ type EagerCourier = {
   readonly phoneNumber?: string | null;
   readonly email?: string | null;
   readonly courierNIN?: string | null;
-  readonly courierBVN?: string | null;
+  readonly bankCode?: string | null;
   readonly bankName?: string | null;
   readonly accountName?: string | null;
   readonly accountNumber?: string | null;
@@ -225,7 +225,7 @@ type LazyCourier = {
   readonly phoneNumber?: string | null;
   readonly email?: string | null;
   readonly courierNIN?: string | null;
-  readonly courierBVN?: string | null;
+  readonly bankCode?: string | null;
   readonly bankName?: string | null;
   readonly accountName?: string | null;
   readonly accountNumber?: string | null;
