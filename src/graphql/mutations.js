@@ -206,6 +206,7 @@ export const createOrder = /* GraphQL */ `
         phoneNumber
         email
         courierNIN
+        courierNINImage
         bankCode
         bankName
         accountName
@@ -224,6 +225,7 @@ export const createOrder = /* GraphQL */ `
         guarantorAddress
         guarantorEmail
         guarantorNIN
+        guarantorNINImage
         lat
         lng
         heading
@@ -281,6 +283,7 @@ export const updateOrder = /* GraphQL */ `
         phoneNumber
         email
         courierNIN
+        courierNINImage
         bankCode
         bankName
         accountName
@@ -299,6 +302,7 @@ export const updateOrder = /* GraphQL */ `
         guarantorAddress
         guarantorEmail
         guarantorNIN
+        guarantorNINImage
         lat
         lng
         heading
@@ -356,6 +360,7 @@ export const deleteOrder = /* GraphQL */ `
         phoneNumber
         email
         courierNIN
+        courierNINImage
         bankCode
         bankName
         accountName
@@ -374,6 +379,7 @@ export const deleteOrder = /* GraphQL */ `
         guarantorAddress
         guarantorEmail
         guarantorNIN
+        guarantorNINImage
         lat
         lng
         heading
@@ -414,6 +420,7 @@ export const createCourier = /* GraphQL */ `
       phoneNumber
       email
       courierNIN
+      courierNINImage
       bankCode
       bankName
       accountName
@@ -432,6 +439,7 @@ export const createCourier = /* GraphQL */ `
       guarantorAddress
       guarantorEmail
       guarantorNIN
+      guarantorNINImage
       lat
       lng
       heading
@@ -464,6 +472,7 @@ export const updateCourier = /* GraphQL */ `
       phoneNumber
       email
       courierNIN
+      courierNINImage
       bankCode
       bankName
       accountName
@@ -482,6 +491,7 @@ export const updateCourier = /* GraphQL */ `
       guarantorAddress
       guarantorEmail
       guarantorNIN
+      guarantorNINImage
       lat
       lng
       heading
@@ -514,6 +524,7 @@ export const deleteCourier = /* GraphQL */ `
       phoneNumber
       email
       courierNIN
+      courierNINImage
       bankCode
       bankName
       accountName
@@ -532,6 +543,7 @@ export const deleteCourier = /* GraphQL */ `
       guarantorAddress
       guarantorEmail
       guarantorNIN
+      guarantorNINImage
       lat
       lng
       heading

@@ -11,18 +11,47 @@ import { useProfileContext } from '../../../providers/ProfileProvider';
 const NextEditProfile = () => {
 
     const {
-        guarantorName, setGuarantorName, guarantorLastName, setGuarantorLastName, guarantorProfession, setGuarantorProfession, guarantorNumber, setGuarantorNumber, guarantorRelationship, setGuarantorRelationship, guarantorAddress, setGuarantorAddress, guarantorEmail, setGuarantorEmail, guarantorNIN, setGuarantorNIN,errorMessage, onValidateGuarantorInput,
+        guarantorName, setGuarantorName, guarantorLastName, setGuarantorLastName, guarantorProfession, setGuarantorProfession, guarantorNumber, setGuarantorNumber, guarantorRelationship, setGuarantorRelationship, guarantorAddress, setGuarantorAddress, guarantorEmail, setGuarantorEmail, guarantorNIN, setGuarantorNIN,guarantorNINImage, setGuarantorNINImage, errorMessage, onValidateGuarantorInput,
     } = useProfileContext()
 
-    const pickImage = async () => {
-      // No permissions request is necessary for launching the image library
+    // Pick NIN Function
+    const showImageOptions = () => {
+      Alert.alert(
+        "Upload NIN Image",
+        "Choose an option",
+        [
+          { text: "Camera", onPress: openCamera },
+          { text: "Gallery", onPress: pickNINImage },
+          { text: "Cancel", style: "cancel" },
+        ]
+      );
+    };
+
+    const openCamera = async () => {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert("Permission required", "Camera access is needed.");
+        return;
+      }
+
+      let result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        quality: 0.8,
+      });
+
+      if (!result.canceled) {
+        setGuarantorNINImage(result.assets[0].uri);
+      }
+    };
+
+    const pickNINImage = async () => {
       let result = await ImagePicker.launchImageLibraryAsync({
         allowsEditing: true,
-        quality: 1,
+        quality: 0.8,
       });
-  
+
       if (!result.canceled) {
-        setProfilePic(result.assets[0].uri);
+        setGuarantorNINImage(result.assets[0].uri);
       }
     };
     
@@ -46,49 +75,71 @@ const NextEditProfile = () => {
       <Text style={styles.addGuarantorSub}>Add Guarantor</Text>
         
       <ScrollView>
+        <Text style={styles.subHeader}>
+          Guarantor's First Name:
+        </Text>
         <TextInput 
-        value={guarantorName}
-        onChangeText={setGuarantorName}
-        placeholder="Guarantor's First Name"
-        style={styles.input}
-        />
-        <TextInput 
-        value={guarantorLastName}
-        onChangeText={setGuarantorLastName}
-        placeholder="Guarantor's Last Name"
-        style={styles.input}
-        />
-        <TextInput 
-        value={guarantorProfession}
-        onChangeText={setGuarantorProfession}
-        placeholder="Guarantor's profession eg: Lawyer, plumber"
-        style={styles.input}
+          value={guarantorName}
+          onChangeText={setGuarantorName}
+          placeholder="Guarantor's First Name"
+          style={styles.input}
         />
 
+        <Text style={styles.subHeader}>
+          Guarantor's Last Name:
+        </Text>
         <TextInput 
-        value={guarantorAddress}
-        onChangeText={setGuarantorAddress}
-        placeholder="Guarantor's address"
-        multiline
-        style={styles.input}
+          value={guarantorLastName}
+          onChangeText={setGuarantorLastName}
+          placeholder="Guarantor's Last Name"
+          style={styles.input}
+        />
+        <Text style={styles.subHeader}>
+          Guarantor's Profession:
+        </Text>
+        <TextInput 
+          value={guarantorProfession}
+          onChangeText={setGuarantorProfession}
+          placeholder="Guarantor's profession eg: Lawyer, plumber"
+          style={styles.input}
+        />
+
+        <Text style={styles.subHeader}>
+          Guarantor's Address:
+        </Text>
+        <TextInput 
+          value={guarantorAddress}
+          onChangeText={setGuarantorAddress}
+          placeholder="Guarantor's address"
+          multiline
+          style={styles.input}
         />
       
+        <Text style={styles.subHeader}>
+          Guarantor's Phone Number:
+        </Text>
         <TextInput
-        value={guarantorNumber}
-        onChangeText={setGuarantorNumber}
-        placeholder="08000000000"
-        style={styles.input}
-        keyboardType='numeric'
+          value={guarantorNumber}
+          onChangeText={setGuarantorNumber}
+          placeholder="08000000000"
+          style={styles.input}
+          keyboardType='numeric'
         />
 
+        <Text style={styles.subHeader}>
+          Relationship With Guarantor:
+        </Text>
         <TextInput 
-        value={guarantorRelationship}
-        onChangeText={setGuarantorRelationship}
-        placeholder="Relationship with Guarantor eg: Friend, Mother, Boss etc"
-        multiline
-        style={styles.input}
+          value={guarantorRelationship}
+          onChangeText={setGuarantorRelationship}
+          placeholder="Relationship with Guarantor eg: Friend, Mother, Boss etc"
+          multiline
+          style={styles.input}
         />
 
+        <Text style={styles.subHeader}>
+          Guarantor's NIN:
+        </Text>
         <TextInput
           value={guarantorNIN}
           onChangeText={setGuarantorNIN}
@@ -97,7 +148,42 @@ const NextEditProfile = () => {
           keyboardType='numeric'
         />
 
-       <TextInput
+        {/* NIN Image Upload Section */}
+        <Text style={styles.sectionTitle}>Guarantor National ID</Text>
+
+        <View style={styles.ninCard}>
+          {guarantorNINImage ? (
+            <>
+              <Image source={{ uri: guarantorNINImage }} style={styles.ninImage} />
+
+              <View style={styles.ninActions}>
+                <TouchableOpacity onPress={pickNINImage} style={styles.replaceBtn}>
+                  <Text style={styles.replaceText}>Replace</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => setCourierNINImage(null)}
+                  style={styles.removeBtn}
+                >
+                  <Text style={styles.removeText}>Remove</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <TouchableOpacity onPress={showImageOptions} style={styles.uploadBox}>
+              <Ionicons name="cloud-upload-outline" size={40} color="#07a830" />
+              <Text style={styles.uploadTitle}>Upload NIN Slip</Text>
+              <Text style={styles.uploadSub}>
+                Take a clear photo or upload from gallery
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <Text style={styles.subHeader}>
+          Guarantor's Email:
+        </Text>
+        <TextInput
           value={guarantorEmail}
           onChangeText={setGuarantorEmail}
           placeholder="Guarantor's email (Optional)"

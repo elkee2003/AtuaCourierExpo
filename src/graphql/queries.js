@@ -261,6 +261,7 @@ export const getOrder = /* GraphQL */ `
         phoneNumber
         email
         courierNIN
+        courierNINImage
         bankCode
         bankName
         accountName
@@ -279,6 +280,7 @@ export const getOrder = /* GraphQL */ `
         guarantorAddress
         guarantorEmail
         guarantorNIN
+        guarantorNINImage
         lat
         lng
         heading
@@ -444,6 +446,7 @@ export const getCourier = /* GraphQL */ `
       phoneNumber
       email
       courierNIN
+      courierNINImage
       bankCode
       bankName
       accountName
@@ -462,6 +465,7 @@ export const getCourier = /* GraphQL */ `
       guarantorAddress
       guarantorEmail
       guarantorNIN
+      guarantorNINImage
       lat
       lng
       heading
@@ -496,6 +500,7 @@ export const listCouriers = /* GraphQL */ `
         phoneNumber
         email
         courierNIN
+        courierNINImage
         bankCode
         bankName
         accountName
@@ -514,6 +519,7 @@ export const listCouriers = /* GraphQL */ `
         guarantorAddress
         guarantorEmail
         guarantorNIN
+        guarantorNINImage
         lat
         lng
         heading
@@ -558,6 +564,7 @@ export const syncCouriers = /* GraphQL */ `
         phoneNumber
         email
         courierNIN
+        courierNINImage
         bankCode
         bankName
         accountName
@@ -576,6 +583,7 @@ export const syncCouriers = /* GraphQL */ `
         guarantorAddress
         guarantorEmail
         guarantorNIN
+        guarantorNINImage
         lat
         lng
         heading

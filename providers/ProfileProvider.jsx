@@ -24,6 +24,7 @@ const ProfileProvider = ({children}) => {
     const [landMark, setLandMark] = useState("");
     const [phoneNumber, setPhoneNumber] = useState("");
     const [courierNIN, setCourierNIN] = useState("");
+    const [courierNINImage, setCourierNINImage] = useState("");
     const [bankCode, setBankCode] = useState("");
     const [bankName, setBankName] = useState("");
     const [accountName, setAccountName] = useState("");
@@ -36,6 +37,7 @@ const ProfileProvider = ({children}) => {
     const [guarantorAddress, setGuarantorAddress] = useState("");
     const [guarantorEmail, setGuarantorEmail] = useState("");
     const [guarantorNIN, setGuarantorNIN] = useState("");
+    const [guarantorNINImage, setGuarantorNINImage] = useState("");
     const [lat, setLat] = useState("0");
     const [lng, setLng] = useState("0");
     const [heading, setHeading] = useState(heading);
@@ -71,6 +73,10 @@ const ProfileProvider = ({children}) => {
         }
         if(courierNIN.length < 9){
           setErrorMessage('Your NIN is required')
+          return false;
+        }
+        if(!courierNINImage){
+          setErrorMessage('Your NIN Image is required')
           return false;
         }
         if(!bankName){
@@ -209,6 +215,7 @@ const ProfileProvider = ({children}) => {
             setLandMark(dbUser?.landMark || "");
             setPhoneNumber(dbUser?.phoneNumber || "");
             setCourierNIN(dbUser?.courierNIN || "");
+            setCourierNINImage(dbUser?.courierNINImage || "");
             setBankCode(dbUser?.bankCode || "");
             setBankName(dbUser?.bankName || "");
             setAccountName(dbUser?.accountName || "");
@@ -221,6 +228,7 @@ const ProfileProvider = ({children}) => {
             setGuarantorAddress(dbUser?.guarantorAddress || "");
             setGuarantorEmail(dbUser?.guarantorEmail || "");
             setGuarantorNIN(dbUser?.guarantorNIN || "");
+            setGuarantorNINImage(dbUser?.guarantorNINImage || "");
             setLat(dbUser?.lat?.toString() || "0");
             setLng(dbUser?.lng?.toString() || "0");
             setHeading(dbUser.heading || heading);
@@ -232,7 +240,7 @@ const ProfileProvider = ({children}) => {
       isOnline, setIsOnline,
       firstName, setFirstName, lastName, setLastName, transportationType, setTransportationType, vehicleType, setVehicleType, model, setModel, plateNumber, setPlateNumber,
       images, setImages, validatVehicleInfo,
-      address, setAddress, phoneNumber, setPhoneNumber, errorMessage, setErrorMessage, profilePic, setProfilePic, landMark, setLandMark, courierNIN, setCourierNIN, bankCode, setBankCode,  bankName, setBankName, accountName, setAccountName, accountNumber, setAccountNumber, guarantorName, setGuarantorName, guarantorLastName, setGuarantorLastName, guarantorProfession, setGuarantorProfession, guarantorNumber, setGuarantorNumber, guarantorRelationship, setGuarantorRelationship, guarantorAddress, setGuarantorAddress, guarantorEmail, setGuarantorEmail, guarantorNIN, setGuarantorNIN, lat, setLat, lng, setLng, heading, setHeading,
+      address, setAddress, phoneNumber, setPhoneNumber, errorMessage, setErrorMessage, profilePic, setProfilePic, landMark, setLandMark, courierNIN, setCourierNIN, courierNINImage, setCourierNINImage, bankCode, setBankCode,  bankName, setBankName, accountName, setAccountName, accountNumber, setAccountNumber, guarantorName, setGuarantorName, guarantorLastName, setGuarantorLastName, guarantorProfession, setGuarantorProfession, guarantorNumber, setGuarantorNumber, guarantorRelationship, setGuarantorRelationship, guarantorAddress, setGuarantorAddress, guarantorEmail, setGuarantorEmail, guarantorNIN, setGuarantorNIN, guarantorNINImage, setGuarantorNINImage, lat, setLat, lng, setLng, heading, setHeading,
       onValidateCourierInput, onValidateGuarantorInput, validatVehicleInfo,
       }}>
         {children}

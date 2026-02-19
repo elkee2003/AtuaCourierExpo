@@ -60,6 +60,13 @@ const styles = StyleSheet.create({
         marginVertical:10,
         gap:10,
     },
+    reviewNinImage: {
+        width: "100%",
+        height: 200,
+        borderRadius: 12,
+        marginTop: 10,
+        resizeMode: "cover",
+    },
     doneBtn:{
         backgroundColor:'#1a1b1a',
         marginTop:10,

@@ -542,6 +542,13 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
+                "courierNINImage": {
+                    "name": "courierNINImage",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
                 "bankCode": {
                     "name": "bankCode",
                     "isArray": false,
@@ -664,6 +671,13 @@ export const schema = {
                 },
                 "guarantorNIN": {
                     "name": "guarantorNIN",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "guarantorNINImage": {
+                    "name": "guarantorNINImage",
                     "isArray": false,
                     "type": "String",
                     "isRequired": false,
@@ -912,5 +926,5 @@ export const schema = {
     },
     "nonModels": {},
     "codegenVersion": "3.4.4",
-    "version": "cab1a2fdd1ee217b517e113c59a53dfd"
+    "version": "50de4f20e3a132b389dafc35451e997f"
 };

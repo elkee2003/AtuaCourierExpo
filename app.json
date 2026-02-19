@@ -30,7 +30,12 @@
       ],
       "package": "com.anonymous.AtuaCourier",
       "runtimeVersion": "1.0.0",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBC20OJWrWULw_Nj_ZSiV3eKp0gO3OyCIw"
+        }
+      }
     },
     "web": {
       "bundler": "metro",

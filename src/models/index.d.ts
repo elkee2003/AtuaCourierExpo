@@ -181,6 +181,7 @@ type EagerCourier = {
   readonly phoneNumber?: string | null;
   readonly email?: string | null;
   readonly courierNIN?: string | null;
+  readonly courierNINImage?: string | null;
   readonly bankCode?: string | null;
   readonly bankName?: string | null;
   readonly accountName?: string | null;
@@ -199,6 +200,7 @@ type EagerCourier = {
   readonly guarantorAddress?: string | null;
   readonly guarantorEmail?: string | null;
   readonly guarantorNIN?: string | null;
+  readonly guarantorNINImage?: string | null;
   readonly lat?: number | null;
   readonly lng?: number | null;
   readonly heading?: number | null;
@@ -225,6 +227,7 @@ type LazyCourier = {
   readonly phoneNumber?: string | null;
   readonly email?: string | null;
   readonly courierNIN?: string | null;
+  readonly courierNINImage?: string | null;
   readonly bankCode?: string | null;
   readonly bankName?: string | null;
   readonly accountName?: string | null;
@@ -243,6 +246,7 @@ type LazyCourier = {
   readonly guarantorAddress?: string | null;
   readonly guarantorEmail?: string | null;
   readonly guarantorNIN?: string | null;
+  readonly guarantorNINImage?: string | null;
   readonly lat?: number | null;
   readonly lng?: number | null;
   readonly heading?: number | null;

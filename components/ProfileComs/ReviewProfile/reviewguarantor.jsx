@@ -1,19 +1,48 @@
 import { View, Text, Image, ScrollView, TouchableOpacity } from 'react-native'
-import React from 'react'
+import React, {useState, useEffect} from 'react'
 import { useProfileContext } from '../../../providers/ProfileProvider'
 import Ionicons from '@expo/vector-icons/Ionicons';
 import styles from './styles'
 import { router } from 'expo-router';
+import { getUrl } from 'aws-amplify/storage';
 
 const ReviewGuarantorCom = () => {
     const {
-        guarantorName, guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN,
+        guarantorName, guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN, guarantorNINImage
     } = useProfileContext()
+
+    const [ninImageUrl, setNinImageUrl] = useState(null);
 
     // Navigation Function
     const goToProfile = () => {
         router.push('/profile'); 
     };
+
+    // useEffect for fetching NINImage
+    useEffect(() => {
+        const fetchNinImage = async () => {
+            if (!guarantorNINImage) return;
+
+            // If already a signed URL, use it directly
+            if (guarantorNINImage.startsWith('http')) {
+            setNinImageUrl(guarantorNINImage);
+            return;
+            }
+
+            try {
+            const result = await getUrl({
+                path: guarantorNINImage,
+                options: { validateObjectExistence: true },
+            });
+
+            setNinImageUrl(result.url.toString());
+            } catch (error) {
+            console.log("Error fetching NIN image:", error);
+            }
+        };
+
+        fetchNinImage();
+    }, [guarantorNINImage]);
 
   return (
     <View style={styles.reviewContainer}>
@@ -51,6 +80,17 @@ const ReviewGuarantorCom = () => {
 
             <Text style={styles.subHeader}>Guarantor's NIN:</Text>
             <Text style={styles.inputReviewLast}>{guarantorNIN}</Text>
+
+            {/* NIN Image */}
+            {ninImageUrl && (
+                <>
+                    <Text style={styles.subHeader}>NIN Slip:</Text>
+                    <Image
+                    source={{ uri: ninImageUrl }}
+                    style={styles.reviewNinImage}
+                    />
+                </>
+            )}
         </ScrollView>
         
         {/* Button */}

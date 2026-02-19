@@ -13,8 +13,8 @@ import {Courier} from '../../../src/models';
 
 const ReviewGuarantorCom = () => {
     const {
-        firstName, lastName, profilePic, transportationType, vehicleType, model, plateNumber, images,  address, phoneNumber, landMark, courierNIN, bankCode, bankName, accountName, accountNumber,
-        guarantorName, guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN,
+        firstName, lastName, profilePic, transportationType, vehicleType, model, plateNumber, images,  address, phoneNumber, landMark, courierNIN, courierNINImage, bankCode, bankName, accountName, accountNumber,
+        guarantorName, guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN, guarantorNINImage, 
     } = useProfileContext()
 
     const {dbUser, setDbUser, sub} = useAuthContext();
@@ -24,112 +24,93 @@ const ReviewGuarantorCom = () => {
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
 
-    async function uploadImage() {
-        try {
+    const uploadSingleImage = async (localUri, folder) => {
+        if (!localUri) return null;
 
-            // Step 1: Delete the previous profile photo if it exists
-            if (dbUser?.profilePic) {
-                console.log("Deleting previous profile photo:", dbUser.profilePic);
-                await remove({ path: dbUser.profilePic });
-            }
+        const manipulatedImage = await ImageManipulator.manipulateAsync(
+            localUri,
+            [{ resize: { width: 800 } }],
+            { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+        );
 
-            // Step 2: Process and upload the new profile photo
-            const manipulatedImage = await ImageManipulator.manipulateAsync(
-                profilePic,
-                [{ resize: { width: 250 } }],  // Adjust width as needed
-                { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG } // Compress quality between 0 and 1
-            );
-            const response = await fetch(manipulatedImage.uri);
-            const blob = await response.blob();
+        const response = await fetch(manipulatedImage.uri);
+        const blob = await response.blob();
 
-            // Generate a unique file key
-            const fileKey = `public/profilePhoto/${sub}/${Crypto.randomUUID()}.jpg`; // New path format
+        const fileKey = `public/${folder}/${sub}/${Crypto.randomUUID()}.jpg`;
 
-            // Upload the new image to S3
-            const result = await uploadData({
-                path: fileKey,
-                data: blob,
-                options:{
-                    contentType:'image/jpeg', // contentType is optional
-                    onProgress:({ transferredBytes, totalBytes }) => {
-                        if(totalBytes){
-                            const progress = Math.round((transferredBytes / totalBytes) * 100);
-                            setUploadProgress(progress); // Update upload progress
-                            console.log(`Upload progress: ${progress}%`);
-                        }
-                    }
-                }
-            }).result
+        const result = await uploadData({
+            path: fileKey,
+            data: blob,
+            options: {
+            contentType: "image/jpeg",
+            },
+        }).result;
 
-            return result.path;  // Updated to return `path`
-            } catch (err) {
-            console.log('Error uploading file:', err);
-            }
-    }
+        return result.path;
+        };
+
+    
 
     // function for maxi images
     const uploadMaxiImages = async () => {
         try {
-          // Step 1: Delete existing maxiImages
-          if (dbUser?.maxiImages?.length) {
-            await Promise.all(
-              dbUser.maxiImages.map(async (oldImage) => {
-                try {
-                    console.log("Deleting old maxi image:", oldImage);
-                    await remove({ path: oldImage });
-                } catch (err) {
-                    console.error(`Failed to delete image ${oldImage}:`, err);
-                }
-              })
-            );
-          }
-
-          // Step 2: Check if images array has data before proceeding
+            // If no new images selected, keep existing
             if (!images || images.length === 0) {
-                console.log("No images to upload.");
-                return [];
+            return dbUser?.maxiImages || [];
             }
-      
-          // Step 3: Upload new images
+
+            // 1️⃣ Upload new images FIRST
             const uploadPromises = images.map(async (item) => {
-                // Resize and compress image
-                const manipulatedImage = await ImageManipulator.manipulateAsync(
-                    item.uri,
-                    [{ resize: { width: 600 } }],  // Adjust width as needed
-                    { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG } // Compress quality between 0 and 1
-                );
+            const manipulatedImage = await ImageManipulator.manipulateAsync(
+                item.uri,
+                [{ resize: { width: 600 } }],
+                { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG }
+            );
 
-                const response = await fetch(manipulatedImage.uri);
-                const blob = await response.blob();
+            const response = await fetch(manipulatedImage.uri);
+            const blob = await response.blob();
 
-                const fileKey = `public/maxiImages/${sub}/${Crypto.randomUUID()}.jpg`;
+            const fileKey = `public/maxiImages/${sub}/${Crypto.randomUUID()}.jpg`;
 
-                const result = await uploadData({
-                    path: fileKey,
-                    data: blob,
-                    options: {
-                        contentType: 'image/jpeg',
-                        onProgress: ({ transferredBytes, totalBytes }) => {
-                            if (totalBytes) {
-                                const progress = Math.round((transferredBytes / totalBytes) * 100);
-                                setUploadProgress(progress); // Update upload progress
-                                console.log(`Upload progress: ${progress}%`);
-                            }
-                        }
+            const result = await uploadData({
+                path: fileKey,
+                data: blob,
+                options: {
+                contentType: "image/jpeg",
+                onProgress: ({ transferredBytes, totalBytes }) => {
+                    if (totalBytes) {
+                    const progress = Math.round(
+                        (transferredBytes / totalBytes) * 100
+                    );
+                    setUploadProgress(progress);
                     }
-                }).result;
+                },
+                },
+            }).result;
 
-                return result.path;
+            return result.path;
             });
 
-            // Wait for all upload promises to complete
-            const maxiImageUrls = await Promise.all(uploadPromises);
-            return maxiImageUrls;
-          
+            const newMaxiImages = await Promise.all(uploadPromises);
+
+            // 2️⃣ Delete old images AFTER successful upload
+            if (dbUser?.maxiImages?.length) {
+            await Promise.all(
+                dbUser.maxiImages.map((oldImage) =>
+                remove({ path: oldImage }).catch(() => {})
+                )
+            );
+            }
+
+            return newMaxiImages;
+
         } catch (err) {
-          console.log("Error managing maxi images:", err);
-          Alert.alert('Upload Maxi Error', 'Failed to upload Maxi Images. Please try again.');
-          throw err;
+            console.log("Error uploading maxi images:", err);
+            Alert.alert(
+            "Upload Error",
+            "Failed to upload Maxi Images. Please try again."
+            );
+            throw err;
         }
     };
 
@@ -138,15 +119,25 @@ const ReviewGuarantorCom = () => {
         if (uploading) return;
         setUploading(true);
 
+        if (!profilePic) {
+            Alert.alert("Profile Photo Required", "Please upload a profile picture.");
+            setUploading(false);
+            return;
+        }
+
         try{
-            const uploadedImagePath = await uploadImage();  // Upload image first
-            const uploadedMaxiImages = await uploadMaxiImages(); // Upload Maxi Images
+            const uploadedProfilePic = await uploadSingleImage(profilePic, "profilePhoto");
+            const uploadedMaxiImages = await uploadMaxiImages();
+            const uploadedCourierNINImage = await uploadSingleImage(courierNINImage, "courierNIN");
+            const uploadedGuarantorNINImage = await uploadSingleImage(guarantorNINImage, "guarantorNIN");
 
             const courier = await DataStore.save(new Courier({
                 firstName, lastName, transportationType, vehicleType, model, plateNumber,
-                profilePic: uploadedImagePath,
+                profilePic: uploadedProfilePic,
                 maxiImages: uploadedMaxiImages,
-                address, landMark, phoneNumber, courierNIN,  bankCode, bankName, accountName, accountNumber, guarantorName,guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN, 
+                courierNINImage: uploadedCourierNINImage,
+                guarantorNINImage: uploadedGuarantorNINImage,
+                address, landMark, phoneNumber, courierNIN,   bankCode, bankName, accountName, accountNumber, guarantorName,guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN, 
                 sub,
                 isOnline:false,
                 isApproved:false,
@@ -155,6 +146,8 @@ const ReviewGuarantorCom = () => {
             setDbUser(courier)
         }catch(e){
             Alert.alert("Error", e.message)
+        }finally {
+            setUploading(false);
         }
     };
 
@@ -162,13 +155,45 @@ const ReviewGuarantorCom = () => {
         if (uploading) return;
         setUploading(true);
         try{
-            const uploadedImagePath = await uploadImage();
+            let uploadedProfilePic = dbUser?.profilePic;
+            
             const uploadedMaxiImages = await uploadMaxiImages();
+            let uploadedCourierNINImage = dbUser?.courierNINImage;
+            let uploadedGuarantorNINImage = dbUser?.guarantorNINImage;
+
+            // Only uploads if changed; deletes if replaced
+
+            // Only upload if profilePic changed
+            if (profilePic && profilePic !== dbUser?.profilePic) {
+            // 1️⃣ Upload first
+            uploadedProfilePic = await uploadSingleImage(profilePic, "profilePhoto");
+
+            // 2️⃣ Delete old AFTER successful upload
+            if (dbUser?.profilePic) {
+                await remove({ path: dbUser.profilePic });
+            }
+            }
+
+            // courierNIN Image
+            if (courierNINImage && courierNINImage !== dbUser?.courierNINImage) {
+            uploadedCourierNINImage = await uploadSingleImage(courierNINImage, "courierNIN");
+            if (dbUser?.courierNINImage) {
+                await remove({ path: dbUser.courierNINImage });
+            }
+            }
+
+            // guarantorNIN Image
+            if (guarantorNINImage && guarantorNINImage !== dbUser?.guarantorNINImage) {
+            uploadedGuarantorNINImage = await uploadSingleImage(guarantorNINImage, "guarantorNIN");
+            if (dbUser?.guarantorNINImage) {
+                await remove({ path: dbUser.guarantorNINImage });
+            }
+            }
 
             const courier = await DataStore.save(Courier.copyOf(dbUser, (updated)=>{
                 updated.firstName = firstName;
                 updated.lastName = lastName; 
-                updated.profilePic = uploadedImagePath;
+                updated.profilePic = uploadedProfilePic;
                 updated.maxiImages = uploadedMaxiImages;
                 updated.transportationType = transportationType,
                 updated.vehicleType = vehicleType,
@@ -178,6 +203,7 @@ const ReviewGuarantorCom = () => {
                 updated.landMark = landMark, 
                 updated.phoneNumber = phoneNumber, 
                 updated.courierNIN = courierNIN, 
+                updated.courierNINImage = uploadedCourierNINImage,
                 updated.bankCode = bankCode,
                 updated.bankName = bankName, 
                 updated.accountName = accountName, 
@@ -189,7 +215,8 @@ const ReviewGuarantorCom = () => {
                 updated.guarantorRelationship = guarantorRelationship, 
                 updated.guarantorAddress = guarantorAddress, 
                 updated.guarantorEmail = guarantorEmail, 
-                updated.guarantorNIN = guarantorNIN
+                updated.guarantorNIN = guarantorNIN,
+                updated.guarantorNINImage = uploadedGuarantorNINImage
             }))
             setDbUser(courier)
         }catch(e){
@@ -255,7 +282,18 @@ const ReviewGuarantorCom = () => {
             <Text style={styles.inputReview}>{guarantorEmail}</Text>
 
             <Text style={styles.subHeader}>Guarantor's NIN</Text>
-            <Text style={styles.inputReviewLast}>{guarantorNIN}</Text>
+            <Text style={styles.inputReview}>{guarantorNIN}</Text>
+
+            {/* NIN Image */}
+            {guarantorNINImage && (
+            <>
+                <Text style={styles.subHeader}>Guarantor NIN Slip:</Text>
+                <Image
+                source={{ uri: guarantorNINImage }}
+                style={styles.reviewNinImage}
+                />
+            </>
+            )}
         </ScrollView>
         
         {/* Button */}
