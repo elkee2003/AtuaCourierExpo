@@ -1,16 +1,29 @@
-import { View, Text, Alert, TouchableOpacity, TextInput } from 'react-native'
-import React, {useState} from 'react'
-import { Dropdown } from 'react-native-element-dropdown';
-import * as ImagePicker from 'expo-image-picker';
-import styles from './styles'
+import { View, Text, Alert, TouchableOpacity, TextInput, ScrollView, Image } from 'react-native'
+import React, { useState } from 'react'
+import { Dropdown } from 'react-native-element-dropdown'
+import * as ImagePicker from 'expo-image-picker'
 import AntDesign from '@expo/vector-icons/AntDesign';
+import styles from './styles'
 import { useProfileContext } from '../../../providers/ProfileProvider'
 
 const TransportationTypeCom = () => {
 
-  const {transportationType, setTransportationType, vehicleType, setVehicleType, model, setModel, plateNumber, setPlateNumber, images, setImages} = useProfileContext()
+  const {
+    transportationType,
+    setTransportationType,
+    vehicleClass,
+    setVehicleClass,
+    model,
+    setModel,
+    plateNumber,
+    setPlateNumber,
+    maxiImages,
+    setMaxiImages,
+  } = useProfileContext()
 
-  const [isFocus, setIsFocus] = useState(false);
+  const [isFocus, setIsFocus] = useState(false)
+
+  /* ---------------- Transportation Categories ---------------- */
 
   const transportData = [
       { label: 'Micro', 
@@ -31,117 +44,163 @@ const TransportationTypeCom = () => {
   };
 
 
+  /* ---------------- Controlled Vehicle Classes ---------------- */
+
+  const motoClasses = [
+    { label: 'Motorcycle', value: 'Motorcycle' },
+    // { label: 'Car (Sedan)', value: 'Car_Sedan' },
+    // { label: 'Car (SUV)', value: 'Car_SUV' },
+  ]
+
+  const maxiClasses = [
+    { label: 'Small Van (1-1.5 Tons)', value: 'Small_Van' },
+    { label: 'Medium Van (2-3 Tons)', value: 'Medium_Van' },
+    { label: 'Large Van (3-5 Tons)', value: 'Large_Van' },
+    
+    { label: '5 Ton Truck', value: 'Truck_5T' },
+    { label: '10 Ton Truck', value: 'Truck_10T' },
+    // { label: '20 Ton Truck', value: 'Truck_20T' },
+    
+    { label: 'Flatbed 5 Ton', value: 'FLATBED_5T' },
+    { label: 'Flatbed 10 Ton', value: 'FLATBED_10T' },
+    // { label: 'Flatbed 20 Ton', value: 'FLATBED_20T' },
+
+    { label: 'Tipper 5 Ton (Sand/Gravel)', value: 'TIPPER_5T' },
+    { label: 'Tipper 10 Ton (Sand/Gravel)', value: 'TIPPER_10T' },
+    // { label: 'Tipper 20 Ton (Sand/Gravel)', value: 'TIPPER_20T' },
+
+    { label: 'Refrigerated 5 Ton', value: 'REFRIGERATED_5T' },
+    { label: 'Refrigerated 10 Ton', value: 'REFRIGERATED_10T' },
+  ]
+
   const pickImages = async () => {
-    // No permissions request is necessary for launching the image library
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
-      aspect: [4, 3],
       quality: 1,
-    });
-
-    console.log(result);
+    })
 
     if (!result.canceled) {
-
-      if(result.assets.length < 3){
-        Alert.alert('Error', 'Please select at least 3 images');
-        return;
+      if (result.assets.length < 3) {
+        Alert.alert('Error', 'Please select at least 3 images')
+        return
       }
 
-      const selectedImages = result.assets.map((asset)=>asset.uri)
-      setImages(selectedImages);
+      const selectedImages = result.assets.map(asset => asset.uri)
+      setMaxiImages(selectedImages)
     }
-  };
+  }
 
   return (
-    <View style={styles.container}>
-      {/* <Text>TransportationTypeCom</Text> */}
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+
+      {/* Transportation Dropdown */}
       <Dropdown
-          style={[styles.dropdown, isFocus && { borderColor: '#0f238a' }]}
-          placeholderStyle={styles.placeholderStyle}
-          selectedTextStyle={styles.selectedTextStyle}
-          inputSearchStyle={styles.inputSearchStyle}
-          iconStyle={styles.iconStyle}
-          data={transportData}
-          search
-          maxHeight={300}
-          labelField="label"
-          valueField="value"
-          placeholder={!isFocus ? 'Select transportation type' : '...'}
-          searchPlaceholder="Search..."
-          value={transportationType}
-          onFocus={() => setIsFocus(true)}
-          onBlur={() => setIsFocus(false)}
-          onChange={item => {
-              setTransportationType(item.value);
-              setIsFocus(false);
-          }}
-          renderItem={(item) => (
-            <View style={styles.dropdownItem}>
-              {/* Transportation Label */}
-              <Text style={styles.itemLabel}>{item.label}</Text>
-  
-              {/* Info Icon next to each label */}
-              <TouchableOpacity onPress={() => handleInfoPress(item.description)}>
-                <AntDesign name="info-cirlce" style={styles.infoIcon} />
-              </TouchableOpacity>
-            </View>
-          )}
+        style={[styles.dropdown, isFocus && { borderColor: '#0F2D7A' }]}
+        data={transportData}
+        labelField="label"
+        valueField="value"
+        placeholder="Select category"
+        value={transportationType}
+        onFocus={() => setIsFocus(true)}
+        onBlur={() => setIsFocus(false)}
+        onChange={item => {
+          setTransportationType(item.value)
+          setVehicleClass(null)
+          setIsFocus(false)
+        }}
+        renderItem={(item) => (
+          <View style={styles.dropdownItem}>
+            {/* Transportation Label */}
+            <Text style={styles.itemLabel}>{item.label}</Text>
+
+            {/* Info Icon next to each label */}
+            <TouchableOpacity onPress={() => handleInfoPress(item.description)}>
+              <AntDesign name="info-circle" style={styles.infoIcon} />
+            </TouchableOpacity>
+          </View>
+        )}
       />
 
-      {/* Moto */}
-      {(transportationType === "Moto") && (
+      {/* ---------------- MOTO ---------------- */}
+      {transportationType === 'Moto' && (
         <>
-          <TextInput
-          style={styles.input}
-          value={vehicleType}
-          onChangeText={setVehicleType}
-          placeholder='Vehicle type eg: Car, Bike, Cooling Van etc'
+          <Text style={styles.sectionSubtitle}>Vehicle Class</Text>
+          <Dropdown
+            style={styles.dropdown}
+            data={motoClasses}
+            labelField="label"
+            valueField="value"
+            placeholder="Select vehicle class"
+            value={vehicleClass}
+            onChange={item => setVehicleClass(item.value)}
           />
+
           <TextInput
             style={styles.input}
             value={model}
             onChangeText={setModel}
-            placeholder='Vehicle model eg: Audi, Toyota, etc'
+            placeholder="Vehicle Model (e.g. Toyota Corolla)"
           />
+
           <TextInput
             style={styles.input}
             value={plateNumber}
             onChangeText={setPlateNumber}
-            placeholder='Plate Number eg: RIV-90909'
+            placeholder="Plate Number"
           />
         </>
       )}
 
-      {/* Maxi */}
-      {(transportationType === 'Maxi') && (
+      {/* ---------------- MAXI ---------------- */}
+      {transportationType === 'Maxi' && (
         <>
-          <TextInput
-          style={styles.input}
-          value={vehicleType}
-          onChangeText={setVehicleType}
-          placeholder='Eg: Moving Van, Pickup Van, Cooling Van'
+          <Text style={styles.sectionSubtitle}>Vehicle Class</Text>
+          <Dropdown
+            style={styles.dropdown}
+            data={maxiClasses}
+            labelField="label"
+            valueField="value"
+            placeholder="Select vehicle class"
+            value={vehicleClass}
+            onChange={item => setVehicleClass(item.value)}
           />
+
+          
           <TextInput
             style={styles.input}
             value={model}
             onChangeText={setModel}
-            placeholder='Vehicle model eg: Audi, Toyota, etc'
+            placeholder="Vehicle Model"
           />
+
           <TextInput
             style={styles.input}
             value={plateNumber}
             onChangeText={setPlateNumber}
-            placeholder='Plate Number eg: RIV-90909'
+            placeholder="Plate Number"
           />
-          <TouchableOpacity style={styles.addPhotoCon} onPress={pickImages}>
-            <Text style={styles.addPhotoTxt}>Add Photos</Text>
-            {/* <AntDesign name="pluscircle" style={styles.plusIconBtn} /> */}
+
+          <TouchableOpacity style={styles.photoButton} onPress={pickImages}>
+            <AntDesign name="camera" size={18} color="#fff" />
+            <Text style={styles.photoButtonText}>Upload Vehicle Photos</Text>
           </TouchableOpacity>
+
+          {maxiImages?.length > 0 && (
+            <View style={styles.imagePreviewContainer}>
+              {maxiImages.map((uri, index) => (
+                <Image
+                  key={index}
+                  source={{ uri }}
+                  style={styles.previewImage}
+                />
+              ))}
+            </View>
+          )}
         </>
       )}
-    </View>
+
+    </ScrollView>
   )
 }
 

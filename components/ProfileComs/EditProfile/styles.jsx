@@ -148,6 +148,7 @@ const styles = StyleSheet.create({
         borderRadius: 75,
         resizeMode: "cover",
     },
+    
 
     reviewNinImage: {
         width: "100%",
@@ -157,14 +158,18 @@ const styles = StyleSheet.create({
         resizeMode: "cover",
     },
 
-    maxiImages:{
-        height:300,
-        width:140,
-        borderRadius:20,
+    maxiImages: {
+        width: '48%',
+        height: 150,
+        borderRadius: 12,
+        marginBottom: 10,
     },
-    imageListContainer:{
-        marginVertical:10,
-        gap:10,
+
+    imageListContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        marginTop: 10,
     },
     addGuarantorSub:{
         marginHorizontal:10,

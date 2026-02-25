@@ -4,7 +4,6 @@ import { KeyboardAvoidingView, Platform } from "react-native";
 import * as ImagePicker from 'expo-image-picker';
 import styles from './styles';
 import { router } from 'expo-router';
-import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import TranportionType from '../TransporationType'

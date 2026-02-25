@@ -13,7 +13,7 @@ import {Courier} from '../../../src/models';
 
 const ReviewGuarantorCom = () => {
     const {
-        firstName, lastName, profilePic, transportationType, vehicleType, model, plateNumber, images,  address, phoneNumber, landMark, courierNIN, courierNINImage, bankCode, bankName, accountName, accountNumber,
+        firstName, lastName, profilePic, transportationType, vehicleClass, model, plateNumber, maxiImages,  address, phoneNumber, landMark, courierNIN, courierNINImage, bankCode, bankName, accountName, accountNumber,
         guarantorName, guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN, guarantorNINImage, 
     } = useProfileContext()
 
@@ -54,62 +54,76 @@ const ReviewGuarantorCom = () => {
     // function for maxi images
     const uploadMaxiImages = async () => {
         try {
-            // If no new images selected, keep existing
-            if (!images || images.length === 0) {
+            if (!maxiImages || maxiImages.length === 0) {
             return dbUser?.maxiImages || [];
             }
 
-            // 1️⃣ Upload new images FIRST
-            const uploadPromises = images.map(async (item) => {
-            const manipulatedImage = await ImageManipulator.manipulateAsync(
-                item.uri,
+            const uploadedPaths = [];
+
+            for (const item of maxiImages) {
+
+            const localUri = typeof item === "string" ? item : item?.uri;
+
+            if (!localUri) continue;
+
+            // ✅ If already uploaded (S3 path), keep it
+            if (localUri.startsWith("public/")) {
+                uploadedPaths.push(localUri);
+                continue;
+            }
+
+            // ✅ Only upload local files
+            if (localUri.startsWith("file://")) {
+
+                const manipulatedImage = await ImageManipulator.manipulateAsync(
+                localUri,
                 [{ resize: { width: 600 } }],
                 { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG }
-            );
+                );
 
-            const response = await fetch(manipulatedImage.uri);
-            const blob = await response.blob();
+                const response = await fetch(manipulatedImage.uri);
+                const blob = await response.blob();
 
-            const fileKey = `public/maxiImages/${sub}/${Crypto.randomUUID()}.jpg`;
+                const fileKey = `public/maxiImages/${sub}/${Crypto.randomUUID()}.jpg`;
 
-            const result = await uploadData({
+                const result = await uploadData({
                 path: fileKey,
                 data: blob,
                 options: {
-                contentType: "image/jpeg",
-                onProgress: ({ transferredBytes, totalBytes }) => {
+                    contentType: "image/jpeg",
+                    onProgress: ({ transferredBytes, totalBytes }) => {
                     if (totalBytes) {
-                    const progress = Math.round(
-                        (transferredBytes / totalBytes) * 100
-                    );
-                    setUploadProgress(progress);
+                        setUploadProgress(
+                        Math.round((transferredBytes / totalBytes) * 100)
+                        );
                     }
+                    },
                 },
-                },
-            }).result;
+                }).result;
 
-            return result.path;
-            });
+                uploadedPaths.push(result.path);
+            }
+            }
 
-            const newMaxiImages = await Promise.all(uploadPromises);
-
-            // 2️⃣ Delete old images AFTER successful upload
+            // ✅ Delete only removed images
             if (dbUser?.maxiImages?.length) {
+
+            const removedImages = dbUser.maxiImages.filter(
+                oldPath => !uploadedPaths.includes(oldPath)
+            );
+
             await Promise.all(
-                dbUser.maxiImages.map((oldImage) =>
-                remove({ path: oldImage }).catch(() => {})
+                removedImages.map(path =>
+                remove({ path }).catch(() => {})
                 )
             );
             }
 
-            return newMaxiImages;
+            return uploadedPaths;
 
         } catch (err) {
             console.log("Error uploading maxi images:", err);
-            Alert.alert(
-            "Upload Error",
-            "Failed to upload Maxi Images. Please try again."
-            );
+            Alert.alert("Upload Error", "Failed to upload Maxi Images.");
             throw err;
         }
     };
@@ -132,7 +146,7 @@ const ReviewGuarantorCom = () => {
             const uploadedGuarantorNINImage = await uploadSingleImage(guarantorNINImage, "guarantorNIN");
 
             const courier = await DataStore.save(new Courier({
-                firstName, lastName, transportationType, vehicleType, model, plateNumber,
+                firstName, lastName, transportationType, vehicleClass, model, plateNumber,
                 profilePic: uploadedProfilePic,
                 maxiImages: uploadedMaxiImages,
                 courierNINImage: uploadedCourierNINImage,
@@ -196,7 +210,7 @@ const ReviewGuarantorCom = () => {
                 updated.profilePic = uploadedProfilePic;
                 updated.maxiImages = uploadedMaxiImages;
                 updated.transportationType = transportationType,
-                updated.vehicleType = vehicleType,
+                updated.vehicleClass = vehicleClass,
                 updated.model = model,
                 updated.plateNumber = plateNumber,
                 updated.address = address, 

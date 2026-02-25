@@ -8,7 +8,7 @@ import { router } from 'expo-router';
 
 const ReviewCourierCom = () => {
     const {
-        firstName, lastName, profilePic, transportationType, vehicleType, model, plateNumber, images, address, phoneNumber, landMark, courierNIN, courierNINImage, bankName, accountName, accountNumber,
+        firstName, lastName, profilePic, transportationType, vehicleClass, model, plateNumber, maxiImages, address, phoneNumber, landMark, courierNIN, courierNINImage, bankName, accountName, accountNumber,
     } = useProfileContext()
 
     // Navigation Function
@@ -44,9 +44,26 @@ const ReviewCourierCom = () => {
                 {renderField("First Name", firstName)}
                 {renderField("Last Name", lastName)}
                 {renderField("Transportation Type", transportationType)}
-                {vehicleType && renderField("Vehicle Type", vehicleType)}
+                {vehicleClass && renderField("Vehicle Class", vehicleClass)}
                 {model && renderField("Model", model)}
                 {plateNumber && renderField("Plate Number", plateNumber)}
+
+                {/* Vehicle Images (Maxi Only) */}
+                {transportationType === 'Maxi' && maxiImages?.length > 0 && (
+                <>
+                    <Text style={styles.subHeader}>Vehicle Photos:</Text>
+
+                    <View style={styles.imageListContainer}>
+                    {maxiImages.map((uri, index) => (
+                        <Image
+                        key={index}
+                        source={{ uri }}
+                        style={styles.maxiImages}
+                        />
+                    ))}
+                    </View>
+                </>
+                )}
                 {renderField("Address", address)}
                 {renderField("Land Mark", landMark)}
                 {renderField("Phone Number", phoneNumber)}
