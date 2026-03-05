@@ -13,8 +13,8 @@ import {Courier} from '../../../src/models';
 
 const ReviewGuarantorCom = () => {
     const {
-        firstName, lastName, profilePic, transportationType, vehicleClass, model, plateNumber, maxiImages,  address, phoneNumber, landMark, courierNIN, courierNINImage, bankCode, bankName, accountName, accountNumber,
-        guarantorName, guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN, guarantorNINImage, 
+        firstName, lastName, profilePic, transportationType, vehicleType, model, plateNumber, images,  address, phoneNumber, landMark, courierNIN, bankCode, bankName, accountName, accountNumber,
+        guarantorName, guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN,
     } = useProfileContext()
 
     const {dbUser, setDbUser, sub} = useAuthContext();
@@ -24,61 +24,79 @@ const ReviewGuarantorCom = () => {
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
 
-    const uploadSingleImage = async (localUri, folder) => {
-        if (!localUri) return null;
+    async function uploadImage() {
+        try {
 
-        const manipulatedImage = await ImageManipulator.manipulateAsync(
-            localUri,
-            [{ resize: { width: 800 } }],
-            { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-        );
+            // Step 1: Delete the previous profile photo if it exists
+            if (dbUser?.profilePic) {
+                console.log("Deleting previous profile photo:", dbUser.profilePic);
+                await remove({ path: dbUser.profilePic });
+            }
 
-        const response = await fetch(manipulatedImage.uri);
-        const blob = await response.blob();
+            // Step 2: Process and upload the new profile photo
+            const manipulatedImage = await ImageManipulator.manipulateAsync(
+                profilePic,
+                [{ resize: { width: 250 } }],  // Adjust width as needed
+                { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG } // Compress quality between 0 and 1
+            );
+            const response = await fetch(manipulatedImage.uri);
+            const blob = await response.blob();
 
-        const fileKey = `public/${folder}/${sub}/${Crypto.randomUUID()}.jpg`;
+            // Generate a unique file key
+            const fileKey = `public/profilePhoto/${sub}/${Crypto.randomUUID()}.jpg`; // New path format
 
-        const result = await uploadData({
-            path: fileKey,
-            data: blob,
-            options: {
-            contentType: "image/jpeg",
-            },
-        }).result;
+            // Upload the new image to S3
+            const result = await uploadData({
+                path: fileKey,
+                data: blob,
+                options:{
+                    contentType:'image/jpeg', // contentType is optional
+                    onProgress:({ transferredBytes, totalBytes }) => {
+                        if(totalBytes){
+                            const progress = Math.round((transferredBytes / totalBytes) * 100);
+                            setUploadProgress(progress); // Update upload progress
+                            console.log(`Upload progress: ${progress}%`);
+                        }
+                    }
+                }
+            }).result
 
-        return result.path;
-        };
-
-    
+            return result.path;  // Updated to return `path`
+            } catch (err) {
+            console.log('Error uploading file:', err);
+            }
+    }
 
     // function for maxi images
     const uploadMaxiImages = async () => {
         try {
-            if (!maxiImages || maxiImages.length === 0) {
-            return dbUser?.maxiImages || [];
+          // Step 1: Delete existing maxiImages
+          if (dbUser?.maxiImages?.length) {
+            await Promise.all(
+              dbUser.maxiImages.map(async (oldImage) => {
+                try {
+                    console.log("Deleting old maxi image:", oldImage);
+                    await remove({ path: oldImage });
+                } catch (err) {
+                    console.error(`Failed to delete image ${oldImage}:`, err);
+                }
+              })
+            );
+          }
+
+          // Step 2: Check if images array has data before proceeding
+            if (!images || images.length === 0) {
+                console.log("No images to upload.");
+                return [];
             }
-
-            const uploadedPaths = [];
-
-            for (const item of maxiImages) {
-
-            const localUri = typeof item === "string" ? item : item?.uri;
-
-            if (!localUri) continue;
-
-            // ✅ If already uploaded (S3 path), keep it
-            if (localUri.startsWith("public/")) {
-                uploadedPaths.push(localUri);
-                continue;
-            }
-
-            // ✅ Only upload local files
-            if (localUri.startsWith("file://")) {
-
+      
+          // Step 3: Upload new images
+            const uploadPromises = images.map(async (item) => {
+                // Resize and compress image
                 const manipulatedImage = await ImageManipulator.manipulateAsync(
-                localUri,
-                [{ resize: { width: 600 } }],
-                { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG }
+                    item.uri,
+                    [{ resize: { width: 600 } }],  // Adjust width as needed
+                    { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG } // Compress quality between 0 and 1
                 );
 
                 const response = await fetch(manipulatedImage.uri);
@@ -87,44 +105,31 @@ const ReviewGuarantorCom = () => {
                 const fileKey = `public/maxiImages/${sub}/${Crypto.randomUUID()}.jpg`;
 
                 const result = await uploadData({
-                path: fileKey,
-                data: blob,
-                options: {
-                    contentType: "image/jpeg",
-                    onProgress: ({ transferredBytes, totalBytes }) => {
-                    if (totalBytes) {
-                        setUploadProgress(
-                        Math.round((transferredBytes / totalBytes) * 100)
-                        );
+                    path: fileKey,
+                    data: blob,
+                    options: {
+                        contentType: 'image/jpeg',
+                        onProgress: ({ transferredBytes, totalBytes }) => {
+                            if (totalBytes) {
+                                const progress = Math.round((transferredBytes / totalBytes) * 100);
+                                setUploadProgress(progress); // Update upload progress
+                                console.log(`Upload progress: ${progress}%`);
+                            }
+                        }
                     }
-                    },
-                },
                 }).result;
 
-                uploadedPaths.push(result.path);
-            }
-            }
+                return result.path;
+            });
 
-            // ✅ Delete only removed images
-            if (dbUser?.maxiImages?.length) {
-
-            const removedImages = dbUser.maxiImages.filter(
-                oldPath => !uploadedPaths.includes(oldPath)
-            );
-
-            await Promise.all(
-                removedImages.map(path =>
-                remove({ path }).catch(() => {})
-                )
-            );
-            }
-
-            return uploadedPaths;
-
+            // Wait for all upload promises to complete
+            const maxiImageUrls = await Promise.all(uploadPromises);
+            return maxiImageUrls;
+          
         } catch (err) {
-            console.log("Error uploading maxi images:", err);
-            Alert.alert("Upload Error", "Failed to upload Maxi Images.");
-            throw err;
+          console.log("Error managing maxi images:", err);
+          Alert.alert('Upload Maxi Error', 'Failed to upload Maxi Images. Please try again.');
+          throw err;
         }
     };
 
@@ -133,25 +138,15 @@ const ReviewGuarantorCom = () => {
         if (uploading) return;
         setUploading(true);
 
-        if (!profilePic) {
-            Alert.alert("Profile Photo Required", "Please upload a profile picture.");
-            setUploading(false);
-            return;
-        }
-
         try{
-            const uploadedProfilePic = await uploadSingleImage(profilePic, "profilePhoto");
-            const uploadedMaxiImages = await uploadMaxiImages();
-            const uploadedCourierNINImage = await uploadSingleImage(courierNINImage, "courierNIN");
-            const uploadedGuarantorNINImage = await uploadSingleImage(guarantorNINImage, "guarantorNIN");
+            const uploadedImagePath = await uploadImage();  // Upload image first
+            const uploadedMaxiImages = await uploadMaxiImages(); // Upload Maxi Images
 
             const courier = await DataStore.save(new Courier({
-                firstName, lastName, transportationType, vehicleClass, model, plateNumber,
-                profilePic: uploadedProfilePic,
+                firstName, lastName, transportationType, vehicleType, model, plateNumber,
+                profilePic: uploadedImagePath,
                 maxiImages: uploadedMaxiImages,
-                courierNINImage: uploadedCourierNINImage,
-                guarantorNINImage: uploadedGuarantorNINImage,
-                address, landMark, phoneNumber, courierNIN,   bankCode, bankName, accountName, accountNumber, guarantorName,guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN, 
+                address, landMark, phoneNumber, courierNIN,  bankCode, bankName, accountName, accountNumber, guarantorName,guarantorLastName, guarantorProfession, guarantorNumber, guarantorRelationship, guarantorAddress, guarantorEmail, guarantorNIN, 
                 sub,
                 isOnline:false,
                 isApproved:false,
@@ -160,8 +155,6 @@ const ReviewGuarantorCom = () => {
             setDbUser(courier)
         }catch(e){
             Alert.alert("Error", e.message)
-        }finally {
-            setUploading(false);
         }
     };
 
@@ -169,55 +162,22 @@ const ReviewGuarantorCom = () => {
         if (uploading) return;
         setUploading(true);
         try{
-            let uploadedProfilePic = dbUser?.profilePic;
-            
+            const uploadedImagePath = await uploadImage();
             const uploadedMaxiImages = await uploadMaxiImages();
-            let uploadedCourierNINImage = dbUser?.courierNINImage;
-            let uploadedGuarantorNINImage = dbUser?.guarantorNINImage;
-
-            // Only uploads if changed; deletes if replaced
-
-            // Only upload if profilePic changed
-            if (profilePic && profilePic !== dbUser?.profilePic) {
-            // 1️⃣ Upload first
-            uploadedProfilePic = await uploadSingleImage(profilePic, "profilePhoto");
-
-            // 2️⃣ Delete old AFTER successful upload
-            if (dbUser?.profilePic) {
-                await remove({ path: dbUser.profilePic });
-            }
-            }
-
-            // courierNIN Image
-            if (courierNINImage && courierNINImage !== dbUser?.courierNINImage) {
-            uploadedCourierNINImage = await uploadSingleImage(courierNINImage, "courierNIN");
-            if (dbUser?.courierNINImage) {
-                await remove({ path: dbUser.courierNINImage });
-            }
-            }
-
-            // guarantorNIN Image
-            if (guarantorNINImage && guarantorNINImage !== dbUser?.guarantorNINImage) {
-            uploadedGuarantorNINImage = await uploadSingleImage(guarantorNINImage, "guarantorNIN");
-            if (dbUser?.guarantorNINImage) {
-                await remove({ path: dbUser.guarantorNINImage });
-            }
-            }
 
             const courier = await DataStore.save(Courier.copyOf(dbUser, (updated)=>{
                 updated.firstName = firstName;
                 updated.lastName = lastName; 
-                updated.profilePic = uploadedProfilePic;
+                updated.profilePic = uploadedImagePath;
                 updated.maxiImages = uploadedMaxiImages;
                 updated.transportationType = transportationType,
-                updated.vehicleClass = vehicleClass,
+                updated.vehicleType = vehicleType,
                 updated.model = model,
                 updated.plateNumber = plateNumber,
                 updated.address = address, 
                 updated.landMark = landMark, 
                 updated.phoneNumber = phoneNumber, 
                 updated.courierNIN = courierNIN, 
-                updated.courierNINImage = uploadedCourierNINImage,
                 updated.bankCode = bankCode,
                 updated.bankName = bankName, 
                 updated.accountName = accountName, 
@@ -229,8 +189,7 @@ const ReviewGuarantorCom = () => {
                 updated.guarantorRelationship = guarantorRelationship, 
                 updated.guarantorAddress = guarantorAddress, 
                 updated.guarantorEmail = guarantorEmail, 
-                updated.guarantorNIN = guarantorNIN,
-                updated.guarantorNINImage = uploadedGuarantorNINImage
+                updated.guarantorNIN = guarantorNIN
             }))
             setDbUser(courier)
         }catch(e){
@@ -296,18 +255,7 @@ const ReviewGuarantorCom = () => {
             <Text style={styles.inputReview}>{guarantorEmail}</Text>
 
             <Text style={styles.subHeader}>Guarantor's NIN</Text>
-            <Text style={styles.inputReview}>{guarantorNIN}</Text>
-
-            {/* NIN Image */}
-            {guarantorNINImage && (
-            <>
-                <Text style={styles.subHeader}>Guarantor NIN Slip:</Text>
-                <Image
-                source={{ uri: guarantorNINImage }}
-                style={styles.reviewNinImage}
-                />
-            </>
-            )}
+            <Text style={styles.inputReviewLast}>{guarantorNIN}</Text>
         </ScrollView>
         
         {/* Button */}

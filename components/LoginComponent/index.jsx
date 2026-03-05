@@ -1,162 +1,141 @@
-import { View, Text, Image, Alert, ScrollView } from 'react-native';
-import React, { useState } from 'react';
-import Logo from '../../assets/images/Atua.png';
-import CustomInput from './customInput';
-import CustomButton from './customButtons';
-import { useForm } from 'react-hook-form';
-import styles from './styles';
-import { signIn, signOut, fetchAuthSession } from 'aws-amplify/auth';
-import { router } from 'expo-router';
+import { fetchAuthSession, signIn, signOut } from "aws-amplify/auth";
+import { router } from "expo-router";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import {
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import Logo from "../../assets/images/Atua.png";
+import CustomButton from "./customButtons";
+import CustomInput from "./customInput";
+import styles from "./styles";
 
 const Index = () => {
   const { control, handleSubmit } = useForm();
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const onSignInPressed = async (data) => {
-    const { email, password } = data;
-
     if (loading) return;
-
     setLoading(true);
 
     try {
-      const { isSignedIn } = await signIn({ username: email, password });
+      const { isSignedIn } = await signIn({
+        username: data.email,
+        password: data.password,
+      });
 
       if (isSignedIn) {
-        // ✅ Get user’s session to inspect role/group
         const session = await fetchAuthSession();
         const accessToken = session.tokens?.accessToken?.toString();
 
         if (!accessToken) {
-          throw new Error('Unable to fetch access token.');
+          throw new Error("Unable to fetch access token.");
         }
 
-        // Decode JWT payload
-        const tokenPayload = JSON.parse(atob(accessToken.split('.')[1]));
-        const userGroups = tokenPayload['cognito:groups'] || [];
-        const userRole = tokenPayload['custom:role'] || '';
+        const tokenPayload = JSON.parse(atob(accessToken.split(".")[1]));
 
-        // Define which role is allowed in this app
-        const allowedRole = 'courier';
+        const userGroups = tokenPayload["cognito:groups"] || [];
+        const userRole = tokenPayload["custom:role"] || "";
 
-        // ✅ Check if user belongs to this app
+        const allowedRole = "courier";
+
         if (userGroups.includes(allowedRole) || userRole === allowedRole) {
-          router.push('/home');
+          router.replace("/home");
         } else {
           Alert.alert(
-            'Access Denied',
-            `This account is registered as a "${userRole || userGroups[0] || 'different'}". Please use the correct app.`
+            "Access Denied",
+            `This account is registered as "${
+              userRole || userGroups[0] || "different"
+            }". Please use the correct app.`,
           );
           await signOut();
         }
       }
     } catch (error) {
-      console.log('Error signing in:', error);
-      Alert.alert('Sign In Failed', error.message || 'Something went wrong.');
+      Alert.alert("Sign In Failed", error.message || "Something went wrong.");
     }
 
     setLoading(false);
   };
 
-  const onSignUpPressed = () => router.push('/login/signup');
-  const onForgotPassword = () => router.push('/login/forgotpassword');
-
   return (
-    <View style={styles.container}>
-      {/* Logo */}
-      <View style={styles.logoCon}>
-        <Image source={Logo} style={styles.logo} />
-      </View>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+        // keyboardVerticalOffset={80}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+        >
+          <Image source={Logo} style={styles.logo} />
 
-      {/* Header */}
-      <View style={styles.titleCon}>
-        <Text style={styles.title}>Sign In (Courier App)</Text>
-      </View>
+          <View style={styles.header}>
+            <Text style={styles.title}>Courier Portal</Text>
+            <Text style={styles.subtitle}>Sign in to manage deliveries</Text>
+          </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Email */}
-        <CustomInput
-          name="email"
-          control={control}
-          rules={{
-            required: 'Email is required',
-            pattern: {
-              value: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/,
-              message: 'Invalid email format',
-            },
-          }}
-          placeholder="Enter your Email"
-          inputSub="Email"
-        />
+          <View style={styles.card}>
+            <CustomInput
+              name="email"
+              control={control}
+              placeholder="Enter your email"
+              inputSub="Email"
+              rules={{
+                required: "Email is required",
+              }}
+            />
 
-        {/* Password */}
-        <CustomInput
-          name="password"
-          control={control}
-          isPasswordVisible={isPasswordVisible}
-          setIsPasswordVisible={setIsPasswordVisible}
-          rules={{
-            required: 'Password is required',
-            minLength: {
-              value: 8,
-              message: 'Password must be at least 8 characters long.',
-            },
-            validate: (value) => {
-              const hasNumber = /\d/.test(value);
-              if (!hasNumber) {
-                return 'Password must include at least one number';
-              }
-              return true;
-            },
-          }}
-          placeholder="Enter your Password"
-          inputSub="Password"
-          secureTextEntry={!isPasswordVisible}
-        />
+            <CustomInput
+              name="password"
+              control={control}
+              placeholder="Enter your password"
+              inputSub="Password"
+              secureTextEntry={!isPasswordVisible}
+              isPasswordVisible={isPasswordVisible}
+              setIsPasswordVisible={setIsPasswordVisible}
+              rules={{
+                required: "Password is required",
+                minLength: {
+                  value: 8,
+                  message: "Minimum 8 characters",
+                },
+              }}
+            />
 
-        {/* Policy */}
-        <View style={styles.policyContainer}>
-          <Text style={styles.policyTxt}>
-            Kindly review the{' '}
+            <CustomButton
+              text="Sign In"
+              onPress={handleSubmit(onSignInPressed)}
+              loading={loading}
+            />
+
             <Text
-              style={styles.policyLink}
-              onPress={() => router.push('/termsandconditions')}
+              style={styles.link}
+              onPress={() => router.push("/login/forgotpassword")}
             >
-              Terms of Use{' '}
+              Forgot Password?
             </Text>
-            and{' '}
+
             <Text
-              style={styles.policyLink}
-              onPress={() => router.push('/privacypolicy')}
+              style={styles.link}
+              onPress={() => router.push("/login/signup")}
             >
-              Privacy Policy
-            </Text>{' '}
-            before going further.
-          </Text>
-        </View>
-
-        {/* Buttons */}
-        <CustomButton
-          text={loading ? 'Loading...' : 'Sign In'}
-          onPress={handleSubmit(onSignInPressed)}
-        />
-
-        {/* Forgot Password & Create Account */}
-        <View style={styles.secBtnSection}>
-          <CustomButton
-            text="Forgot Password?"
-            onPress={onForgotPassword}
-            type="SECONDARY"
-          />
-          <CustomButton
-            text="Create Account"
-            onPress={onSignUpPressed}
-            type="SECONDARY"
-          />
-        </View>
-      </ScrollView>
-    </View>
+              Create Account
+            </Text>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 

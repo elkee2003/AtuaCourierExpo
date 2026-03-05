@@ -31,56 +31,37 @@ const styles = StyleSheet.create({
         fontSize:16,       
         color:'#c90707',
     },
-    profilePicWrapper: {
-        alignItems: "center",
-        marginVertical: 15,
+    profilePicContainer:{
+        position:'relative',
+        height:150,
+        width:150,
+        borderRadius:75,
+        backgroundColor:'#a2a2a8',
+        justifyContent:'center',
+        alignSelf:'center',
+        justifyContent:'center',
+        alignItems:'center',
+        marginVertical:10,
     },
-
-    profilePicContainer: {
-        height: 150,
-        width: 150,
-        borderRadius: 75,
-        backgroundColor: "#e0e0e0",
-        justifyContent: "center",
-        alignItems: "center",
-        position: "relative",
-        elevation: 4,
-        shadowColor: "#000",
-        shadowOpacity: 0.2,
-        shadowRadius: 6,
+    img:{
+        width:'100%',
+        height:'100%',
+        resizeMode:"contain",
+        borderRadius:75,
     },
-
-    img: {
-        width: "100%",
-        height: "100%",
-        borderRadius: 75,
-        resizeMode: "cover",
+    plusIconContainer: {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: [{ translateX: -30 }, { translateY: -30 }], // Adjust translate values according to your icon size
+        zIndex: 3,
     },
-
-    placeholderContainer: {
-        justifyContent: "center",
-        alignItems: "center",
+    plusIcon:{
+        color: 'rgba(3, 3, 59, 0.7)',
+        backgroundColor:'transparent',
+        fontSize:60,
+        color:'#07a830',
     },
-
-    addPhotoText: {
-        marginTop: 5,
-        fontSize: 14,
-        color: "#555",
-    },
-
-    cameraIconContainer: {
-        position: "absolute",
-        bottom: 5,
-        right: 5,
-        backgroundColor: "#07a830",
-        height: 35,
-        width: 35,
-        borderRadius: 17.5,
-        justifyContent: "center",
-        alignItems: "center",
-        elevation: 3,
-    },
-
     input: {
         marginBottom:10,
         backgroundColor: "white",
@@ -136,40 +117,14 @@ const styles = StyleSheet.create({
         marginTop:30,
         marginHorizontal:10,
     },
-
-    reviewScrollContent: {
-        paddingBottom: 30,
-        
+    maxiImages:{
+        height:300,
+        width:140,
+        borderRadius:20,
     },
-    
-    reviewProfileImage: {
-        width: 150,
-        height: 150,
-        borderRadius: 75,
-        resizeMode: "cover",
-    },
-    
-
-    reviewNinImage: {
-        width: "100%",
-        height: 200,
-        borderRadius: 12,
-        marginTop: 10,
-        resizeMode: "cover",
-    },
-
-    maxiImages: {
-        width: '48%',
-        height: 150,
-        borderRadius: 12,
-        marginBottom: 10,
-    },
-
-    imageListContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        marginTop: 10,
+    imageListContainer:{
+        marginVertical:10,
+        gap:10,
     },
     addGuarantorSub:{
         marginHorizontal:10,
@@ -182,97 +137,22 @@ const styles = StyleSheet.create({
         fontWeight:'bold',
     },
     inputReview:{
-        paddingVertical: 10,
-        paddingHorizontal: 15,
-        fontSize: 18,
-        letterSpacing: 0.5,
-        color: "white",
-        backgroundColor: "#3b3b3b",
-        borderRadius: 12,
-        marginBottom: 10,
+        padding:5,
+        fontSize:18,
+        letterSpacing:0.5,
+        color:"white",
+        backgroundColor:'#3b3b3b',
+        borderRadius:20,
     },
 
     inputReviewLast:{
-        paddingVertical: 10,
-        paddingHorizontal: 15,
-        fontSize: 18,
-        letterSpacing: 0.5,
-        color: "white",
-        backgroundColor: "#3b3b3b",
-        borderRadius: 12,
-        marginBottom: 30,
-    },
-
-    // NIN styles
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: "bold",
-        marginTop: 15,
-        marginBottom: 8,
-    },
-
-    ninCard: {
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        padding: 15,
-        marginBottom: 15,
-        elevation: 3, // Android shadow
-        shadowColor: "#000", // iOS shadow
-        shadowOpacity: 0.1,
-        shadowRadius: 6,
-    },
-
-    uploadBox: {
-        borderWidth: 1.5,
-        borderColor: "#07a830",
-        borderStyle: "dashed",
-        borderRadius: 10,
-        paddingVertical: 30,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-
-    uploadTitle: {
-        marginTop: 10,
-        fontSize: 16,
-        fontWeight: "600",
-    },
-
-    uploadSub: {
-        fontSize: 13,
-        color: "#777",
-        marginTop: 4,
-    },
-
-    ninImage: {
-        width: "100%",
-        height: 180,
-        borderRadius: 10,
-        resizeMode: "cover",
-    },
-
-    ninActions: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginTop: 10,
-    },
-
-    replaceBtn: {
-        padding: 10,
-    },
-
-    replaceText: {
-        color: "#07a830",
-        fontWeight: "bold",
-    },
-
-    removeBtn: {
-        padding: 10,
-    },
-
-    removeText: {
-        color: "#c90707",
-        fontWeight: "bold",
+        padding:5,
+        fontSize:18,
+        letterSpacing:0.5,
+        color:"white",
+        backgroundColor:'#3b3b3b',
+        borderRadius:20,
+        marginBottom:20,
     },
 
     // Bank styles

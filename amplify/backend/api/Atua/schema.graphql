@@ -1,4 +1,4 @@
-type CompanyVehicle @model @auth(rules: [{allow: public}]) {
+type CompanyVehicle @model @auth(rules: [{ allow: public }]) {
   id: ID!
   vehicleType: String
   model: String
@@ -6,7 +6,7 @@ type CompanyVehicle @model @auth(rules: [{allow: public}]) {
   couriercompanyID: ID! @index(name: "byCourierCompany")
 }
 
-type CourierCompany @model @auth(rules: [{allow: public}]) {
+type CourierCompany @model @auth(rules: [{ allow: public }]) {
   id: ID!
   sub: String!
   firstName: String!
@@ -22,7 +22,8 @@ type CourierCompany @model @auth(rules: [{allow: public}]) {
   adminLastName: String
   adminPhoneNumber: String
   bankName: String
-  CompanyVehicles: [CompanyVehicle] @hasMany(indexName: "byCourierCompany", fields: ["id"])
+  CompanyVehicles: [CompanyVehicle]
+    @hasMany(indexName: "byCourierCompany", fields: ["id"])
   accountNumber: String
   push_token: String
 }
@@ -42,7 +43,7 @@ enum OrderStatus {
   DISPUTED
 }
 
-type Order @model @auth(rules: [{allow: public}]) {
+type Order @model @auth(rules: [{ allow: public }]) {
   id: ID!
 
   # ---------------- BASIC INFO ----------------
@@ -54,7 +55,7 @@ type Order @model @auth(rules: [{allow: public}]) {
   originAddress: String
   originLat: Float
   originLng: Float
-  
+
   destinationAddress: String
   destinationLat: Float
   destinationLng: Float
@@ -62,19 +63,30 @@ type Order @model @auth(rules: [{allow: public}]) {
   transportationType: String
   status: OrderStatus
 
-   # ---------------- PRICING ----------------
-  totalPrice: Float
-  courierFee: Float
+  # ---------------- PRICING ----------------
+  # ------- FOR MAXI -------
+  estimatedMinPrice: Float
+  estimatedMaxPrice: Float
+
+  initialOfferPrice: Float # first price user sends
+  currentOfferPrice: Float # latest active offer
+  lastOfferBy: String # "USER" or "COURIER"
   loadingFee: Float
   unloadingFee: Float
+
+  # ------- General -------
+  totalPrice: Float # final agreed price
+  courierEarnings: Float
   commissionRate: Float
   platformRevenue: Float
 
-   # ---------------- VERIFICATION ----------------
+  # ---------------- VERIFICATION ----------------
   deliveryVerificationCode: String
 
   # ---------------- WEIGHT ----------------
   declaredWeightBracket: String
+
+  # Interstate (Courier + Logistics Company Flow)
 
   # ---------------- CUSTODY EVIDENCE ----------------
   senderPreTransferPhotos: [String]
@@ -125,7 +137,7 @@ type Order @model @auth(rules: [{allow: public}]) {
   Courier: Courier @hasOne
 }
 
-type Courier @model @auth(rules: [{allow: public}]) {
+type Courier @model @auth(rules: [{ allow: public }]) {
   id: ID!
   sub: String!
   isOnline: Boolean
@@ -147,6 +159,7 @@ type Courier @model @auth(rules: [{allow: public}]) {
   model: String
   plateNumber: String
   maxiImages: [String]
+  maxiDescription: String
   guarantorName: String
   guarantorLastName: String
   guarantorProfession: String
@@ -164,7 +177,7 @@ type Courier @model @auth(rules: [{allow: public}]) {
   approvedBy: String
 }
 
-type User @model @auth(rules: [{allow: public}]) {
+type User @model @auth(rules: [{ allow: public }]) {
   id: ID!
   sub: String!
   firstName: String!
@@ -179,4 +192,3 @@ type User @model @auth(rules: [{allow: public}]) {
   push_token: String
   Orders: [Order] @hasMany(indexName: "byUser", fields: ["id"])
 }
- 
