@@ -6,12 +6,12 @@ import * as ImageManipulator from "expo-image-manipulator";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
-    Alert,
-    Image,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Image,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useAuthContext } from "../../../providers/AuthProvider";
 import { useProfileContext } from "../../../providers/ProfileProvider";
@@ -26,6 +26,7 @@ const ReviewGuarantorCom = () => {
     transportationType,
     vehicleClass,
     model,
+    vehicleColour,
     plateNumber,
     maxiImages,
     maxiDescription,
@@ -233,6 +234,7 @@ const ReviewGuarantorCom = () => {
           transportationType,
           vehicleClass,
           model,
+          vehicleColour,
           plateNumber,
           email: userMail,
           profilePic: uploadedProfilePic,
@@ -361,6 +363,7 @@ const ReviewGuarantorCom = () => {
           ((updated.transportationType = transportationType),
             (updated.vehicleClass = vehicleClass),
             (updated.model = model),
+            (updated.vehicleColour = vehicleColour),
             (updated.plateNumber = plateNumber),
             (updated.address = address),
             (updated.landMark = landMark),

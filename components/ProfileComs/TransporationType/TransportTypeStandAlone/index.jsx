@@ -31,6 +31,8 @@ const StandaloneTtypeCom = () => {
     setVehicleClass,
     model,
     setModel,
+    vehicleColour,
+    setVehicleColour,
     plateNumber,
     setPlateNumber,
     maxiImages,
@@ -66,19 +68,19 @@ const StandaloneTtypeCom = () => {
   const transportData = [
     {
       label: "Micro",
-      value: "Micro",
+      value: "MICRO",
       description:
         "This transportation method option includes eco-friendly transport methods such as Bicycles, Scooters, Skates for quick, short-distance deliveries.",
     },
     {
       label: "Moto",
-      value: "Moto",
+      value: "MOTO",
       description:
         "This transportation method is suitable for faster, mid-sized deliveries that require speed and distance. This option includes Motorcycles, Mopeds, Car.",
     },
     {
       label: "Maxi",
-      value: "Maxi",
+      value: "MAXI",
       description:
         "This transportation method is best for large or bulky items that need spacious transport. This option includes Vans, Moving Trucks, Large Cargo vehicles",
     },
@@ -250,6 +252,7 @@ const StandaloneTtypeCom = () => {
           updated.transportationType = transportationType;
           updated.vehicleClass = vehicleClass;
           updated.model = model;
+          updated.vehicleColour = vehicleColour;
           updated.plateNumber = plateNumber;
           updated.maxiDescription = maxiDescription;
 
@@ -370,7 +373,7 @@ const StandaloneTtypeCom = () => {
 
       {/* MOTO */}
 
-      {transportationType === "Moto" && (
+      {transportationType === "MOTO" && (
         <>
           <Text style={styles.label}>Vehicle Class</Text>
 
@@ -393,6 +396,13 @@ const StandaloneTtypeCom = () => {
 
           <TextInput
             style={styles.input}
+            value={vehicleColour}
+            onChangeText={setVehicleColour}
+            placeholder="Vehicle Colour (e.g. Red)"
+          />
+
+          <TextInput
+            style={styles.input}
             value={plateNumber}
             onChangeText={setPlateNumber}
             placeholder="Plate Number"
@@ -402,7 +412,7 @@ const StandaloneTtypeCom = () => {
 
       {/* MAXI */}
 
-      {transportationType === "Maxi" && (
+      {transportationType === "MAXI" && (
         <>
           <Text style={styles.label}>Vehicle Class</Text>
 

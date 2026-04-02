@@ -187,6 +187,7 @@ type Courier @model @auth(rules: [{ allow: public }]) {
   transportationType: String
   vehicleClass: String
   model: String
+  vehicleColour: String
   plateNumber: String
   maxiImages: [String]
   maxiDescription: String

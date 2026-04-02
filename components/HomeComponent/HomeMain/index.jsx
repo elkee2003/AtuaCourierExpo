@@ -110,17 +110,6 @@ const HomeComponent = () => {
         ]),
       );
 
-      // const availableOrders = await DataStore.query(Order, (o) =>
-      //   o.and((o2) => [
-      //     o2.status.eq("READY_FOR_PICKUP"),
-      //     isMaxi
-      //       ? o2.transportationType.eq("MAXI")
-      //       : o2.transportationType
-      //           .contains("MICRO_EXPRESS")
-      //           .or(o2.transportationType.contains("MOTO_EXPRESS")),
-      //   ]),
-      // );
-
       // 👇 we will filter by distance next
       const nearbyOrders = availableOrders.filter((order) => {
         const distance = getDistance(
