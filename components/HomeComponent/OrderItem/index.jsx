@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import styles from "./styles";
 
-const OrderItem = ({ order, onAccept, onRemoveOrder, onSelect }) => {
+const OrderItem = ({ order, onRemoveOrder, onSelect }) => {
   const [timeLeft, setTimeLeft] = useState(25);
 
   //   To format the transportationType
@@ -35,7 +35,7 @@ const OrderItem = ({ order, onAccept, onRemoveOrder, onSelect }) => {
 
   return (
     <Animated.View entering={FadeInDown.duration(400)}>
-      <Pressable
+      <TouchableOpacity
         style={styles.card}
         // onPress={goToOrderDelivery}
         onPress={() => onSelect(order)}
@@ -63,20 +63,17 @@ const OrderItem = ({ order, onAccept, onRemoveOrder, onSelect }) => {
         <View style={styles.footer}>
           <Text style={styles.timer}>⏱ {timeLeft}s</Text>
 
+          {/* Remove or Accept shouldn't be here */}
           <View style={styles.actions}>
-            <Pressable
+            <TouchableOpacity
               style={styles.declineBtn}
               onPress={() => onRemoveOrder(order.id)}
             >
               <FontAwesome name="times" size={18} color="white" />
-            </Pressable>
-
-            <Pressable style={styles.acceptBtn} onPress={() => onAccept(order)}>
-              <FontAwesome name="check" size={18} color="white" />
-            </Pressable>
+            </TouchableOpacity>
           </View>
         </View>
-      </Pressable>
+      </TouchableOpacity>
     </Animated.View>
   );
 };

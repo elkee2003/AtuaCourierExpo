@@ -28,6 +28,9 @@
       },
       "storage": {
         "atuaStorage": {}
+      },
+      "api": {
+        "Atua": {}
       }
     }
   }

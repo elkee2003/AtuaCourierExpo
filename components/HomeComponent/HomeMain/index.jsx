@@ -62,19 +62,8 @@ const HomeComponent = () => {
   };
 
   // Accept Order:
-  const onAccept = async (order) => {
-    try {
-      await DataStore.save(
-        Order.copyOf(order, (updated) => {
-          updated.status = "ACCEPTED";
-        }),
-      );
-
-      // navigate immediately
-      router.push(`/orders/${order.id}`);
-    } catch (e) {
-      Alert.alert("Error", e.message);
-    }
+  const onSelectOrder = (order) => {
+    router.push(`/home/${order.id}`);
   };
 
   // Remove Order
@@ -230,9 +219,8 @@ const HomeComponent = () => {
               <OrderItem
                 key={item.id}
                 order={item}
-                onAccept={onAccept}
                 onRemoveOrder={onRemoveOrder}
-                onSelect={setSelectedOrder}
+                onSelect={onSelectOrder}
               />
             ))}
         </BottomSheetScrollView>

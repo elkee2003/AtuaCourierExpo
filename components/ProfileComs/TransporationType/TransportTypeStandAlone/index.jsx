@@ -45,6 +45,8 @@ const StandaloneTtypeCom = () => {
 
   const { dbUser, setDbUser, sub } = useAuthContext();
 
+  const [saving, setSaving] = useState(false);
+
   const [isFocus, setIsFocus] = useState(false);
 
   // signed S3 images
@@ -212,10 +214,14 @@ const StandaloneTtypeCom = () => {
   /* ------------------ UPDATE ------------------ */
 
   const updateTransportType = async () => {
+    if (saving) return;
+
     if (!validateVehicleInfo()) {
       Alert.alert("Error", errorMessage);
       return;
     }
+
+    setSaving(true);
 
     try {
       let imagesToSave = dbUser?.maxiImages || [];
@@ -282,6 +288,8 @@ const StandaloneTtypeCom = () => {
     } catch (error) {
       console.log(error);
       Alert.alert("Error", "Failed to update transport");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -495,7 +503,11 @@ const StandaloneTtypeCom = () => {
 
       {errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
 
-      <TouchableOpacity style={styles.saveButton} onPress={updateTransportType}>
+      <TouchableOpacity
+        style={styles.saveButton}
+        onPress={updateTransportType}
+        disabled={saving}
+      >
         <Text style={styles.saveButtonText}>Save Changes</Text>
       </TouchableOpacity>
     </ScrollView>
