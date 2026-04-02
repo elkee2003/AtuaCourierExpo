@@ -6,6 +6,7 @@ import ProfileProvider from "@/providers/ProfileProvider";
 import { Amplify } from "aws-amplify";
 import { Stack } from "expo-router";
 import { AutocompleteDropdownContextProvider } from "react-native-autocomplete-dropdown";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import amplifyconfig from "../src/amplifyconfiguration.json";
 
 Amplify.configure(amplifyconfig);
@@ -31,21 +32,23 @@ const RootLayout = () => {
   // if (!ready) return null;
 
   return (
-    <AuthProvider>
-      <AutocompleteDropdownContextProvider>
-        <ProfileProvider>
-          <OrderProvider>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-              }}
-            >
-              <Stack.Screen name="(tabs)" />
-            </Stack>
-          </OrderProvider>
-        </ProfileProvider>
-      </AutocompleteDropdownContextProvider>
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <AutocompleteDropdownContextProvider>
+          <ProfileProvider>
+            <OrderProvider>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                }}
+              >
+                <Stack.Screen name="(tabs)" />
+              </Stack>
+            </OrderProvider>
+          </ProfileProvider>
+        </AutocompleteDropdownContextProvider>
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 };
 

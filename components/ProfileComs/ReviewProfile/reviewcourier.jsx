@@ -10,15 +10,45 @@ import { getUrl } from 'aws-amplify/storage';
 const ReviewCourierCom = () => {
 
     const [imageUris, setImageUris] = useState([]);
+    const [ninImageUrl, setNinImageUrl] = useState(null);
     
     const {
-        firstName, lastName, profilePic, transportationType, vehicleType, model, plateNumber, images, address, phoneNumber, landMark, courierNIN, courierBVN, bankName, accountName, accountNumber,
+        firstName, lastName, profilePic, transportationType, vehicleType, model, plateNumber, images, address, phoneNumber, landMark, courierNIN, courierNINImage, bankName, accountName, accountNumber,
     } = useProfileContext()
+
+    
 
     // Navigation Function
     const handleNxtPage = () => {
         router.push('/profile/reviewinfo/reviewguarantor'); 
     };
+
+    // useEffect for fetching NINImage
+    useEffect(() => {
+        const fetchNinImage = async () => {
+            if (!courierNINImage) return;
+
+            // If already a signed URL, use it directly
+            if (courierNINImage.startsWith('http')) {
+            setNinImageUrl(courierNINImage);
+            return;
+            }
+
+            try {
+            const result = await getUrl({
+                path: courierNINImage,
+                options: { validateObjectExistence: true },
+            });
+
+            setNinImageUrl(result.url.toString());
+            } catch (error) {
+            console.log("Error fetching NIN image:", error);
+            }
+        };
+
+        fetchNinImage();
+    }, [courierNINImage]);
+
 
   return (
     <View style={styles.reviewContainer}>
@@ -93,8 +123,15 @@ const ReviewCourierCom = () => {
             <Text style={styles.subHeader}>NIN:</Text>
             <Text style={styles.inputReview}>{courierNIN}</Text>
 
-            <Text style={styles.subHeader}>BVN:</Text>
-            <Text style={styles.inputReview}>{courierBVN}</Text>
+            {ninImageUrl && (
+                <>
+                    <Text style={styles.subHeader}>NIN Slip:</Text>
+                    <Image
+                    source={{ uri: ninImageUrl }}
+                    style={styles.reviewNinImage}
+                    />
+                </>
+            )}
 
             <Text style={styles.subHeader}>Bank Name</Text>
             <Text style={styles.inputReview}>{bankName}</Text>

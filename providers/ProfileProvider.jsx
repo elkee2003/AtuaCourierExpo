@@ -16,14 +16,16 @@ const ProfileProvider = ({children}) => {
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [transportationType, setTransportationType] = useState("");
-    const [vehicleType, setVehicleType,] = useState("")
+    const [vehicleClass, setVehicleClass] = useState(null);
     const [model, setModel] = useState("")
     const [plateNumber, setPlateNumber] = useState("")
-    const [images, setImages] = useState("")
+    const [maxiImages, setMaxiImages] = useState("")
+    const [maxiDescription, setMaxiDescription] = useState("")
     const [address, setAddress] = useState("");
     const [landMark, setLandMark] = useState("");
     const [phoneNumber, setPhoneNumber] = useState("");
     const [courierNIN, setCourierNIN] = useState("");
+    const [courierNINImage, setCourierNINImage] = useState("");
     const [bankCode, setBankCode] = useState("");
     const [bankName, setBankName] = useState("");
     const [accountName, setAccountName] = useState("");
@@ -36,6 +38,7 @@ const ProfileProvider = ({children}) => {
     const [guarantorAddress, setGuarantorAddress] = useState("");
     const [guarantorEmail, setGuarantorEmail] = useState("");
     const [guarantorNIN, setGuarantorNIN] = useState("");
+    const [guarantorNINImage, setGuarantorNINImage] = useState("");
     const [lat, setLat] = useState("0");
     const [lng, setLng] = useState("0");
     const [heading, setHeading] = useState(heading);
@@ -73,6 +76,10 @@ const ProfileProvider = ({children}) => {
           setErrorMessage('Your NIN is required')
           return false;
         }
+        if(!courierNINImage){
+          setErrorMessage('Your NIN Image is required')
+          return false;
+        }
         if(!bankName){
           setErrorMessage('Bank name is required ')
           return false;
@@ -94,7 +101,7 @@ const ProfileProvider = ({children}) => {
 
       // Moto
       if (transportationType === 'Moto') {
-        if (!vehicleType) {
+        if (!vehicleClass) {
           setErrorMessage('Vehicle type is required')
           return false;
         }
@@ -110,8 +117,8 @@ const ProfileProvider = ({children}) => {
 
       // maxi verfication
       if (transportationType === 'Maxi') {
-        if (!vehicleType) {
-          setErrorMessage('Vehicle type is required')
+        if (!vehicleClass) {
+          setErrorMessage('Vehicle class is required')
           return false;
         }
         if (!model) {
@@ -122,7 +129,7 @@ const ProfileProvider = ({children}) => {
           setErrorMessage('Plate number is required')
           return false;
         }
-        if (images?.length < 3) {
+        if (maxiImages?.length < 3) {
           setErrorMessage('Kindly select at least 3 images')
           return false;
         }
@@ -183,14 +190,14 @@ const ProfileProvider = ({children}) => {
     // useEffect for setting transportation type
     useEffect(() => {
       if (transportationType === 'Micro'){
-        setVehicleType(null);
+        setVehicleClass(null);
         setModel(null);
         setPlateNumber(null);
-        setImages(null);
+        setMaxiImages(null);
       }
     
       if (transportationType === 'Moto'){
-        setImages(null);
+        setMaxiImages(null);
       }
     }, [transportationType]);
     
@@ -202,13 +209,16 @@ const ProfileProvider = ({children}) => {
             setFirstName(dbUser?.firstName || "");
             setLastName(dbUser?.lastName || "");
             setTransportationType(dbUser.transportationType || "");
-            setVehicleType(dbUser?.vehicleType || "");
+            setVehicleClass(dbUser?.vehicleClass || "");
             setModel(dbUser?.model || "");
             setPlateNumber(dbUser.plateNumber || "");
+            setMaxiImages(dbUser?.maxiImages || []);
+            setMaxiDescription(dbUser?.maxiDescription || "");
             setAddress(dbUser?.address || "");
             setLandMark(dbUser?.landMark || "");
             setPhoneNumber(dbUser?.phoneNumber || "");
             setCourierNIN(dbUser?.courierNIN || "");
+            setCourierNINImage(dbUser?.courierNINImage || "");
             setBankCode(dbUser?.bankCode || "");
             setBankName(dbUser?.bankName || "");
             setAccountName(dbUser?.accountName || "");
@@ -221,6 +231,7 @@ const ProfileProvider = ({children}) => {
             setGuarantorAddress(dbUser?.guarantorAddress || "");
             setGuarantorEmail(dbUser?.guarantorEmail || "");
             setGuarantorNIN(dbUser?.guarantorNIN || "");
+            setGuarantorNINImage(dbUser?.guarantorNINImage || "");
             setLat(dbUser?.lat?.toString() || "0");
             setLng(dbUser?.lng?.toString() || "0");
             setHeading(dbUser.heading || heading);
@@ -230,9 +241,9 @@ const ProfileProvider = ({children}) => {
   return (
     <ProfileContext.Provider value={{
       isOnline, setIsOnline,
-      firstName, setFirstName, lastName, setLastName, transportationType, setTransportationType, vehicleType, setVehicleType, model, setModel, plateNumber, setPlateNumber,
-      images, setImages, validatVehicleInfo,
-      address, setAddress, phoneNumber, setPhoneNumber, errorMessage, setErrorMessage, profilePic, setProfilePic, landMark, setLandMark, courierNIN, setCourierNIN, bankCode, setBankCode,  bankName, setBankName, accountName, setAccountName, accountNumber, setAccountNumber, guarantorName, setGuarantorName, guarantorLastName, setGuarantorLastName, guarantorProfession, setGuarantorProfession, guarantorNumber, setGuarantorNumber, guarantorRelationship, setGuarantorRelationship, guarantorAddress, setGuarantorAddress, guarantorEmail, setGuarantorEmail, guarantorNIN, setGuarantorNIN, lat, setLat, lng, setLng, heading, setHeading,
+      firstName, setFirstName, lastName, setLastName, transportationType, setTransportationType, vehicleClass, setVehicleClass, model, setModel, plateNumber, setPlateNumber,
+      maxiImages, setMaxiImages, maxiDescription, setMaxiDescription,  validatVehicleInfo,
+      address, setAddress, phoneNumber, setPhoneNumber, errorMessage, setErrorMessage, profilePic, setProfilePic, landMark, setLandMark, courierNIN, setCourierNIN, courierNINImage, setCourierNINImage, bankCode, setBankCode,  bankName, setBankName, accountName, setAccountName, accountNumber, setAccountNumber, guarantorName, setGuarantorName, guarantorLastName, setGuarantorLastName, guarantorProfession, setGuarantorProfession, guarantorNumber, setGuarantorNumber, guarantorRelationship, setGuarantorRelationship, guarantorAddress, setGuarantorAddress, guarantorEmail, setGuarantorEmail, guarantorNIN, setGuarantorNIN, guarantorNINImage, setGuarantorNINImage, lat, setLat, lng, setLng, heading, setHeading,
       onValidateCourierInput, onValidateGuarantorInput, validatVehicleInfo,
       }}>
         {children}

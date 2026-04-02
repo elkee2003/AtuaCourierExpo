@@ -1,87 +1,99 @@
-import { resetPassword } from "aws-amplify/auth";
-import { router } from "expo-router";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
-import CustomButton from "../customButtons";
-import CustomInput from "../customInput";
-import styles from "./styles";
+import { View, Text, TextInput, Alert, TouchableOpacity } from 'react-native'
+import React, {useState} from 'react'
+import styles from './styles'
+import { router } from 'expo-router'
+import { useForm, Controller } from 'react-hook-form';
+import { resetPassword } from 'aws-amplify/auth';
 
 const ForgotPasswordCom = () => {
-  const { control, handleSubmit } = useForm();
-  const [loading, setLoading] = useState(false);
 
-  const onSubmit = async ({ email }) => {
-    if (loading) return;
-    setLoading(true);
+    // const [email, setEmail] = useState('')
+    const {control, handleSubmit, formState:{errors} } = useForm()
+    const [loading, setLoading] = useState(false)
 
-    try {
-      await resetPassword({ username: email });
+    // Function to handle form submission
+    const onSubmit = async (data) => {
+        const {email} = data;
+        
+        if(loading){
+            return;
+        }
+        setLoading(true)
 
-      Alert.alert("Success", "Code sent to your email.");
-      router.push({
-        pathname: "/login/confirmcode",
-        params: { email },
-      });
-    } catch (e) {
-      Alert.alert("Error", e.message);
-    }
+        try{
+            const response = await resetPassword({ username: email });
 
-    setLoading(false);
-  };
+            Alert.alert('Success', 'Code has been sent to your email')
+            router.push({
+                pathname: '/login/confirmcode',
+                params: { email }, // Pass the email to the next screen for confirmation
+            });
+        }catch(e){
+            Alert.alert('Error', e.message);
+            console.log('Error sending password reset code:', e)
+        }
+        setLoading(false)
+    };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-      >
-        <ScrollView contentContainerStyle={styles.scroll}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Forgot Password?</Text>
-            <Text style={styles.subtitle}>
-              Enter your email and we’ll send a reset code
-            </Text>
-          </View>
+    <View style={styles.container}>
 
-          <View style={styles.card}>
-            <CustomInput
-              name="email"
-              control={control}
-              inputSub="Email"
-              placeholder="Enter your email"
-              rules={{
-                required: "Email is required",
+        {/* Header */}
+        <View style={styles.titleCon}>
+            <Text style={styles.title}>
+                Reset Password
+            </Text>
+        </View>
+
+        {/* Input */}
+        <View style={styles.inputSection}>
+        <Text style={styles.inputSub}>Enter Your Email</Text>
+        <Controller
+            name='email'
+            control={control}
+            defaultValue=''
+            rules={{
+                required:'Email is required',
                 pattern: {
-                  value: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/,
-                  message: "Invalid email format",
+                    value: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/,
+                    message: 'Invalid email format',
                 },
-              }}
-            />
+            }}
+            render={({field: {value,onChange, onBlur}})=>(
+                <TextInput
+                    style={[styles.input, errors.email && styles.errorBorder]}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    placeholder='Enter your email'
+                />
+            )}
+        />
+        {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
+        </View>
 
-            <CustomButton
-              text="Send Code"
-              onPress={handleSubmit(onSubmit)}
-              loading={loading}
-            />
+        <TouchableOpacity 
+            style={styles.btnCon}
+            onPress={handleSubmit(onSubmit)}
+        >
+            <Text style={styles.btnTxt}>{loading ? 'Sending...' : 'Send code'}</Text>
+        </TouchableOpacity>
 
-            <Text style={styles.link} onPress={() => router.replace("/login")}>
-              Back to Sign In
-            </Text>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-  );
-};
+        <View style={styles.secBtnSection}>
+            {/* Resend Code */}
+            {/* <TouchableOpacity style={styles.secBtnCon} onPress={()=> console.warn('Resend Code')}>
+                    <Text style={styles.secBtnTxt}>Resend code</Text>
+            </TouchableOpacity> */}
+
+            {/* Back to Sign In page */}
+            <TouchableOpacity style={styles.secBtnCon} onPress={()=>router.push('/login')}>
+                <Text style={styles.secBtnTxt}>
+                    Back to Sign In
+                </Text>
+            </TouchableOpacity>
+        </View>
+    </View>
+  )
+}
 
 export default ForgotPasswordCom;

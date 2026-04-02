@@ -59,7 +59,17 @@ const AuthProvider = ({children}) => {
 
     const dbCurrentUser = async () =>{
         try{
-          const dbusercurrent = await DataStore.query(Courier, (courier)=>courier.sub.eq(sub))
+          let dbusercurrent = await DataStore.query(Courier, (u) => u.sub.eq(sub));
+
+        if (dbusercurrent.length === 0) {
+          console.log("No local user — forcing sync retry...");
+
+          await DataStore.clear();
+          await DataStore.start();
+
+          // retry AFTER sync
+          dbusercurrent = await DataStore.query(Courier, (u) => u.sub.eq(sub));
+        }
         //   DataStore.delete(Courier, Predicates.ALL)
           // DataStore.clear()
           
@@ -144,7 +154,7 @@ const AuthProvider = ({children}) => {
 
   return (
     <AuthContext.Provider value={{
-        authUser, dbUser, setDbUser, sub
+        authUser, dbUser, setDbUser, sub, userMail
     }}>
         {children}
     </AuthContext.Provider>

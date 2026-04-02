@@ -96,12 +96,12 @@ const OrderDeliveryMap = ({
         const getDestination=()=>{
             if (isPickedUp){
             return{
-                latitude:order.parcelDestinationLat,
-                longitude:order.parcelDestinationLng,
+                latitude:order.destinationLat,
+                longitude:order.destinationLng,
             }
             }return{
-            latitude:order.parcelOriginLat,
-            longitude:order.parcelOriginLng,
+            latitude:order.originLat,
+            longitude:order.originLng,
             }
         }
 
@@ -144,10 +144,10 @@ const OrderDeliveryMap = ({
                 <Marker
                     key={`${order.id}-origin`}
                     title={user.firstName}
-                    description={order.parcelOrigin}
+                    description={order.originAddress}
                     coordinate={{
-                        latitude: order.parcelOriginLat,
-                        longitude: order.parcelOriginLng,
+                        latitude: order.originLat,
+                        longitude: order.originLng,
                     }}
                 >
                     <View style={{ backgroundColor: '#04b831', padding: 5, borderRadius: 20 }}>
@@ -161,8 +161,8 @@ const OrderDeliveryMap = ({
                     title={user.firstName}
                     description={'Destination Location'}
                     coordinate={{
-                        latitude: order.parcelDestinationLng,
-                        longitude: order.parcelDestinationLng,
+                        latitude: order.destinationLng,
+                        longitude: order.destinationLng,
                     }}
                 >
                     <View style={{ backgroundColor: 'red', padding: 5, borderRadius: 20 }}>

@@ -8,10 +8,10 @@ const CompletedDeliverySingle = ({item}) => {
   return (
     <View style={styles.card}>
         <Text style={styles.subHeader}>Order Origin:</Text>
-        <Text style={styles.details}>{item.parcelOrigin}</Text>
+        <Text style={styles.details}>{item.originAddress}</Text>
 
         <Text style={styles.subHeader}>Order Destination:</Text>
-        <Text style={styles.details}>{item.parcelDestination}</Text>
+        <Text style={styles.details}>{item.destinationAddress}</Text>
 
         <Text style={styles.subHeader}>Order Type:</Text>
         <Text style={styles.details}>{item.transportationType}</Text>

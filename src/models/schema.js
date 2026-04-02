@@ -314,6 +314,13 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
+                "originState": {
+                    "name": "originState",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
                 "originLat": {
                     "name": "originLat",
                     "isArray": false,
@@ -335,6 +342,13 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
+                "destinationState": {
+                    "name": "destinationState",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
                 "destinationLat": {
                     "name": "destinationLat",
                     "isArray": false,
@@ -346,6 +360,20 @@ export const schema = {
                     "name": "destinationLng",
                     "isArray": false,
                     "type": "Float",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "tripType": {
+                    "name": "tripType",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "distance": {
+                    "name": "distance",
+                    "isArray": false,
+                    "type": "String",
                     "isRequired": false,
                     "attributes": []
                 },
@@ -362,6 +390,20 @@ export const schema = {
                     "type": {
                         "enum": "OrderStatus"
                     },
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "loadCategory": {
+                    "name": "loadCategory",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "isInterState": {
+                    "name": "isInterState",
+                    "isArray": false,
+                    "type": "Boolean",
                     "isRequired": false,
                     "attributes": []
                 },
@@ -428,15 +470,36 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
-                "commissionRate": {
-                    "name": "commissionRate",
+                "commissionAmount": {
+                    "name": "commissionAmount",
                     "isArray": false,
                     "type": "Float",
                     "isRequired": false,
                     "attributes": []
                 },
-                "platformRevenue": {
-                    "name": "platformRevenue",
+                "platformFee": {
+                    "name": "platformFee",
+                    "isArray": false,
+                    "type": "Float",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "platformServiceRevenue": {
+                    "name": "platformServiceRevenue",
+                    "isArray": false,
+                    "type": "Float",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "vatAmount": {
+                    "name": "vatAmount",
+                    "isArray": false,
+                    "type": "Float",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "platformNetRevenue": {
+                    "name": "platformNetRevenue",
                     "isArray": false,
                     "type": "Float",
                     "isRequired": false,
@@ -475,6 +538,30 @@ export const schema = {
                     "name": "senderPreTransferRecordedAt",
                     "isArray": false,
                     "type": "AWSDateTime",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "senderPreTransferLocalPhotos": {
+                    "name": "senderPreTransferLocalPhotos",
+                    "isArray": true,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": [],
+                    "isArrayNullable": true
+                },
+                "senderPreTransferLocalVideo": {
+                    "name": "senderPreTransferLocalVideo",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "mediaUploadStatus": {
+                    "name": "mediaUploadStatus",
+                    "isArray": false,
+                    "type": {
+                        "enum": "MediaUploadStatus"
+                    },
                     "isRequired": false,
                     "attributes": []
                 },
@@ -559,6 +646,13 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
+                "pickupFloorLevelPrice": {
+                    "name": "pickupFloorLevelPrice",
+                    "isArray": false,
+                    "type": "Float",
+                    "isRequired": false,
+                    "attributes": []
+                },
                 "pickupHasElevator": {
                     "name": "pickupHasElevator",
                     "isArray": false,
@@ -577,6 +671,13 @@ export const schema = {
                     "name": "dropoffFloorLevel",
                     "isArray": false,
                     "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "dropoffFloorLevelPrice": {
+                    "name": "dropoffFloorLevelPrice",
+                    "isArray": false,
+                    "type": "Float",
                     "isRequired": false,
                     "attributes": []
                 },
@@ -1017,8 +1118,8 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
-                "approvedBy": {
-                    "name": "approvedBy",
+                "approvedById": {
+                    "name": "approvedById",
                     "isArray": false,
                     "type": "String",
                     "isRequired": false,
@@ -1213,9 +1314,19 @@ export const schema = {
         }
     },
     "enums": {
+        "MediaUploadStatus": {
+            "name": "MediaUploadStatus",
+            "values": [
+                "PENDING",
+                "UPLOADING",
+                "COMPLETE",
+                "FAILED"
+            ]
+        },
         "OrderStatus": {
             "name": "OrderStatus",
             "values": [
+                "BIDDING",
                 "READY_FOR_PICKUP",
                 "ACCEPTED",
                 "ARRIVED_PICKUP",
@@ -1233,5 +1344,5 @@ export const schema = {
     },
     "nonModels": {},
     "codegenVersion": "3.4.4",
-    "version": "fe50a71e805111dfa7dc906cb9c801f8"
+    "version": "17ae79b6e762c0734586fe26dea88f6c"
 };

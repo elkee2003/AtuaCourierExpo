@@ -24,20 +24,20 @@ const PendingDeliverySingle = ({item}) => {
       <Text style={styles.subHeader}>Order Origin:</Text>
       <Text style={styles.details}>
         {
-          item?.parcelOrigin?.length > 10 ?
-          `${item?.parcelOrigin?.substring(0,60)}...`
+          item?.originAddress?.length > 10 ?
+          `${item?.originAddress?.substring(0,60)}...`
           :
-          item?.parcelOrigin
+          item?.originAddress
         }
       </Text>
 
       <Text style={styles.subHeader}>Order Destination:</Text>
       <Text style={styles.details}>
         {
-          item?.parcelDestination?.length > 10 ?
-          `${item?.parcelDestination?.substring(0,60)}...`
+          item?.destinationAddress?.length > 10 ?
+          `${item?.destinationAddress?.substring(0,60)}...`
           :
-          item?.parcelDestination
+          item?.destinationAddress
         }
       </Text>
 

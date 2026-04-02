@@ -1,136 +1,167 @@
-import { signUp } from "aws-amplify/auth";
-import Checkbox from "expo-checkbox";
-import { router } from "expo-router";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
-import CustomButton from "./customButtons";
-import CustomInput from "./customInput";
-import styles from "./styles";
+import { View, Text, TextInput, Alert, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import styles from './styles';
+import Checkbox from 'expo-checkbox';
+import { Ionicons } from '@expo/vector-icons';
+import { useForm, Controller } from 'react-hook-form';
+import { router } from 'expo-router';
+import { signUp } from 'aws-amplify/auth';
 
 const SignupCom = () => {
-  const { control, handleSubmit, getValues } = useForm();
   const [loading, setLoading] = useState(false);
-  const [agree, setAgree] = useState(false);
+  const [toggleCheckBox, setToggleCheckBox] = useState(false); 
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [isConfirmVisible, setIsConfirmVisible] = useState(false);
+  const [isPasswordRepeatVisible, setIsPasswordRepeatVisible] = useState(false);
 
-  const role = "courier";
+  const { control, handleSubmit, formState:{ errors }, getValues } = useForm();
+
+  const role = "courier"; // set per project (courier app / user app)
 
   const onSignUp = async (data) => {
-    if (!agree) {
-      Alert.alert("Please accept terms first.");
-      return;
-    }
-
     setLoading(true);
+    const { email, password } = data;
 
     try {
-      await signUp({
-        username: data.email,
-        password: data.password,
+      // Sign up user with custom:role attribute
+      const { isSignUpComplete } = await signUp({
+        username: email,
+        password,
         options: {
           userAttributes: {
-            email: data.email,
-            "custom:role": role,
+            email,
+            'custom:role': role,
           },
           autoSignIn: true,
         },
       });
 
+      // ✅ Navigate to confirm email page
       router.push({
-        pathname: "/login/confirmemail",
-        params: { username: data.email },
+        pathname: '/login/confirmemail',
+        params: { username: email }
       });
+
     } catch (error) {
-      Alert.alert("Sign Up Failed", error.message);
+      // Show proper error
+      Alert.alert('Error', error.message);
     }
 
     setLoading(false);
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-        // keyboardVerticalOffset={80}
-      >
-        <ScrollView contentContainerStyle={styles.scroll}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Create Courier Account</Text>
-            <Text style={styles.subtitle}>Start delivering with Atua</Text>
-          </View>
+    <View style={styles.containerP}>
+      <View style={styles.titleCon}>
+        <Text style={styles.title}>Create Account</Text>
+      </View>
 
-          <View style={styles.card}>
-            <CustomInput
-              name="email"
-              control={control}
-              placeholder="Enter your email"
-              inputSub="Email"
-              rules={{ required: "Email is required" }}
-            />
+      <ScrollView>
+        <View style={styles.inputSection}>
+          <Text style={styles.inputSub}>Email</Text>
+          <Controller
+            name='email'
+            control={control}
+            defaultValue=''
+            rules={{
+              required: 'Email is required',
+              pattern: {
+                value: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/,
+                message: 'Invalid email format',
+              },
+            }}
+            render={({ field: { value, onChange, onBlur } }) => (
+              <TextInput
+                style={styles.input}
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                autoCapitalize='none'
+                placeholder='Enter your Email'
+              />
+            )}
+          />
+          {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
 
-            <CustomInput
-              name="password"
-              control={control}
-              placeholder="Create password"
-              inputSub="Password"
-              secureTextEntry={!isPasswordVisible}
-              isPasswordVisible={isPasswordVisible}
-              setIsPasswordVisible={setIsPasswordVisible}
-              rules={{
-                required: "Password is required",
-                minLength: {
-                  value: 8,
-                  message: "Minimum 8 characters",
-                },
-              }}
-            />
+          <Text style={styles.inputSub}>Password</Text>
+          <Controller
+            name='password'
+            control={control}
+            defaultValue=''
+            rules={{
+              required: 'Password is required',
+              minLength: { value: 8, message: 'Password must be at least 8 characters long.' },
+              validate: value => /\d/.test(value) || 'Password must include at least one number',
+            }}
+            render={({ field: { value, onChange, onBlur } }) => (
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.input}
+                  value={value}
+                  secureTextEntry={!isPasswordVisible}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  autoCapitalize='none'
+                  placeholder='Enter your Password'
+                />
+                <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
+                  <Ionicons name={isPasswordVisible ? 'eye' : 'eye-off'} size={24} color="grey" />
+                </TouchableOpacity>
+              </View>
+            )}
+          />
+          {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
 
-            <CustomInput
-              name="confirmPassword"
-              control={control}
-              placeholder="Confirm password"
-              inputSub="Confirm Password"
-              secureTextEntry={!isConfirmVisible}
-              isPasswordVisible={isConfirmVisible}
-              setIsPasswordVisible={setIsConfirmVisible}
-              rules={{
-                validate: (value) =>
-                  value === getValues("password") || "Passwords do not match",
-              }}
-            />
+          <Text style={styles.inputSub}>Confirm Password</Text>
+          <Controller
+            name='confirmPassword'
+            control={control}
+            defaultValue=''
+            rules={{
+              required: 'Please confirm your password',
+              validate: value => value === getValues('password') || 'Passwords do not match'
+            }}
+            render={({ field: { value, onChange, onBlur } }) => (
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.input}
+                  value={value}
+                  secureTextEntry={!isPasswordRepeatVisible}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  autoCapitalize='none'
+                  placeholder='Confirm your Password'
+                />
+                <TouchableOpacity onPress={() => setIsPasswordRepeatVisible(!isPasswordRepeatVisible)}>
+                  <Ionicons name={isPasswordRepeatVisible ? 'eye' : 'eye-off'} size={24} color="grey" />
+                </TouchableOpacity>
+              </View>
+            )}
+          />
+          {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword.message}</Text>}
+        </View>
 
-            <View style={styles.checkboxRow}>
-              <Checkbox value={agree} onValueChange={setAgree} />
-              <Text style={styles.checkboxText}>
-                I agree to the Terms and Privacy Policy
-              </Text>
-            </View>
+        <View style={styles.policyContainerSignUp}>
+          <Checkbox value={toggleCheckBox} onValueChange={setToggleCheckBox} />
+          <Text style={styles.policyTxt}>
+            I agree to the{' '}
+            <Text style={styles.policyLink} onPress={() => router.push('/termsandconditions')}>Terms of Service</Text> and{' '}
+            <Text style={styles.policyLink} onPress={() => router.push('/privacypolicy')}>Privacy Policy</Text>
+          </Text>
+        </View>
 
-            <CustomButton
-              text="Create Account"
-              onPress={handleSubmit(onSignUp)}
-              loading={loading}
-            />
+        <TouchableOpacity 
+          style={styles.btnCon} 
+          onPress={handleSubmit(onSignUp)}
+          disabled={!toggleCheckBox || loading}
+        >
+          <Text style={styles.btnTxt}>{loading ? 'Signing Up...' : 'Sign Up'}</Text>
+        </TouchableOpacity>
 
-            <Text style={styles.link} onPress={() => router.push("/login")}>
-              Already have an account? Sign In
-            </Text>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        <TouchableOpacity style={styles.secBtnCon} onPress={()=>router.push('/login')}>
+          <Text style={styles.secBtnTxt}>Sign In</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
   );
 };
 

@@ -1,70 +1,120 @@
-import {StyleSheet} from 'react-native'
+// BottomContainer.styles.ts
+import { StyleSheet } from "react-native";
 
-const styles = StyleSheet.create({
-    bottomContainer:{
-        height: 100,
-        backgroundColor:'#121311',
-        borderTopLeftRadius:50,
-        borderTopRightRadius:50,
-        flexDirection: 'row',
-        justifyContent:'center',
-        alignItems:"center",
-        padding:15,
-    },
-    bottomText:{
-        fontSize:24,
-        fontWeight:'bold',
-        color:'#111111'
-    },
-    
-    bottomTextOffline:{
-        fontSize:24,
-        fontWeight:'bold',
-        color:'#f80b0b'
-    },
-    pendingOrderText:{
-        fontSize:18,
-        color:'#c01c10',
-        textAlign:'center',
-        fontWeight:'bold',
-    },
-    // pickUpInfo:{
-    //     flexDirection:'row',
-    //     alignItems:"center",
-    // },
-    // isFinished:{
-    //     flexDirection:'row',
-    //     alignItems:"center",
-    //     justifyContent:'center',
-    //     backgroundColor:'#000000',
-    //     borderRadius:30,
-    //     width:200,
-    //     padding:5,
-    //     marginVertical: 5,
-    // },
-    // isFinishedText:{
-    //     fontSize:20,
-    //     fontWeight:'bold',
-    //     color:'white',
-    // },
-    // userBackground:{
-    //     backgroundColor:'#07e5f5',
-    //     borderRadius:70,
-    //     width:30,
-    //     height:30,
-    //     alignItems:'center',
-    //     justifyContent:'center',
-    //     marginHorizontal:10,
-    // },
-    // userBackgroundDrop:{
-    //     backgroundColor:'#09ff00',
-    //     borderRadius:70,
-    //     width:30,
-    //     height:30,
-    //     alignItems:'center',
-    //     justifyContent:'center',
-    //     marginHorizontal:10,
-    // },
-})
+export default StyleSheet.create({
+  wrapper: {
+    padding: 16,
+    gap: 14,
+  },
 
-export default styles;
+  statusCard: {
+    backgroundColor: "#121212",
+    borderRadius: 20,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+
+  statusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 14,
+  },
+
+  statusDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+
+  dotOnline: {
+    backgroundColor: "#22c55e",
+  },
+
+  dotOffline: {
+    backgroundColor: "#ef4444",
+  },
+
+  statusTitle: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+
+  statusSubtitle: {
+    color: "#9ca3af",
+    fontSize: 13,
+    marginTop: 2,
+  },
+
+  goBtn: {
+    backgroundColor: "#22c55e",
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+
+  endBtn: {
+    backgroundColor: "#ef4444",
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+
+  btnText: {
+    color: "white",
+    fontWeight: "700",
+    fontSize: 14,
+  },
+
+  statsCard: {
+    flexDirection: "row",
+    backgroundColor: "#1f2937",
+    borderRadius: 20,
+    paddingVertical: 16,
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
+
+  statBox: {
+    alignItems: "center",
+  },
+
+  statNumber: {
+    color: "white",
+    fontSize: 20,
+    fontWeight: "800",
+  },
+
+  statLabel: {
+    color: "#9ca3af",
+    fontSize: 12,
+    marginTop: 4,
+  },
+
+  statDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: "#374151",
+  },
+
+  actionsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+
+  refreshBtn: {
+    backgroundColor: "#2563eb",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+  },
+
+  refreshText: {
+    color: "white",
+    fontWeight: "600",
+  },
+});

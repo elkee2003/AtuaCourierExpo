@@ -28,7 +28,15 @@ type CourierCompany @model @auth(rules: [{ allow: public }]) {
   push_token: String
 }
 
+enum MediaUploadStatus {
+  PENDING
+  UPLOADING
+  COMPLETE
+  FAILED
+}
+
 enum OrderStatus {
+  BIDDING
   READY_FOR_PICKUP
   ACCEPTED
   ARRIVED_PICKUP
@@ -53,18 +61,25 @@ type Order @model @auth(rules: [{ allow: public }]) {
   orderDetails: String
 
   originAddress: String
+  originState: String
   originLat: Float
   originLng: Float
 
   destinationAddress: String
+  destinationState: String
   destinationLat: Float
   destinationLng: Float
+
+  tripType: String
+  distance: String
 
   transportationType: String
   status: OrderStatus
 
   # ---------------- PRICING ----------------
   # ------- FOR MAXI -------
+  loadCategory: String
+  isInterState: Boolean
   estimatedMinPrice: Float
   estimatedMaxPrice: Float
 
@@ -77,9 +92,11 @@ type Order @model @auth(rules: [{ allow: public }]) {
   # ------- General -------
   totalPrice: Float # final agreed price
   courierEarnings: Float
-  commissionRate: Float
-  platformRevenue: Float
-
+  commissionAmount: Float
+  platformFee: Float
+  platformServiceRevenue: Float # commissionAmount + platformFee
+  vatAmount: Float
+  platformNetRevenue: Float # platformServiceRevenue - vatAmount
   # ---------------- VERIFICATION ----------------
   deliveryVerificationCode: String
 
@@ -92,6 +109,12 @@ type Order @model @auth(rules: [{ allow: public }]) {
   senderPreTransferPhotos: [String]
   senderPreTransferVideo: String
   senderPreTransferRecordedAt: AWSDateTime
+
+  senderPreTransferLocalPhotos: [String]
+  senderPreTransferLocalVideo: String
+
+  # ---------------- MEDIA UPLOAD STATUS ----------------
+  mediaUploadStatus: MediaUploadStatus
 
   courierPreTransferPhotos: [String]
   courierPreTransferVideo: String
@@ -109,10 +132,12 @@ type Order @model @auth(rules: [{ allow: public }]) {
   # ---------------- LOADING DETAILS ----------------
   pickupLoadingResponsibility: String
   pickupFloorLevel: String
+  pickupFloorLevelPrice: Float
   pickupHasElevator: Boolean
 
   dropoffUnloadingResponsibility: String
   dropoffFloorLevel: String
+  dropoffFloorLevelPrice: Float
   dropoffHasElevator: Boolean
 
   # ---------------- TIME EVENTS ----------------
@@ -131,6 +156,11 @@ type Order @model @auth(rules: [{ allow: public }]) {
   logisticsTrackingStatus: String
   handedOverToLogisticsAt: AWSDateTime
   logisticsIntakeConfirmedAt: AWSDateTime
+
+  # ---------------- ASSIGNMENT FIELDS ----------------
+  assignedCourierId: ID
+  assignmentStatus: String
+  assignmentExpiresAt: AWSDateTime
 
   # ---------------- RELATIONS ----------------
   userID: ID! @index(name: "byUser")
@@ -174,7 +204,7 @@ type Courier @model @auth(rules: [{ allow: public }]) {
   heading: Float
   push_token: String
   isApproved: Boolean
-  approvedBy: String
+  approvedById: String
 }
 
 type User @model @auth(rules: [{ allow: public }]) {

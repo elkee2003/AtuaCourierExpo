@@ -2,7 +2,15 @@ import { ModelInit, MutableModel, __modelMeta__, ManagedIdentifier } from "@aws-
 // @ts-ignore
 import { LazyLoading, LazyLoadingDisabled, AsyncCollection, AsyncItem } from "@aws-amplify/datastore";
 
+export enum MediaUploadStatus {
+  PENDING = "PENDING",
+  UPLOADING = "UPLOADING",
+  COMPLETE = "COMPLETE",
+  FAILED = "FAILED"
+}
+
 export enum OrderStatus {
+  BIDDING = "BIDDING",
   READY_FOR_PICKUP = "READY_FOR_PICKUP",
   ACCEPTED = "ACCEPTED",
   ARRIVED_PICKUP = "ARRIVED_PICKUP",
@@ -124,13 +132,19 @@ type EagerOrder = {
   readonly recipientNumber2?: string | null;
   readonly orderDetails?: string | null;
   readonly originAddress?: string | null;
+  readonly originState?: string | null;
   readonly originLat?: number | null;
   readonly originLng?: number | null;
   readonly destinationAddress?: string | null;
+  readonly destinationState?: string | null;
   readonly destinationLat?: number | null;
   readonly destinationLng?: number | null;
+  readonly tripType?: string | null;
+  readonly distance?: string | null;
   readonly transportationType?: string | null;
   readonly status?: OrderStatus | keyof typeof OrderStatus | null;
+  readonly loadCategory?: string | null;
+  readonly isInterState?: boolean | null;
   readonly estimatedMinPrice?: number | null;
   readonly estimatedMaxPrice?: number | null;
   readonly initialOfferPrice?: number | null;
@@ -140,13 +154,19 @@ type EagerOrder = {
   readonly unloadingFee?: number | null;
   readonly totalPrice?: number | null;
   readonly courierEarnings?: number | null;
-  readonly commissionRate?: number | null;
-  readonly platformRevenue?: number | null;
+  readonly commissionAmount?: number | null;
+  readonly platformFee?: number | null;
+  readonly platformServiceRevenue?: number | null;
+  readonly vatAmount?: number | null;
+  readonly platformNetRevenue?: number | null;
   readonly deliveryVerificationCode?: string | null;
   readonly declaredWeightBracket?: string | null;
   readonly senderPreTransferPhotos?: (string | null)[] | null;
   readonly senderPreTransferVideo?: string | null;
   readonly senderPreTransferRecordedAt?: string | null;
+  readonly senderPreTransferLocalPhotos?: (string | null)[] | null;
+  readonly senderPreTransferLocalVideo?: string | null;
+  readonly mediaUploadStatus?: MediaUploadStatus | keyof typeof MediaUploadStatus | null;
   readonly courierPreTransferPhotos?: (string | null)[] | null;
   readonly courierPreTransferVideo?: string | null;
   readonly courierPreTransferRecordedAt?: string | null;
@@ -158,9 +178,11 @@ type EagerOrder = {
   readonly postDeliveryVideo?: string | null;
   readonly pickupLoadingResponsibility?: string | null;
   readonly pickupFloorLevel?: string | null;
+  readonly pickupFloorLevelPrice?: number | null;
   readonly pickupHasElevator?: boolean | null;
   readonly dropoffUnloadingResponsibility?: string | null;
   readonly dropoffFloorLevel?: string | null;
+  readonly dropoffFloorLevelPrice?: number | null;
   readonly dropoffHasElevator?: boolean | null;
   readonly acceptedAt?: string | null;
   readonly arrivedPickupAt?: string | null;
@@ -193,13 +215,19 @@ type LazyOrder = {
   readonly recipientNumber2?: string | null;
   readonly orderDetails?: string | null;
   readonly originAddress?: string | null;
+  readonly originState?: string | null;
   readonly originLat?: number | null;
   readonly originLng?: number | null;
   readonly destinationAddress?: string | null;
+  readonly destinationState?: string | null;
   readonly destinationLat?: number | null;
   readonly destinationLng?: number | null;
+  readonly tripType?: string | null;
+  readonly distance?: string | null;
   readonly transportationType?: string | null;
   readonly status?: OrderStatus | keyof typeof OrderStatus | null;
+  readonly loadCategory?: string | null;
+  readonly isInterState?: boolean | null;
   readonly estimatedMinPrice?: number | null;
   readonly estimatedMaxPrice?: number | null;
   readonly initialOfferPrice?: number | null;
@@ -209,13 +237,19 @@ type LazyOrder = {
   readonly unloadingFee?: number | null;
   readonly totalPrice?: number | null;
   readonly courierEarnings?: number | null;
-  readonly commissionRate?: number | null;
-  readonly platformRevenue?: number | null;
+  readonly commissionAmount?: number | null;
+  readonly platformFee?: number | null;
+  readonly platformServiceRevenue?: number | null;
+  readonly vatAmount?: number | null;
+  readonly platformNetRevenue?: number | null;
   readonly deliveryVerificationCode?: string | null;
   readonly declaredWeightBracket?: string | null;
   readonly senderPreTransferPhotos?: (string | null)[] | null;
   readonly senderPreTransferVideo?: string | null;
   readonly senderPreTransferRecordedAt?: string | null;
+  readonly senderPreTransferLocalPhotos?: (string | null)[] | null;
+  readonly senderPreTransferLocalVideo?: string | null;
+  readonly mediaUploadStatus?: MediaUploadStatus | keyof typeof MediaUploadStatus | null;
   readonly courierPreTransferPhotos?: (string | null)[] | null;
   readonly courierPreTransferVideo?: string | null;
   readonly courierPreTransferRecordedAt?: string | null;
@@ -227,9 +261,11 @@ type LazyOrder = {
   readonly postDeliveryVideo?: string | null;
   readonly pickupLoadingResponsibility?: string | null;
   readonly pickupFloorLevel?: string | null;
+  readonly pickupFloorLevelPrice?: number | null;
   readonly pickupHasElevator?: boolean | null;
   readonly dropoffUnloadingResponsibility?: string | null;
   readonly dropoffFloorLevel?: string | null;
+  readonly dropoffFloorLevelPrice?: number | null;
   readonly dropoffHasElevator?: boolean | null;
   readonly acceptedAt?: string | null;
   readonly arrivedPickupAt?: string | null;
@@ -298,7 +334,7 @@ type EagerCourier = {
   readonly heading?: number | null;
   readonly push_token?: string | null;
   readonly isApproved?: boolean | null;
-  readonly approvedBy?: string | null;
+  readonly approvedById?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }
@@ -344,7 +380,7 @@ type LazyCourier = {
   readonly heading?: number | null;
   readonly push_token?: string | null;
   readonly isApproved?: boolean | null;
-  readonly approvedBy?: string | null;
+  readonly approvedById?: string | null;
   readonly createdAt?: string | null;
   readonly updatedAt?: string | null;
 }

@@ -19,7 +19,7 @@ import styles from './styles';
 
 const MainProfile = () => {
   const {
-    firstName, lastName, phoneNumber, bankName, accountName, accountNumber, transportationType, profilePic, setProfilePic,
+    firstName, lastName, phoneNumber, bankName, accountName, accountNumber, transportationType, profilePic, setProfilePic, maxiDescription,
   } = useProfileContext();
 
   const { dbUser } = useAuthContext();
@@ -100,6 +100,15 @@ const MainProfile = () => {
           label="Vehicle Type"
           value={transportationType}
         />
+
+        {/* SHOW ONLY IF MAXI */}
+        {transportationType === 'Maxi' && (
+          <InfoRow
+            icon={<Ionicons name="document-text-outline" size={18} color="#6B7280" />}
+            label="Maxi Description"
+            value={maxiDescription}
+          />
+        )}
         
         <InfoRow 
           icon={<Ionicons name="business-outline" size={18} color="#6B7280" />} 

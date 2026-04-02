@@ -71,7 +71,7 @@ const OrderDetails = ({
                   <Entypo name={'location'} size={40} color={'#021d46'}/>
                 </View>
                 <Text style={styles.tDetails}>
-                  {order.parcelDestination}
+                  {order.destinationAddress}
                 </Text>
               </View>
 
@@ -129,7 +129,7 @@ const OrderDetails = ({
               <Entypo name={'location'} size={30} color={'#021d46'}/>
             </View>
             <Text style={styles.tDetails}>
-              {order.parcelOrigin}
+              {order.OriginAddress}
             </Text>
           </View>
         </View>

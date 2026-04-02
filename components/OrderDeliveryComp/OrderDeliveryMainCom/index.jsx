@@ -12,9 +12,15 @@ import {useOrderContext} from '@/providers/OrderProvider';
 
 // Variable to show button name in OrderDetails Screen
 const STATUS_TO_TITLE = {
+  BIDDING: 'Place Bid',
   READY_FOR_PICKUP: 'Accept Order',
-  ACCEPTED: 'Picked Up Order',
-  PICKEDUP: 'Delivered!'
+  ACCEPTED: 'Go to Pickup',
+  ARRIVED_PICKUP: 'Confirm Pickup',
+  LOADING: 'Confirm Pickup',
+  IN_TRANSIT: 'Navigate to Dropoff',
+  ARRIVED_DROPOFF: 'Confirm Arrival',
+  UNLOADING: 'Complete Delivery',
+  DELIVERED: 'Done'
 }
 
 const OrderdeliveryMainCom = ({order, user}) => {
