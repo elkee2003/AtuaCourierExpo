@@ -94,7 +94,7 @@ const ProfileProvider = ({ children }) => {
     return true;
   };
 
-  const validatVehicleInfo = () => {
+  const validateVehicleInfo = () => {
     setErrorMessage("");
 
     // Moto
@@ -135,6 +135,10 @@ const ProfileProvider = ({ children }) => {
         setErrorMessage("Plate number is required");
         return false;
       }
+      if (!maxiDescription) {
+        setErrorMessage("Vehicle description is required");
+        return false;
+      }
       if (maxiImages?.length < 3) {
         setErrorMessage("Kindly select at least 3 images");
         return false;
@@ -144,7 +148,7 @@ const ProfileProvider = ({ children }) => {
   };
 
   const onValidateCourierInput = () => {
-    if (validateCourierInput() && validatVehicleInfo()) {
+    if (validateCourierInput() && validateVehicleInfo()) {
       return true;
     } else {
       return false;
@@ -269,7 +273,7 @@ const ProfileProvider = ({ children }) => {
         setMaxiImages,
         maxiDescription,
         setMaxiDescription,
-        validatVehicleInfo,
+        validateVehicleInfo,
         address,
         setAddress,
         phoneNumber,
@@ -318,7 +322,7 @@ const ProfileProvider = ({ children }) => {
         setHeading,
         onValidateCourierInput,
         onValidateGuarantorInput,
-        validatVehicleInfo,
+        validateVehicleInfo,
       }}
     >
       {children}

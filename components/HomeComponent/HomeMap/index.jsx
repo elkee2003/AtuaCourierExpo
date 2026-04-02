@@ -8,7 +8,7 @@ import { ActivityIndicator, View, useWindowDimensions } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import styles from "./styles";
 
-const Map = ({ location, setLocation, orders, selectedOrder }) => {
+const Map = ({ location, setLocation, orders }) => {
   const { width, height } = useWindowDimensions();
   const mapRef = useRef(null);
   const [errorMsg, setErrorMsg] = useState(null);
@@ -86,50 +86,48 @@ const Map = ({ location, setLocation, orders, selectedOrder }) => {
 
   // ✅ 2. Update courier location (THROTTLED)
   useEffect(() => {
-    if (!location || !dbUser) return;
+    if (!location || !dbUser?.id) return;
 
-    const now = Date.now();
+    const updateLocation = async () => {
+      const now = Date.now();
 
-    // ⏱ Limit updates (every 10s)
-    if (now - lastSaveTime.current < 10000) return;
+      // ⏱ Limit updates (every 10s)
+      if (now - lastSaveTime.current < 10000) return;
 
-    // 📍 Limit by distance (100m)
-    if (lastSavedLocation.current) {
-      const distance = getDistance(
-        lastSavedLocation.current.latitude,
-        lastSavedLocation.current.longitude,
-        location.latitude,
-        location.longitude,
-      );
+      // 📍 Limit by distance (100m)
+      if (lastSavedLocation.current) {
+        const distance = getDistance(
+          lastSavedLocation.current.latitude,
+          lastSavedLocation.current.longitude,
+          location.latitude,
+          location.longitude,
+        );
 
-      if (distance < 0.1) return; // 0.1km = 100m
-    }
+        if (distance < 0.1) return;
+      }
 
-    lastSavedLocation.current = location;
-    lastSaveTime.current = now;
+      lastSavedLocation.current = location;
+      lastSaveTime.current = now;
 
-    DataStore.save(
-      Courier.copyOf(dbUser, (updated) => {
-        updated.lat = location.latitude;
-        updated.lng = location.longitude;
-      }),
-    );
-  }, [location]);
+      try {
+        // ✅ ALWAYS GET FRESH USER
+        const freshUser = await DataStore.query(Courier, dbUser.id);
 
-  // ✅ 3. Animate to selected order
-  useEffect(() => {
-    if (!selectedOrder || !mapRef.current) return;
+        if (!freshUser) return;
 
-    mapRef.current.animateToRegion(
-      {
-        latitude: selectedOrder.originLat,
-        longitude: selectedOrder.originLng,
-        latitudeDelta: 0.02,
-        longitudeDelta: 0.02,
-      },
-      500,
-    );
-  }, [selectedOrder]);
+        await DataStore.save(
+          Courier.copyOf(freshUser, (updated) => {
+            updated.lat = location.latitude;
+            updated.lng = location.longitude;
+          }),
+        );
+      } catch (e) {
+        console.log("Location update error:", e);
+      }
+    };
+
+    updateLocation();
+  }, [location, dbUser?.id]);
 
   // ✅ Loading state
   if (!location) {
@@ -152,8 +150,6 @@ const Map = ({ location, setLocation, orders, selectedOrder }) => {
         followsUserLocation
       >
         {orders.map((order) => {
-          const isSelected = selectedOrder?.id === order.id;
-
           return (
             <Marker
               key={order.id}
@@ -162,11 +158,7 @@ const Map = ({ location, setLocation, orders, selectedOrder }) => {
                 longitude: order.originLng,
               }}
             >
-              <Feather
-                name="box"
-                size={30}
-                color={isSelected ? "green" : "black"}
-              />
+              <Feather name="box" size={30} color={"black"} />
             </Marker>
           );
         })}

@@ -202,6 +202,13 @@ const TransportationTypeCom = () => {
 
           <TextInput
             style={styles.input}
+            value={vehicleColour}
+            onChangeText={setVehicleColour}
+            placeholder="Vehicle Colour (e.g. Red)"
+          />
+
+          <TextInput
+            style={styles.input}
             value={plateNumber}
             onChangeText={setPlateNumber}
             placeholder="Plate Number"

@@ -5,7 +5,7 @@ import FontAwesome from "react-native-vector-icons/FontAwesome";
 import styles from "./styles";
 
 const OrderItem = ({ order, onAccept, onRemoveOrder, onSelect }) => {
-  const [timeLeft, setTimeLeft] = useState(15);
+  const [timeLeft, setTimeLeft] = useState(25);
 
   //   To format the transportationType
   const formatType = (type) => {
@@ -21,17 +21,17 @@ const OrderItem = ({ order, onAccept, onRemoveOrder, onSelect }) => {
   // countdown
   useEffect(() => {
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          onRemoveOrder(order.id);
-          return 0;
-        }
-        return prev - 1;
-      });
+      setTimeLeft((prev) => prev - 1);
     }, 1000);
 
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      onRemoveOrder(order.id);
+    }
+  }, [timeLeft]);
 
   return (
     <Animated.View entering={FadeInDown.duration(400)}>
@@ -45,7 +45,9 @@ const OrderItem = ({ order, onAccept, onRemoveOrder, onSelect }) => {
           <Text style={styles.type}>
             {formatType(order.transportationType)}
           </Text>
-          <Text style={styles.price}>₦{order?.courierEarnings || "---"}</Text>
+          <Text style={styles.price}>
+            ₦{order?.courierEarnings || order?.initialOfferPrice || "---"}
+          </Text>
         </View>
 
         {/* ADDRESSES */}

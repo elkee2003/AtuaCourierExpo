@@ -155,7 +155,7 @@ const ReviewGuarantorCom = () => {
 
   // Validation for maximages before saving
   const validateMaxiRequirements = () => {
-    if (transportationType === "Maxi") {
+    if (transportationType === "MAXI") {
       if (!maxiImages || maxiImages.length < 3) {
         Alert.alert(
           "Maxi Images Required",
@@ -238,8 +238,8 @@ const ReviewGuarantorCom = () => {
           plateNumber,
           email: userMail,
           profilePic: uploadedProfilePic,
-          maxiImages: transportationType === "Maxi" ? uploadedMaxiImages : [],
-          maxiDescription: transportationType === "Maxi" ? maxiDescription : "",
+          maxiImages: transportationType === "MAXI" ? uploadedMaxiImages : [],
+          maxiDescription: transportationType === "MAXI" ? maxiDescription : "",
           courierNINImage: uploadedCourierNINImage,
           guarantorNINImage: uploadedGuarantorNINImage,
           address,
@@ -279,8 +279,8 @@ const ReviewGuarantorCom = () => {
       let uploadedProfilePic = dbUser?.profilePic;
 
       if (
-        dbUser?.transportationType === "Maxi" &&
-        transportationType !== "Maxi" &&
+        dbUser?.transportationType === "MAXI" &&
+        transportationType !== "MAXI" &&
         dbUser?.maxiImages?.length
       ) {
         try {
@@ -298,7 +298,7 @@ const ReviewGuarantorCom = () => {
 
       let uploadedMaxiImages = [];
 
-      if (transportationType === "Maxi") {
+      if (transportationType === "MAXI") {
         uploadedMaxiImages = await uploadMaxiImages();
       }
 
@@ -351,8 +351,21 @@ const ReviewGuarantorCom = () => {
           updated.firstName = firstName;
           updated.lastName = lastName;
           updated.profilePic = uploadedProfilePic;
+          updated.transportationType = transportationType;
+          updated.vehicleClass = vehicleClass;
 
-          if (transportationType === "Maxi") {
+          // Vehicle fields
+          if (transportationType === "MICRO") {
+            updated.model = "";
+            updated.vehicleColour = "";
+            updated.plateNumber = "";
+          } else {
+            updated.model = model;
+            updated.vehicleColour = vehicleColour;
+            updated.plateNumber = plateNumber;
+          }
+
+          if (transportationType === "MAXI") {
             updated.maxiImages = uploadedMaxiImages;
             updated.maxiDescription = maxiDescription;
           } else {
@@ -360,30 +373,26 @@ const ReviewGuarantorCom = () => {
             updated.maxiDescription = "";
           }
 
-          ((updated.transportationType = transportationType),
-            (updated.vehicleClass = vehicleClass),
-            (updated.model = model),
-            (updated.vehicleColour = vehicleColour),
-            (updated.plateNumber = plateNumber),
-            (updated.address = address),
-            (updated.landMark = landMark),
-            (updated.email = userMail));
-          ((updated.phoneNumber = phoneNumber),
-            (updated.courierNIN = courierNIN),
-            (updated.courierNINImage = uploadedCourierNINImage),
-            (updated.bankCode = bankCode),
-            (updated.bankName = bankName),
-            (updated.accountName = accountName),
-            (updated.accountNumber = accountNumber),
-            (updated.guarantorName = guarantorName),
-            (updated.guarantorLastName = guarantorLastName),
-            (updated.guarantorProfession = guarantorProfession),
-            (updated.guarantorNumber = guarantorNumber),
-            (updated.guarantorRelationship = guarantorRelationship),
-            (updated.guarantorAddress = guarantorAddress),
-            (updated.guarantorEmail = guarantorEmail),
-            (updated.guarantorNIN = guarantorNIN),
-            (updated.guarantorNINImage = uploadedGuarantorNINImage));
+          // Other fields
+          updated.address = address;
+          updated.landMark = landMark;
+          updated.email = userMail;
+          updated.phoneNumber = phoneNumber;
+          updated.courierNIN = courierNIN;
+          updated.courierNINImage = uploadedCourierNINImage;
+          updated.bankCode = bankCode;
+          updated.bankName = bankName;
+          updated.accountName = accountName;
+          updated.accountNumber = accountNumber;
+          updated.guarantorName = guarantorName;
+          updated.guarantorLastName = guarantorLastName;
+          updated.guarantorProfession = guarantorProfession;
+          updated.guarantorNumber = guarantorNumber;
+          updated.guarantorRelationship = guarantorRelationship;
+          updated.guarantorAddress = guarantorAddress;
+          updated.guarantorEmail = guarantorEmail;
+          updated.guarantorNIN = guarantorNIN;
+          updated.guarantorNINImage = uploadedGuarantorNINImage;
         }),
       );
       setDbUser(courier);

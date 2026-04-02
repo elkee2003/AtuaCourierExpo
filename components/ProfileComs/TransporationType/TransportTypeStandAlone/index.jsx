@@ -40,7 +40,7 @@ const StandaloneTtypeCom = () => {
     maxiDescription,
     setMaxiDescription,
     errorMessage,
-    validatVehicleInfo,
+    validateVehicleInfo,
   } = useProfileContext();
 
   const { dbUser, setDbUser, sub } = useAuthContext();
@@ -212,7 +212,7 @@ const StandaloneTtypeCom = () => {
   /* ------------------ UPDATE ------------------ */
 
   const updateTransportType = async () => {
-    if (!validatVehicleInfo()) {
+    if (!validateVehicleInfo()) {
       Alert.alert("Error", errorMessage);
       return;
     }
@@ -222,8 +222,8 @@ const StandaloneTtypeCom = () => {
 
       // 🚨 ✅ 1️⃣ DELETE FIRST: Delete all maxi images if switching away from Maxi
       if (
-        dbUser?.transportationType === "Maxi" &&
-        transportationType !== "Maxi" &&
+        dbUser?.transportationType === "MAXI" &&
+        transportationType !== "MAXI" &&
         dbUser?.maxiImages?.length
       ) {
         try {
@@ -241,7 +241,7 @@ const StandaloneTtypeCom = () => {
       }
 
       // 2️⃣ THEN UPLOAD (only if still Maxi): Upload new images if selected
-      if (transportationType === "Maxi" && localMaxiImages.length > 0) {
+      if (transportationType === "MAXI" && localMaxiImages.length > 0) {
         Alert.alert("Uploading", "Uploading vehicle images...");
         imagesToSave = await uploadImagesToS3();
       }
@@ -251,16 +251,24 @@ const StandaloneTtypeCom = () => {
         Courier.copyOf(dbUser, (updated) => {
           updated.transportationType = transportationType;
           updated.vehicleClass = vehicleClass;
-          updated.model = model;
-          updated.vehicleColour = vehicleColour;
-          updated.plateNumber = plateNumber;
-          updated.maxiDescription = maxiDescription;
 
-          if (transportationType === "Maxi") {
+          // Set vehicle fields depending on transportation type
+          if (transportationType === "MICRO") {
+            updated.model = "";
+            updated.vehicleColour = "";
+            updated.plateNumber = "";
+          } else {
+            updated.model = model;
+            updated.vehicleColour = vehicleColour;
+            updated.plateNumber = plateNumber;
+          }
+
+          // MAXI-specific fields
+          if (transportationType === "MAXI") {
             updated.maxiDescription = maxiDescription;
             updated.maxiImages = imagesToSave;
           } else {
-            updated.maxiDescription = ""; // ✅ CLEAR DESCRIPTION
+            updated.maxiDescription = "";
             updated.maxiImages = []; // already correct
           }
         }),
@@ -291,7 +299,7 @@ const StandaloneTtypeCom = () => {
 
   useEffect(() => {
     const fetchImages = async () => {
-      if (transportationType !== "Maxi") {
+      if (transportationType !== "MAXI") {
         setSignedMaxiImages([]);
         return;
       }
@@ -431,6 +439,13 @@ const StandaloneTtypeCom = () => {
             value={model}
             onChangeText={setModel}
             placeholder="Vehicle Model"
+          />
+
+          <TextInput
+            style={styles.input}
+            value={vehicleColour}
+            onChangeText={setVehicleColour}
+            placeholder="Vehicle Colour (e.g. Red)"
           />
 
           <TextInput

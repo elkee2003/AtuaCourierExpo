@@ -42,22 +42,20 @@ const HomeComponent = () => {
 
   // Refferenced functions
   const onGoPress = async () => {
-    if (!location) {
-      setIsOnline(false);
-      return;
-    }
+    if (!location || !dbUser?.id) return;
 
     try {
-      // Toggle the isOnline state in local state
-      const newStatus = !isOnline;
-      setIsOnline(newStatus);
+      const freshUser = await DataStore.query(Courier, dbUser.id);
 
-      // Update the isOnline field in DataStore
+      const newStatus = !freshUser.isOnline;
+
       await DataStore.save(
-        Courier.copyOf(dbUser, (updated) => {
+        Courier.copyOf(freshUser, (updated) => {
           updated.isOnline = newStatus;
         }),
       );
+
+      setIsOnline(newStatus);
     } catch (e) {
       Alert.alert("Error", e.message);
     }
@@ -96,18 +94,27 @@ const HomeComponent = () => {
       const isMaxi = dbUser.transportationType === "MAXI";
 
       const availableOrders = await DataStore.query(Order, (o) =>
-        o.and((o2) => [
-          o2.status.eq("READY_FOR_PICKUP"),
-
-          isMaxi
-            ? o2.transportationType.eq("MAXI")
-            : o2.or((o3) => [
-                o3.transportationType.eq("MICRO_EXPRESS"),
-                o3.transportationType.eq("MOTO_EXPRESS"),
-                o3.transportationType.eq("MICRO_BATCH"),
-                o3.transportationType.eq("MOTO_BATCH"),
+        o.and((o2) => {
+          if (isMaxi) {
+            return [
+              o2.transportationType.eq("MAXI"),
+              o2.or((o3) => [
+                o3.status.eq("READY_FOR_PICKUP"),
+                o3.status.eq("BIDDING"), // ✅ ADD THIS
               ]),
-        ]),
+            ];
+          }
+
+          return [
+            o2.status.eq("READY_FOR_PICKUP"),
+            o2.or((o3) => [
+              o3.transportationType.eq("MICRO_EXPRESS"),
+              o3.transportationType.eq("MOTO_EXPRESS"),
+              o3.transportationType.eq("MICRO_BATCH"),
+              o3.transportationType.eq("MOTO_BATCH"),
+            ]),
+          ];
+        }),
       );
 
       // 👇 we will filter by distance next
@@ -162,7 +169,7 @@ const HomeComponent = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [isOnline]);
+  }, [isOnline, dbUser]);
 
   if (loading && isOnline) {
     return <ActivityIndicator size={"large"} style={styles.loading} />;
@@ -171,12 +178,7 @@ const HomeComponent = () => {
   return (
     <SafeAreaView style={styles.container}>
       {/* later check if availableorder prop is necessary */}
-      <HomeMap
-        orders={orders}
-        location={location}
-        setLocation={setLocation}
-        selectedOrder={selectedOrder}
-      />
+      <HomeMap orders={orders} location={location} setLocation={setLocation} />
 
       {/* Money Balance */}
       {/* Will show when I find out how to display the price of courier */}
@@ -213,6 +215,7 @@ const HomeComponent = () => {
             orders={orders}
             onRefresh={fetchOrders}
             onToggleOnline={onGoPress}
+            transportationType={dbUser?.transportationType}
           />
 
           {/* ✅ EMPTY STATE */}

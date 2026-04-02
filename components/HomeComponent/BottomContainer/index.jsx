@@ -3,7 +3,13 @@ import React from "react";
 import { Pressable, Text, View } from "react-native";
 import styles from "./styles";
 
-const BottomContainer = ({ isOnline, orders, onRefresh, onToggleOnline }) => {
+const BottomContainer = ({
+  isOnline,
+  orders,
+  onRefresh,
+  onToggleOnline,
+  transportationType,
+}) => {
   // ✅ Pre-compute once (better performance)
   const batchJobs = orders.filter(
     (o) =>
@@ -60,21 +66,26 @@ const BottomContainer = ({ isOnline, orders, onRefresh, onToggleOnline }) => {
             <Text style={styles.statLabel}>Available Jobs</Text>
           </View>
 
-          <View style={styles.statDivider} />
+          {/* ✅ ONLY show for NON-MAXI */}
+          {transportationType !== "MAXI" && (
+            <>
+              <View style={styles.statDivider} />
 
-          {/* BATCH */}
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{batchJobs.length}</Text>
-            <Text style={styles.statLabel}>Batch Jobs</Text>
-          </View>
+              {/* BATCH */}
+              <View style={styles.statBox}>
+                <Text style={styles.statNumber}>{batchJobs.length}</Text>
+                <Text style={styles.statLabel}>Batch Jobs</Text>
+              </View>
 
-          <View style={styles.statDivider} />
+              <View style={styles.statDivider} />
 
-          {/* EXPRESS */}
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{expressJobs.length}</Text>
-            <Text style={styles.statLabel}>Express Jobs</Text>
-          </View>
+              {/* EXPRESS */}
+              <View style={styles.statBox}>
+                <Text style={styles.statNumber}>{expressJobs.length}</Text>
+                <Text style={styles.statLabel}>Express Jobs</Text>
+              </View>
+            </>
+          )}
         </View>
       )}
 
