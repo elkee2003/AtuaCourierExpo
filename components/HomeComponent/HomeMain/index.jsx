@@ -3,6 +3,8 @@ import { useProfileContext } from "@/providers/ProfileProvider";
 import { Courier, Order } from "@/src/models";
 import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { DataStore } from "aws-amplify/datastore";
+import { Audio } from "expo-av";
+import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Text } from "react-native";
@@ -36,6 +38,9 @@ const HomeComponent = () => {
   const [location, setLocation] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const soundRef = useRef(null);
+  const prevOrderIdsRef = useRef(new Set());
 
   const bottomSheetRef = useRef(null);
   const snapPoints = useMemo(() => ["25%", "85%", "100%"], []);
@@ -128,14 +133,68 @@ const HomeComponent = () => {
 
   const playNewOrderSound = async () => {
     try {
-      const { sound } = await Audio.Sound.createAsync(
-        require("@/assets/sounds/new-order.mp3"),
-      );
-      await sound.playAsync();
+      if (soundRef.current) {
+        await soundRef.current.replayAsync();
+        // for vibration
+        await Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success,
+        );
+      }
     } catch (e) {
       console.log("Sound error:", e);
     }
   };
+
+  // useEffect for Alert Sound
+  useEffect(() => {
+    const loadSound = async () => {
+      try {
+        const { sound } = await Audio.Sound.createAsync(
+          require("@/assets/sounds/new-order.mp3"),
+        );
+        soundRef.current = sound;
+      } catch (e) {
+        console.log("Load sound error:", e);
+      }
+    };
+
+    loadSound();
+
+    return () => {
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
+      }
+    };
+  }, []);
+
+  // useEffect for previous Alert Orders
+
+  useEffect(() => {
+    const newIds = new Set(orders.map((o) => o.id));
+
+    let hasNew = false;
+
+    for (let id of newIds) {
+      if (!prevOrderIdsRef.current.has(id)) {
+        hasNew = true;
+        break;
+      }
+    }
+
+    if (hasNew) {
+      playNewOrderSound();
+    }
+
+    prevOrderIdsRef.current = newIds;
+  }, [orders]);
+
+  // to play sound even when phone is silent
+  useEffect(() => {
+    Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: true,
+    });
+  }, []);
 
   useEffect(() => {
     if (!isOnline || !location || !dbUser) {
@@ -148,7 +207,6 @@ const HomeComponent = () => {
 
     const subscription = DataStore.observe(Order).subscribe(({ opType }) => {
       if (opType === "INSERT") {
-        playNewOrderSound();
         fetchOrders();
       }
 
@@ -166,7 +224,6 @@ const HomeComponent = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* later check if availableorder prop is necessary */}
       <HomeMap orders={orders} location={location} setLocation={setLocation} />
 
       {/* Money Balance */}

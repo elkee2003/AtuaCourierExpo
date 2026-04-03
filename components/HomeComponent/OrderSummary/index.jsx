@@ -37,6 +37,18 @@ const OrderSummary = ({ orderId }) => {
 
   const numericOffer = Number(offer);
 
+  // conversion for 'Handle Myself'
+  const formatResponsibility = (value) => {
+    if (!value) return "Not specified";
+
+    switch (value) {
+      case "Handle Myself":
+        return "Handled by sender";
+      default:
+        return value;
+    }
+  };
+
   // ✅ Fetch order + user
   useEffect(() => {
     const fetchData = async () => {
@@ -271,7 +283,15 @@ const OrderSummary = ({ orderId }) => {
               Pickup Floor: {order?.pickupFloorLevel}
             </Text>
             <Text style={styles.text}>
+              Pickup Responsibility:{" "}
+              {formatResponsibility(order?.pickupLoadingResponsibility)}
+            </Text>
+            <Text style={styles.text}>
               Dropoff Floor: {order?.dropoffFloorLevel}
+            </Text>
+            <Text style={styles.text}>
+              Dropoff Responsibility:{" "}
+              {formatResponsibility(order?.dropoffUnloadingResponsibility)}
             </Text>
           </View>
 
