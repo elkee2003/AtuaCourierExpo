@@ -1,3 +1,5 @@
+import { Offer } from "@/src/models";
+import { DataStore } from "aws-amplify/datastore";
 import React, { useEffect, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -5,7 +7,12 @@ import FontAwesome from "react-native-vector-icons/FontAwesome";
 import styles from "./styles";
 
 const OrderItem = ({ order, onRemoveOrder, onSelect }) => {
+  const [latestOffer, setLatestOffer] = useState(null);
   const [timeLeft, setTimeLeft] = useState(25);
+
+  //   to show different options of available prices
+  const displayPrice =
+    order?.courierEarnings ?? latestOffer?.amount ?? order?.initialOfferPrice;
 
   //   To format the transportationType
   const formatType = (type) => {
@@ -17,6 +24,32 @@ const OrderItem = ({ order, onRemoveOrder, onSelect }) => {
   //   const goToOrderDelivery = () => {
   //     router.push(`/orders/${order.id}`);
   //   };
+
+  //   to fetch lastest offer price
+  useEffect(() => {
+    const fetchLatestOffer = async () => {
+      const result = await DataStore.query(Offer, (o) =>
+        o.orderID.eq(order.id),
+      );
+
+      if (result.length > 0) {
+        const sorted = result.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+        );
+        setLatestOffer(sorted[0]);
+      }
+    };
+
+    fetchLatestOffer();
+
+    const sub = DataStore.observe(Offer).subscribe((msg) => {
+      if (msg.element.orderID === order.id) {
+        fetchLatestOffer();
+      }
+    });
+
+    return () => sub.unsubscribe();
+  }, [order.id]);
 
   // countdown
   useEffect(() => {
@@ -46,7 +79,7 @@ const OrderItem = ({ order, onRemoveOrder, onSelect }) => {
             {formatType(order.transportationType)}
           </Text>
           <Text style={styles.price}>
-            ₦{order?.courierEarnings || order?.initialOfferPrice || "---"}
+            ₦{displayPrice?.toLocaleString() || "---"}
           </Text>
         </View>
 

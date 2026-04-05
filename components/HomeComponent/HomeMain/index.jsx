@@ -37,13 +37,17 @@ const HomeComponent = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [location, setLocation] = useState(null);
   const [orders, setOrders] = useState([]);
+  const [stats, setStats] = useState({
+    total: 0,
+    nearby: 0,
+  });
   const [loading, setLoading] = useState(true);
 
   const soundRef = useRef(null);
   const prevOrderIdsRef = useRef(new Set());
 
   const bottomSheetRef = useRef(null);
-  const snapPoints = useMemo(() => ["25%", "85%", "100%"], []);
+  const snapPoints = useMemo(() => ["25%", "65%", "85%"], []);
 
   // Refferenced functions
   const onGoPress = async () => {
@@ -84,8 +88,12 @@ const HomeComponent = () => {
     }
 
     setLoading(true);
+
     try {
       const isMaxi = dbUser.transportationType === "MAXI";
+
+      let processedOrders = [];
+      let nearbyCount = 0;
 
       const availableOrders = await DataStore.query(Order, (o) =>
         o.and((o2) => {
@@ -94,7 +102,7 @@ const HomeComponent = () => {
               o2.transportationType.eq("MAXI"),
               o2.or((o3) => [
                 o3.status.eq("READY_FOR_PICKUP"),
-                o3.status.eq("BIDDING"), // ✅ ADD THIS
+                o3.status.eq("BIDDING"),
               ]),
             ];
           }
@@ -111,8 +119,10 @@ const HomeComponent = () => {
         }),
       );
 
-      // 👇 we will filter by distance next
-      const nearbyOrders = availableOrders.filter((order) => {
+      const nearbyOrders = [];
+      const farOrders = [];
+
+      availableOrders.forEach((order) => {
         const distance = getDistance(
           location.latitude,
           location.longitude,
@@ -120,10 +130,33 @@ const HomeComponent = () => {
           order.originLng,
         );
 
-        return distance <= 10;
+        // Maxi radius should be 100km. Micro & Moto should be 10
+        const radius = isMaxi ? 80 : 10;
+
+        if (distance <= radius) {
+          nearbyOrders.push(order);
+          nearbyCount++;
+        } else {
+          farOrders.push(order);
+        }
       });
 
-      setOrders(nearbyOrders);
+      // sort
+      nearbyOrders.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+      );
+
+      farOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      processedOrders = [...nearbyOrders, ...farOrders];
+
+      // ✅ MUST be inside try
+      setOrders(processedOrders);
+
+      setStats({
+        total: availableOrders.length,
+        nearby: nearbyCount,
+      });
     } catch (e) {
       Alert.alert("Error", e.message);
     } finally {
@@ -168,7 +201,6 @@ const HomeComponent = () => {
   }, []);
 
   // useEffect for previous Alert Orders
-
   useEffect(() => {
     const newIds = new Set(orders.map((o) => o.id));
 
@@ -196,6 +228,7 @@ const HomeComponent = () => {
     });
   }, []);
 
+  // useEffect to handle subscription
   useEffect(() => {
     if (!isOnline || !location || !dbUser) {
       setOrders([]);
@@ -259,6 +292,7 @@ const HomeComponent = () => {
           <BottomContainer
             isOnline={isOnline}
             orders={orders}
+            stats={stats}
             onRefresh={fetchOrders}
             onToggleOnline={onGoPress}
             transportationType={dbUser?.transportationType}
@@ -272,7 +306,7 @@ const HomeComponent = () => {
           )}
 
           {isOnline &&
-            orders.map((item) => (
+            [...orders].map((item) => (
               <OrderItem
                 key={item.id}
                 order={item}

@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import {
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   Text,
   TextInput,
@@ -12,6 +14,7 @@ import {
   View,
 } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
+import { SafeAreaView } from "react-native-safe-area-context";
 import styles from "./styles";
 
 import { useAuthContext } from "../../../../providers/AuthProvider";
@@ -350,167 +353,173 @@ const StandaloneTtypeCom = () => {
   /* ------------------ UI ------------------ */
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: 40 }}
-    >
-      <Text style={styles.header}>Update Transportation</Text>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <Text style={styles.header}>Update Transportation</Text>
 
-      {/* TRANSPORT TYPE */}
+          {/* TRANSPORT TYPE */}
 
-      <Text style={styles.label}>Transportation Type</Text>
-
-      <Dropdown
-        style={[styles.dropdown, isFocus && { borderColor: "#0F2D7A" }]}
-        data={transportData}
-        labelField="label"
-        valueField="value"
-        placeholder="Select transportation type"
-        value={transportationType}
-        onFocus={() => setIsFocus(true)}
-        onBlur={() => setIsFocus(false)}
-        onChange={(item) => {
-          setTransportationType(item.value);
-          setVehicleClass(null);
-          setIsFocus(false);
-        }}
-        renderItem={(item) => (
-          <View style={styles.dropdownItem}>
-            {/* Transportation Label */}
-            <Text style={styles.itemLabel}>{item.label}</Text>
-
-            {/* Info Icon next to each label */}
-            <TouchableOpacity onPress={() => handleInfoPress(item.description)}>
-              <AntDesign name="info-circle" style={styles.infoIcon} />
-            </TouchableOpacity>
-          </View>
-        )}
-      />
-
-      {/* MOTO */}
-
-      {transportationType === "MOTO" && (
-        <>
-          <Text style={styles.label}>Vehicle Class</Text>
+          <Text style={styles.label}>Transportation Type</Text>
 
           <Dropdown
-            style={styles.dropdown}
-            data={motoClasses}
+            style={[styles.dropdown, isFocus && { borderColor: "#0F2D7A" }]}
+            data={transportData}
             labelField="label"
             valueField="value"
-            placeholder="Select vehicle class"
-            value={vehicleClass}
-            onChange={(item) => setVehicleClass(item.value)}
-          />
+            placeholder="Select transportation type"
+            value={transportationType}
+            onFocus={() => setIsFocus(true)}
+            onBlur={() => setIsFocus(false)}
+            onChange={(item) => {
+              setTransportationType(item.value);
+              setVehicleClass(null);
+              setIsFocus(false);
+            }}
+            renderItem={(item) => (
+              <View style={styles.dropdownItem}>
+                {/* Transportation Label */}
+                <Text style={styles.itemLabel}>{item.label}</Text>
 
-          <TextInput
-            style={styles.input}
-            value={model}
-            onChangeText={setModel}
-            placeholder="Vehicle Model"
-          />
-
-          <TextInput
-            style={styles.input}
-            value={vehicleColour}
-            onChangeText={setVehicleColour}
-            placeholder="Vehicle Colour (e.g. Red)"
-          />
-
-          <TextInput
-            style={styles.input}
-            value={plateNumber}
-            onChangeText={setPlateNumber}
-            placeholder="Plate Number"
-          />
-        </>
-      )}
-
-      {/* MAXI */}
-
-      {transportationType === "MAXI" && (
-        <>
-          <Text style={styles.label}>Vehicle Class</Text>
-
-          <Dropdown
-            style={styles.dropdown}
-            data={maxiClasses}
-            labelField="label"
-            valueField="value"
-            placeholder="Select vehicle class"
-            value={vehicleClass}
-            onChange={(item) => setVehicleClass(item.value)}
-          />
-
-          <TextInput
-            style={styles.input}
-            value={model}
-            onChangeText={setModel}
-            placeholder="Vehicle Model"
-          />
-
-          <TextInput
-            style={styles.input}
-            value={vehicleColour}
-            onChangeText={setVehicleColour}
-            placeholder="Vehicle Colour (e.g. Red)"
-          />
-
-          <TextInput
-            style={styles.input}
-            value={plateNumber}
-            onChangeText={setPlateNumber}
-            placeholder="Plate Number"
-          />
-
-          <TextInput
-            style={styles.description}
-            value={maxiDescription}
-            onChangeText={(text) => setMaxiDescription(text)}
-            multiline
-            placeholder="Describe the capacity of vehicle and give examples of what it can carry"
-          />
-
-          <TouchableOpacity style={styles.photoButton} onPress={pickImages}>
-            <AntDesign name="camera" size={18} color="#fff" />
-
-            <Text style={styles.photoButtonText}>
-              {displayImages.length > 0
-                ? "Replace Vehicle Photos"
-                : "Upload Vehicle Photos"}
-            </Text>
-          </TouchableOpacity>
-
-          {displayImages.length > 0 && (
-            <>
-              <Text style={styles.savedImagesTitle}>
-                Current Vehicle Photos
-              </Text>
-
-              <View style={styles.imageGrid}>
-                {displayImages.map((uri, index) => (
-                  <Image
-                    key={index}
-                    source={{ uri }}
-                    style={styles.previewImage}
-                  />
-                ))}
+                {/* Info Icon next to each label */}
+                <TouchableOpacity
+                  onPress={() => handleInfoPress(item.description)}
+                >
+                  <AntDesign name="info-circle" style={styles.infoIcon} />
+                </TouchableOpacity>
               </View>
+            )}
+          />
+
+          {/* MOTO */}
+
+          {transportationType === "MOTO" && (
+            <>
+              <Text style={styles.label}>Vehicle Class</Text>
+
+              <Dropdown
+                style={styles.dropdown}
+                data={motoClasses}
+                labelField="label"
+                valueField="value"
+                placeholder="Select vehicle class"
+                value={vehicleClass}
+                onChange={(item) => setVehicleClass(item.value)}
+              />
+
+              <TextInput
+                style={styles.input}
+                value={model}
+                onChangeText={setModel}
+                placeholder="Vehicle Model"
+              />
+
+              <TextInput
+                style={styles.input}
+                value={vehicleColour}
+                onChangeText={setVehicleColour}
+                placeholder="Vehicle Colour (e.g. Red)"
+              />
+
+              <TextInput
+                style={styles.input}
+                value={plateNumber}
+                onChangeText={setPlateNumber}
+                placeholder="Plate Number"
+              />
             </>
           )}
-        </>
-      )}
 
-      {errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
+          {/* MAXI */}
 
-      <TouchableOpacity
-        style={styles.saveButton}
-        onPress={updateTransportType}
-        disabled={saving}
-      >
-        <Text style={styles.saveButtonText}>Save Changes</Text>
-      </TouchableOpacity>
-    </ScrollView>
+          {transportationType === "MAXI" && (
+            <>
+              <Text style={styles.label}>Vehicle Class</Text>
+
+              <Dropdown
+                style={styles.dropdown}
+                data={maxiClasses}
+                labelField="label"
+                valueField="value"
+                placeholder="Select vehicle class"
+                value={vehicleClass}
+                onChange={(item) => setVehicleClass(item.value)}
+              />
+
+              <TextInput
+                style={styles.input}
+                value={model}
+                onChangeText={setModel}
+                placeholder="Vehicle Model"
+              />
+
+              <TextInput
+                style={styles.input}
+                value={vehicleColour}
+                onChangeText={setVehicleColour}
+                placeholder="Vehicle Colour (e.g. Red)"
+              />
+
+              <TextInput
+                style={styles.input}
+                value={plateNumber}
+                onChangeText={setPlateNumber}
+                placeholder="Plate Number"
+              />
+
+              <TextInput
+                style={styles.description}
+                value={maxiDescription}
+                onChangeText={(text) => setMaxiDescription(text)}
+                multiline
+                placeholder="Describe the capacity of vehicle and give examples of what it can carry"
+              />
+
+              <TouchableOpacity style={styles.photoButton} onPress={pickImages}>
+                <AntDesign name="camera" size={18} color="#fff" />
+
+                <Text style={styles.photoButtonText}>
+                  {displayImages.length > 0
+                    ? "Replace Vehicle Photos"
+                    : "Upload Vehicle Photos"}
+                </Text>
+              </TouchableOpacity>
+
+              {displayImages.length > 0 && (
+                <>
+                  <Text style={styles.savedImagesTitle}>
+                    Current Vehicle Photos
+                  </Text>
+
+                  <View style={styles.imageGrid}>
+                    {displayImages.map((uri, index) => (
+                      <Image
+                        key={index}
+                        source={{ uri }}
+                        style={styles.previewImage}
+                      />
+                    ))}
+                  </View>
+                </>
+              )}
+            </>
+          )}
+
+          {errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
+
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={updateTransportType}
+            disabled={saving}
+          >
+            <Text style={styles.saveButtonText}>Save Changes</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 

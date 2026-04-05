@@ -6,11 +6,11 @@ import styles from "./styles";
 const BottomContainer = ({
   isOnline,
   orders,
+  stats,
   onRefresh,
   onToggleOnline,
   transportationType,
 }) => {
-  // ✅ Pre-compute once (better performance)
   const batchJobs = orders.filter(
     (o) =>
       o.transportationType === "MICRO_BATCH" ||
@@ -62,8 +62,16 @@ const BottomContainer = ({
         <View style={styles.statsCard}>
           {/* TOTAL */}
           <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{orders.length}</Text>
+            <Text style={styles.statNumber}>{stats.total}</Text>
             <Text style={styles.statLabel}>Available Jobs</Text>
+          </View>
+
+          <View style={styles.statDivider} />
+
+          {/* NEARBY (for ALL types including MAXI) */}
+          <View style={styles.statBox}>
+            <Text style={styles.statNumber}>{stats.nearby} </Text>
+            <Text style={styles.statLabel}>Nearby Jobs</Text>
           </View>
 
           {/* ✅ ONLY show for NON-MAXI */}

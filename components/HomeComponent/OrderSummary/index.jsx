@@ -1,10 +1,12 @@
-import { Order, User } from "@/src/models";
+import { useAuthContext } from "@/providers/AuthProvider";
+import { Offer, Order, User } from "@/src/models";
 import { DataStore } from "aws-amplify/datastore";
 import { getUrl } from "aws-amplify/storage";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -19,9 +21,12 @@ import VideoThumbnail from "./VideoThumbnail";
 import styles from "./styles";
 
 const OrderSummary = ({ orderId }) => {
+  const { dbUser } = useAuthContext();
   const [order, setOrder] = useState(null);
   const [user, setUser] = useState(null);
   const [offer, setOffer] = useState("");
+  const [offers, setOffers] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -33,9 +38,27 @@ const OrderSummary = ({ orderId }) => {
   const minPrice = order?.estimatedMinPrice;
   const maxPrice = order?.estimatedMaxPrice;
 
-  const displayPrice = order?.currentOfferPrice ?? order?.courierEarnings;
+  const latestOffer = [...offers].sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+  )[0];
+
+  const displayPrice = latestOffer?.amount ?? order?.initialOfferPrice;
 
   const numericOffer = Number(offer);
+
+  const latestUserOfferAmount =
+    latestOffer?.senderType === "USER"
+      ? latestOffer.amount
+      : order?.initialOfferPrice;
+
+  // Disable Accept if:
+  // 1. Order already accepted
+  // 2. Latest offer not from user
+  // 3. Courier modified the offer (doesn't match latest user offer)
+  const isAcceptDisabled =
+    order?.status === "ACCEPTED" ||
+    (latestOffer && latestOffer.senderType !== "USER") ||
+    numericOffer !== latestUserOfferAmount;
 
   // conversion for 'Handle Myself'
   const formatResponsibility = (value) => {
@@ -58,7 +81,6 @@ const OrderSummary = ({ orderId }) => {
         if (!fetchedOrder) return;
 
         setOrder(fetchedOrder);
-        setOffer(fetchedOrder.currentOfferPrice?.toString() || "");
 
         // fetch user
         if (fetchedOrder.userID) {
@@ -78,7 +100,6 @@ const OrderSummary = ({ orderId }) => {
     const sub = DataStore.observe(Order, orderId).subscribe(async (msg) => {
       if (msg.opType === "UPDATE") {
         setOrder(msg.element);
-        setOffer(msg.element.currentOfferPrice?.toString() || "");
 
         if (msg.element.userID) {
           const updatedUser = await DataStore.query(User, msg.element.userID);
@@ -90,6 +111,33 @@ const OrderSummary = ({ orderId }) => {
     return () => sub.unsubscribe();
   }, [orderId]);
 
+  // useEffect for Offer
+  useEffect(() => {
+    const fetchOffers = async () => {
+      const result = await DataStore.query(Offer, (o) => o.orderID.eq(orderId));
+      setOffers(result);
+    };
+
+    fetchOffers();
+
+    const sub = DataStore.observe(Offer).subscribe((msg) => {
+      if (msg.element.orderID === orderId) {
+        fetchOffers();
+      }
+    });
+
+    return () => sub.unsubscribe();
+  }, [orderId]);
+
+  // useEffect for setting latest offerPrice
+  useEffect(() => {
+    if (!order || isEditing) return;
+
+    const basePrice = latestOffer?.amount ?? order.initialOfferPrice;
+
+    setOffer(basePrice?.toString() || "");
+  }, [order, latestOffer, isEditing]);
+
   // ✅ Send Counter Offer
   const onSendOffer = async (price) => {
     if (!price || price <= 0) return;
@@ -100,30 +148,60 @@ const OrderSummary = ({ orderId }) => {
     }
 
     await DataStore.save(
-      Order.copyOf(order, (updated) => {
-        updated.currentOfferPrice = price;
-        updated.lastOfferBy = "COURIER";
+      new Offer({
+        orderID: order.id,
+        courierID: dbUser.id,
+        senderType: "COURIER",
+        amount: price,
+        status: "ACTIVE",
       }),
     );
+    setOffer("");
   };
 
   // ✅ Accept Offer
   const onAccept = async () => {
-    const price = Number(offer);
-
-    if (!price || price <= 0) return;
-
-    if (price < minPrice || price > maxPrice) {
-      alert("Offer must be within allowed range");
+    if (order.status === "ACCEPTED") {
+      alert("Order already taken");
       return;
     }
 
-    await DataStore.save(
-      Order.copyOf(order, (updated) => {
-        updated.status = "ACCEPTED";
-        updated.totalPrice = price;
-      }),
-    );
+    let priceToAccept;
+    let offerToAccept = null;
+
+    if (!latestOffer) {
+      // ✅ No offers yet → accept initial price
+      priceToAccept = order.initialOfferPrice;
+    } else {
+      if (latestOffer.senderType !== "USER") {
+        alert("You can only accept user's latest offer");
+        return;
+      }
+
+      priceToAccept = latestOffer.amount;
+      offerToAccept = latestOffer;
+    }
+
+    try {
+      await DataStore.save(
+        Order.copyOf(order, (updated) => {
+          updated.status = "ACCEPTED";
+          updated.totalPrice = priceToAccept;
+          updated.acceptedOfferID = offerToAccept?.id;
+          updated.assignedCourierId = dbUser.id;
+        }),
+      );
+
+      if (offerToAccept) {
+        await DataStore.save(
+          Offer.copyOf(offerToAccept, (updated) => {
+            updated.status = "ACCEPTED";
+          }),
+        );
+      }
+    } catch (e) {
+      alert("Error accepting offer");
+    }
   };
 
   // useEffect for Media
@@ -181,13 +259,58 @@ const OrderSummary = ({ orderId }) => {
       <SafeAreaView style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* 🔥 PRICE HEADER */}
-          <View style={styles.priceCard}>
-            <Text style={styles.label}>Current Offer</Text>
-
-            <Text style={styles.price}>
-              ₦{displayPrice?.toLocaleString() || "---"}
+          <View
+            style={[
+              styles.priceCard,
+              order?.status === "ACCEPTED" && styles.priceCardAccepted,
+            ]}
+          >
+            <Text
+              style={[
+                styles.label,
+                order?.status === "ACCEPTED" && styles.labelAccepted,
+              ]}
+            >
+              {order?.status === "ACCEPTED" ? "Final Price" : "Current Offer"}
             </Text>
+
+            <View style={styles.priceRow}>
+              <Text
+                style={[
+                  styles.price,
+                  order?.status === "ACCEPTED" && styles.acceptedPrice,
+                ]}
+              >
+                ₦{displayPrice?.toLocaleString() || "---"}
+              </Text>
+
+              {order?.status === "ACCEPTED" && (
+                <View style={styles.lockBadge}>
+                  <Text style={styles.lockBadgeText}>LOCKED</Text>
+                </View>
+              )}
+            </View>
+
+            {/* <Text style={styles.price}>
+              ₦{displayPrice?.toLocaleString() || "---"}
+            </Text> */}
           </View>
+
+          {/* Show if Order is Accepted */}
+          {order?.status === "ACCEPTED" && (
+            <View style={styles.acceptedBanner}>
+              <View style={styles.acceptedBadge}>
+                <Text style={styles.acceptedIcon}>✓</Text>
+              </View>
+
+              <View>
+                <Text style={styles.acceptedTitle}>Offer Accepted</Text>
+                <Text style={styles.acceptedSubtitle}>
+                  You have secured this delivery
+                </Text>
+              </View>
+            </View>
+          )}
 
           {/* 👤 SENDER */}
           <View style={styles.card}>
@@ -327,6 +450,8 @@ const OrderSummary = ({ orderId }) => {
                 style={styles.offerInput}
                 keyboardType="numeric"
                 value={offer}
+                onFocus={() => setIsEditing(true)}
+                onBlur={() => setIsEditing(false)}
                 onChangeText={(value) => {
                   const num = Number(value);
 
@@ -363,13 +488,32 @@ const OrderSummary = ({ orderId }) => {
             <View style={styles.row}>
               <TouchableOpacity
                 style={styles.counterBtn}
-                onPress={() => onSendOffer(Number(offer))}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setIsEditing(false);
+                  onSendOffer(Number(offer));
+                }}
               >
                 <Text style={styles.btnText}>Counter</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.acceptBtn} onPress={onAccept}>
-                <Text style={styles.btnText}>Accept</Text>
+              {/* if offer price isn't what was offered by user, disable Accept button, to prevent courier from increasing or reducing price and then accepting. Make sure to do same with user app */}
+              <TouchableOpacity
+                style={[
+                  styles.acceptBtn,
+                  isAcceptDisabled && styles.buttonDisabled,
+                ]}
+                onPress={onAccept}
+                disabled={isAcceptDisabled}
+              >
+                <Text
+                  style={[
+                    styles.btnText,
+                    isAcceptDisabled && styles.buttonDisabledText,
+                  ]}
+                >
+                  {isAcceptDisabled ? "Accept (disabled)" : "Accept"}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>

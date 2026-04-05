@@ -1,32 +1,33 @@
-import { View, Text } from 'react-native'
-import React, { useEffect } from 'react'
-import { router } from 'expo-router'
-import { useAuthContext } from '@/providers/AuthProvider'
-import PendingMain from '../../../components/DeliveryHistoryCom/PendingDelivery/PendingMain';
+import { useAuthContext } from "@/providers/AuthProvider";
+import { router } from "expo-router";
+import React, { useEffect } from "react";
+import { Text, View } from "react-native";
+import PendingMain from "../../../components/DeliveryHistoryCom/PendingDelivery/PendingMain";
 
 const PendingOrdersScreen = () => {
+  const { dbUser } = useAuthContext();
 
-  const {dbUser} = useAuthContext()
-
-  useEffect(()=>{
-    if(!dbUser){
-      router.replace('/profile')
+  useEffect(() => {
+    if (!dbUser) {
+      router.replace("/profile");
     }
-  }, [dbUser])
+  }, [dbUser]);
 
-  if(!dbUser){
+  if (!dbUser) {
     return (
-      <View style={{flex:1, justifyContent:'center', alignItems:'center'}}>
-      <Text style={{fontSize:20, fontWeight:'bold', color:'#afadad'}}>Kindly Fill in Your Data in Proile screen</Text>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text style={{ fontSize: 20, fontWeight: "bold", color: "#afadad" }}>
+          Kindly Fill in Your Data in Profile screen
+        </Text>
       </View>
-    )
+    );
   }
 
   return (
-    <View style={{flex:1}}>
-      <PendingMain/>
+    <View style={{ flex: 1 }}>
+      <PendingMain />
     </View>
-  )
-}
+  );
+};
 
 export default PendingOrdersScreen;

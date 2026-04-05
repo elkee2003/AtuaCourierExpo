@@ -54,8 +54,10 @@
     "extra": {
       "API_BASE_URL": "https://opusama-web.vercel.app/api",
       "eas": {
-        "projectId": "5df29d58-2ff7-48d3-b0b8-92f6d81ca820"
-      }
-    }
+        "projectId": "3856e224-1531-41c1-adc9-7c6fae25a7cb"
+      },
+      "router": {}
+    },
+    "owner": "atuainc"
   }
 }
