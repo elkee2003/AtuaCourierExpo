@@ -32,6 +32,8 @@ const OrderSummary = ({ orderId }) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [resolvedMedia, setResolvedMedia] = useState([]);
 
+  const isMaxi = order?.transportationType === "MAXI";
+
   // ✅ ONLY S3 MEDIA
   const mediaList = resolvedMedia;
 
@@ -42,7 +44,9 @@ const OrderSummary = ({ orderId }) => {
     (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
   )[0];
 
-  const displayPrice = latestOffer?.amount ?? order?.initialOfferPrice;
+  const displayPrice = isMaxi
+    ? (latestOffer?.amount ?? order?.initialOfferPrice)
+    : order?.courierEarnings;
 
   const numericOffer = Number(offer);
 
@@ -55,10 +59,11 @@ const OrderSummary = ({ orderId }) => {
   // 1. Order already accepted
   // 2. Latest offer not from user
   // 3. Courier modified the offer (doesn't match latest user offer)
-  const isAcceptDisabled =
-    order?.status === "ACCEPTED" ||
-    (latestOffer && latestOffer.senderType !== "USER") ||
-    numericOffer !== latestUserOfferAmount;
+  const isAcceptDisabled = isMaxi
+    ? order?.status === "ACCEPTED" ||
+      (latestOffer && latestOffer.senderType !== "USER") ||
+      numericOffer !== latestUserOfferAmount
+    : order?.status === "ACCEPTED";
 
   // conversion for 'Handle Myself'
   const formatResponsibility = (value) => {
@@ -166,41 +171,51 @@ const OrderSummary = ({ orderId }) => {
       return;
     }
 
-    let priceToAccept;
-    let offerToAccept = null;
-
-    if (!latestOffer) {
-      // ✅ No offers yet → accept initial price
-      priceToAccept = order.initialOfferPrice;
-    } else {
-      if (latestOffer.senderType !== "USER") {
-        alert("You can only accept user's latest offer");
-        return;
-      }
-
-      priceToAccept = latestOffer.amount;
-      offerToAccept = latestOffer;
-    }
-
     try {
-      await DataStore.save(
-        Order.copyOf(order, (updated) => {
-          updated.status = "ACCEPTED";
-          updated.totalPrice = priceToAccept;
-          updated.acceptedOfferID = offerToAccept?.id;
-          updated.assignedCourierId = dbUser.id;
-        }),
-      );
+      if (isMaxi) {
+        // ✅ existing bidding logic
+        let priceToAccept;
+        let offerToAccept = null;
 
-      if (offerToAccept) {
+        if (!latestOffer) {
+          priceToAccept = order.initialOfferPrice;
+        } else {
+          if (latestOffer.senderType !== "USER") {
+            alert("You can only accept user's latest offer");
+            return;
+          }
+
+          priceToAccept = latestOffer.amount;
+          offerToAccept = latestOffer;
+        }
+
         await DataStore.save(
-          Offer.copyOf(offerToAccept, (updated) => {
+          Order.copyOf(order, (updated) => {
             updated.status = "ACCEPTED";
+            updated.totalPrice = priceToAccept;
+            updated.acceptedOfferID = offerToAccept?.id;
+            updated.assignedCourierId = dbUser.id;
+          }),
+        );
+
+        if (offerToAccept) {
+          await DataStore.save(
+            Offer.copyOf(offerToAccept, (updated) => {
+              updated.status = "ACCEPTED";
+            }),
+          );
+        }
+      } else {
+        // ✅ MICRO / MOTO simple accept
+        await DataStore.save(
+          Order.copyOf(order, (updated) => {
+            updated.status = "ACCEPTED";
+            updated.assignedCourierId = dbUser.id;
           }),
         );
       }
     } catch (e) {
-      alert("Error accepting offer");
+      alert("Error accepting order");
     }
   };
 
@@ -271,7 +286,18 @@ const OrderSummary = ({ orderId }) => {
                 order?.status === "ACCEPTED" && styles.labelAccepted,
               ]}
             >
-              {order?.status === "ACCEPTED" ? "Final Price" : "Current Offer"}
+              <Text
+                style={[
+                  styles.label,
+                  order?.status === "ACCEPTED" && styles.labelAccepted,
+                ]}
+              >
+                {order?.status === "ACCEPTED"
+                  ? "Final Price"
+                  : isMaxi
+                    ? "Current Offer"
+                    : "Price"}
+              </Text>
             </Text>
 
             <View style={styles.priceRow}>
@@ -430,93 +456,103 @@ const OrderSummary = ({ orderId }) => {
           </View>
 
           {/* 💸 OFFER SECTION */}
-          <View style={styles.offerBox}>
-            <Text style={styles.section}>Your Offer</Text>
+          {isMaxi && (
+            <View style={styles.offerBox}>
+              <Text style={styles.section}>Your Offer</Text>
 
-            <View style={styles.offerControl}>
-              <TouchableOpacity
-                style={styles.adjustBtn}
-                onPress={() =>
-                  setOffer((prev) => {
-                    const value = Number(prev) || minPrice;
-                    return Math.max(minPrice, value - 1000).toString();
-                  })
-                }
-              >
-                <Text style={styles.adjustText}>-</Text>
-              </TouchableOpacity>
-
-              <TextInput
-                style={styles.offerInput}
-                keyboardType="numeric"
-                value={offer}
-                onFocus={() => setIsEditing(true)}
-                onBlur={() => setIsEditing(false)}
-                onChangeText={(value) => {
-                  const num = Number(value);
-
-                  if (value === "") {
-                    setOffer("");
-                    return;
+              <View style={styles.offerControl}>
+                <TouchableOpacity
+                  style={styles.adjustBtn}
+                  onPress={() =>
+                    setOffer((prev) => {
+                      const value = Number(prev) || minPrice;
+                      return Math.max(minPrice, value - 1000).toString();
+                    })
                   }
-
-                  setOffer(num.toString());
-                }}
-              />
-
-              <TouchableOpacity
-                style={styles.adjustBtn}
-                onPress={() =>
-                  setOffer((prev) => {
-                    const value = Number(prev) || minPrice;
-                    return Math.min(maxPrice, value + 1000).toString();
-                  })
-                }
-              >
-                <Text style={styles.adjustText}>+</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Feeback */}
-            {numericOffer < minPrice || numericOffer > maxPrice ? (
-              <Text style={styles.feedBack}>
-                Offer must be between ₦{minPrice?.toLocaleString()} and ₦
-                {maxPrice?.toLocaleString()}
-              </Text>
-            ) : null}
-
-            <View style={styles.row}>
-              <TouchableOpacity
-                style={styles.counterBtn}
-                onPress={() => {
-                  Keyboard.dismiss();
-                  setIsEditing(false);
-                  onSendOffer(Number(offer));
-                }}
-              >
-                <Text style={styles.btnText}>Counter</Text>
-              </TouchableOpacity>
-
-              {/* if offer price isn't what was offered by user, disable Accept button, to prevent courier from increasing or reducing price and then accepting. Make sure to do same with user app */}
-              <TouchableOpacity
-                style={[
-                  styles.acceptBtn,
-                  isAcceptDisabled && styles.buttonDisabled,
-                ]}
-                onPress={onAccept}
-                disabled={isAcceptDisabled}
-              >
-                <Text
-                  style={[
-                    styles.btnText,
-                    isAcceptDisabled && styles.buttonDisabledText,
-                  ]}
                 >
-                  {isAcceptDisabled ? "Accept (disabled)" : "Accept"}
+                  <Text style={styles.adjustText}>-</Text>
+                </TouchableOpacity>
+
+                <TextInput
+                  style={styles.offerInput}
+                  keyboardType="numeric"
+                  value={offer}
+                  onFocus={() => setIsEditing(true)}
+                  onBlur={() => setIsEditing(false)}
+                  onChangeText={(value) => {
+                    const num = Number(value);
+
+                    if (value === "") {
+                      setOffer("");
+                      return;
+                    }
+
+                    setOffer(num.toString());
+                  }}
+                />
+
+                <TouchableOpacity
+                  style={styles.adjustBtn}
+                  onPress={() =>
+                    setOffer((prev) => {
+                      const value = Number(prev) || minPrice;
+                      return Math.min(maxPrice, value + 1000).toString();
+                    })
+                  }
+                >
+                  <Text style={styles.adjustText}>+</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Feeback */}
+              {numericOffer < minPrice || numericOffer > maxPrice ? (
+                <Text style={styles.feedBack}>
+                  Offer must be between ₦{minPrice?.toLocaleString()} and ₦
+                  {maxPrice?.toLocaleString()}
                 </Text>
+              ) : null}
+
+              <View style={styles.row}>
+                <TouchableOpacity
+                  style={styles.counterBtn}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setIsEditing(false);
+                    onSendOffer(Number(offer));
+                  }}
+                >
+                  <Text style={styles.btnText}>Counter</Text>
+                </TouchableOpacity>
+
+                {/* if offer price isn't what was offered by user, disable Accept button, to prevent courier from increasing or reducing price and then accepting. Make sure to do same with user app */}
+                <TouchableOpacity
+                  style={[
+                    styles.acceptBtn,
+                    isAcceptDisabled && styles.buttonDisabled,
+                  ]}
+                  onPress={onAccept}
+                  disabled={isAcceptDisabled}
+                >
+                  <Text
+                    style={[
+                      styles.btnText,
+                      isAcceptDisabled && styles.buttonDisabledText,
+                    ]}
+                  >
+                    {isAcceptDisabled ? "Accept (disabled)" : "Accept"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {!isMaxi && order.status !== "ACCEPTED" && (
+            <View style={styles.row}>
+              <TouchableOpacity style={styles.acceptBtn} onPress={onAccept}>
+                <Text style={styles.btnText}>Accept</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          )}
         </ScrollView>
 
         <MediaPreviewModal

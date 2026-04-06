@@ -59,6 +59,22 @@
     }
   },
   "function": {
+    "assignOrder": {
+      "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "GraphQLAPIIdOutput",
+            "GraphQLAPIEndpointOutput",
+            "GraphQLAPIKeyOutput"
+          ],
+          "category": "api",
+          "resourceName": "Atua"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
     "atuac06ab999c06ab999PostConfirmation": {
       "build": true,
       "providerPlugin": "awscloudformation",

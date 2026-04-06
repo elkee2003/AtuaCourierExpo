@@ -205,6 +205,7 @@ export default StyleSheet.create({
   row: {
     flexDirection: "row",
     marginTop: 14,
+    marginBottom: 15,
   },
 
   counterBtn: {

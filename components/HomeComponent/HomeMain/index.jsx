@@ -95,19 +95,37 @@ const HomeComponent = () => {
       let processedOrders = [];
       let nearbyCount = 0;
 
-      const availableOrders = await DataStore.query(Order, (o) =>
-        o.and((o2) => {
-          if (isMaxi) {
-            return [
+      let availableOrders = [];
+
+      if (isMaxi && dbUser?.vehicleClass) {
+        // ✅ First: strict match (vehicleClass)
+        availableOrders = await DataStore.query(Order, (o) =>
+          o.and((o2) => [
+            o2.transportationType.eq("MAXI"),
+            o2.vehicleClass.eq(dbUser.vehicleClass),
+            o2.or((o3) => [
+              o3.status.eq("READY_FOR_PICKUP"),
+              o3.status.eq("BIDDING"),
+            ]),
+          ]),
+        );
+
+        // ✅ Fallback: if none found, show all MAXI
+        if (availableOrders.length === 0) {
+          availableOrders = await DataStore.query(Order, (o) =>
+            o.and((o2) => [
               o2.transportationType.eq("MAXI"),
               o2.or((o3) => [
                 o3.status.eq("READY_FOR_PICKUP"),
                 o3.status.eq("BIDDING"),
               ]),
-            ];
-          }
-
-          return [
+            ]),
+          );
+        }
+      } else {
+        // NON-MAXI (unchanged)
+        availableOrders = await DataStore.query(Order, (o) =>
+          o.and((o2) => [
             o2.status.eq("READY_FOR_PICKUP"),
             o2.or((o3) => [
               o3.transportationType.eq("MICRO_EXPRESS"),
@@ -115,9 +133,18 @@ const HomeComponent = () => {
               o3.transportationType.eq("MICRO_BATCH"),
               o3.transportationType.eq("MOTO_BATCH"),
             ]),
-          ];
-        }),
-      );
+          ]),
+        );
+      }
+
+      // This else statement below is what will work with my backend lambda function. it is meant to asssign and be visible to one courier, as opposed to before, when it was visible to all couriers. However, I think it will not show the different order counts like available orders, nearby orders, batch orders, express orders, like I would want it to show. Later I will see how I can make it possible, together with the lambda function
+
+      // else {
+      //   // ✅ ONLY assigned orders
+      //   availableOrders = await DataStore.query(Order, (o) =>
+      //     o.assignedCourierId.eq(dbUser.id)
+      //   );
+      // }
 
       const nearbyOrders = [];
       const farOrders = [];
