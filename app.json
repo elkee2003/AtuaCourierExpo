@@ -20,7 +20,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.atuainc.AtuaCourier",
+      "package": "com.anonymous.AtuaCourier",
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyDzVvRkaOM0EzKJDQQ0fztKaTlA8tgjdzY"

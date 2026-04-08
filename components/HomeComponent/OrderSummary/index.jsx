@@ -1,5 +1,5 @@
 import { useAuthContext } from "@/providers/AuthProvider";
-import { Offer, Order, User } from "@/src/models";
+import { Courier, Offer, Order, User } from "@/src/models";
 import { DataStore } from "aws-amplify/datastore";
 import { getUrl } from "aws-amplify/storage";
 import { useEffect, useState } from "react";
@@ -20,10 +20,16 @@ import MediaPreviewModal from "./MediaPreviewModal/MediaPreviewModal";
 import VideoThumbnail from "./VideoThumbnail";
 import styles from "./styles";
 
+// This code is meant to be where courier is marking completion of orders. For couriers that finished their orders manually, which will not warant the lambda function to be triggered. we would need to update the fields in Courier model
+// updated.currentBatchCount = 0;
+// updated.currentExpressCount = 0;
+// updated.lastBatchAssignedAt = null;
+
 const OrderSummary = ({ orderId }) => {
   const { dbUser } = useAuthContext();
   const [order, setOrder] = useState(null);
   const [user, setUser] = useState(null);
+  const [courier, setCourier] = useState(null);
   const [offer, setOffer] = useState("");
   const [offers, setOffers] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -65,6 +71,15 @@ const OrderSummary = ({ orderId }) => {
       numericOffer !== latestUserOfferAmount
     : order?.status === "ACCEPTED";
 
+  // Total Courier accepted orders
+  const courierTotal =
+    (courier?.currentBatchCount || 0) + (courier?.currentExpressCount || 0);
+
+  const isBlocked =
+    courierTotal >= 10 ||
+    (courier?.lastBatchAssignedAt &&
+      new Date() - new Date(courier.lastBatchAssignedAt) > 3 * 60 * 60 * 1000);
+
   // conversion for 'Handle Myself'
   const formatResponsibility = (value) => {
     if (!value) return "Not specified";
@@ -76,6 +91,26 @@ const OrderSummary = ({ orderId }) => {
         return value;
     }
   };
+
+  // To fetch couriers
+  useEffect(() => {
+    const fetchCourier = async () => {
+      if (!dbUser?.id) return;
+
+      const c = await DataStore.query(Courier, dbUser.id);
+      setCourier(c);
+    };
+
+    fetchCourier();
+
+    const sub = DataStore.observe(Courier, dbUser.id).subscribe((msg) => {
+      if (msg.opType === "UPDATE") {
+        setCourier(msg.element);
+      }
+    });
+
+    return () => sub.unsubscribe();
+  }, [dbUser]);
 
   // ✅ Fetch order + user
   useEffect(() => {
@@ -166,6 +201,30 @@ const OrderSummary = ({ orderId }) => {
 
   // ✅ Accept Offer
   const onAccept = async () => {
+    const courier = await DataStore.query(Courier, dbUser.id);
+
+    // To check total number of orders accepted
+    const total =
+      (courier.currentBatchCount || 0) + (courier.currentExpressCount || 0);
+
+    if (total >= 10) {
+      alert("Maximum number of orders reached. Please start delivery.");
+      return;
+    }
+
+    // ⏱️ FORCE DISPATCH TIMER CHECK
+    const lastBatchTime = new Date(courier.lastBatchAssignedAt || 0);
+    const now = new Date();
+
+    const THREE_HOURS = 3 * 60 * 60 * 1000;
+
+    const exceededTime = now - lastBatchTime > THREE_HOURS;
+
+    if (exceededTime && total > 0) {
+      alert("You have pending deliveries. Please start delivery.");
+      return;
+    }
+
     if (order.status === "ACCEPTED") {
       alert("Order already taken");
       return;
@@ -211,6 +270,21 @@ const OrderSummary = ({ orderId }) => {
           Order.copyOf(order, (updated) => {
             updated.status = "ACCEPTED";
             updated.assignedCourierId = dbUser.id;
+          }),
+        );
+
+        await DataStore.save(
+          Courier.copyOf(courier, (updated) => {
+            if (!updated.lastBatchAssignedAt) {
+              updated.lastBatchAssignedAt = new Date().toISOString();
+            }
+
+            if (order.transportationType.includes("EXPRESS")) {
+              updated.currentExpressCount =
+                (updated.currentExpressCount || 0) + 1;
+            } else {
+              updated.currentBatchCount = (updated.currentBatchCount || 0) + 1;
+            }
           }),
         );
       }
@@ -528,10 +602,10 @@ const OrderSummary = ({ orderId }) => {
                 <TouchableOpacity
                   style={[
                     styles.acceptBtn,
-                    isAcceptDisabled && styles.buttonDisabled,
+                    (isAcceptDisabled || isBlocked) && styles.buttonDisabled,
                   ]}
                   onPress={onAccept}
-                  disabled={isAcceptDisabled}
+                  disabled={isAcceptDisabled || isBlocked}
                 >
                   <Text
                     style={[
@@ -539,7 +613,11 @@ const OrderSummary = ({ orderId }) => {
                       isAcceptDisabled && styles.buttonDisabledText,
                     ]}
                   >
-                    {isAcceptDisabled ? "Accept (disabled)" : "Accept"}
+                    {isBlocked
+                      ? "Complete deliveries first"
+                      : isAcceptDisabled
+                        ? "Accept (disabled)"
+                        : "Accept"}
                   </Text>
                 </TouchableOpacity>
               </View>
