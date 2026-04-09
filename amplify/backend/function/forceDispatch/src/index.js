@@ -1,37 +1,61 @@
-const AWS = require("aws-sdk");
-const docClient = new AWS.DynamoDB.DocumentClient();
+// ================= AWS SDK v3 =================
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const {
+  DynamoDBDocumentClient,
+  QueryCommand,
+  UpdateCommand,
+} = require("@aws-sdk/lib-dynamodb");
+
+// ================= CONFIG =================
+const client = new DynamoDBClient({});
+const docClient = DynamoDBDocumentClient.from(client);
 
 const COURIER_TABLE = "Courier-n4tb6ywvhnf3zesv5ibhpitqiq-staging";
 const ORDER_TABLE = "Order-n4tb6ywvhnf3zesv5ibhpitqiq-staging";
 
+// ================= HANDLER =================
 exports.handler = async () => {
-  console.log("Running force dispatch...");
+  console.log("🚀 Running force dispatch...");
 
-  const couriersRes = await docClient
-    .scan({
-      TableName: COURIER_TABLE,
-    })
-    .promise();
+  const couriers = await getOnlineCouriers();
 
-  const couriers = couriersRes.Items;
-
-  for (let courier of couriers) {
-    if (!courier.isOnline) continue;
-
+  for (const courier of couriers) {
     await checkForceDispatch(courier);
   }
 };
 
-/* ================= FORCE LOGIC ================= */
+// ================= GET COURIERS (GSI) =================
+async function getOnlineCouriers() {
+  let items = [];
+  let lastKey;
 
+  do {
+    const res = await docClient.send(
+      new QueryCommand({
+        TableName: COURIER_TABLE,
+        IndexName: "byStatus", // ✅ uses your GSI
+        KeyConditionExpression: "statusKey = :s",
+        ExpressionAttributeValues: {
+          ":s": "ONLINE#APPROVED",
+        },
+        ExclusiveStartKey: lastKey,
+      }),
+    );
+
+    items.push(...(res.Items || []));
+    lastKey = res.LastEvaluatedKey;
+  } while (lastKey);
+
+  return items;
+}
+
+// ================= FORCE LOGIC =================
 async function checkForceDispatch(courier) {
   // 🚫 Skip MAXI completely
   if (courier.transportationType === "MAXI") return;
 
   const MAX_CAPACITY = 10;
-
-  // ✅ 3 HOURS
-  const BATCH_TIMEOUT = 3 * 60 * 60 * 1000;
+  const BATCH_TIMEOUT = 3 * 60 * 60 * 1000; // 3 hours
 
   const total =
     (courier.currentBatchCount || 0) + (courier.currentExpressCount || 0);
@@ -42,43 +66,25 @@ async function checkForceDispatch(courier) {
   const noNewOrders = now - lastBatchTime > BATCH_TIMEOUT;
 
   if (total >= MAX_CAPACITY || noNewOrders) {
-    console.log("Force dispatch triggered:", courier.id);
+    console.log("⚡ Force dispatch triggered:", courier.id);
 
     await triggerDeliveryStart(courier.id);
   }
 }
 
-/* ================= START DELIVERY ================= */
-
+// ================= START DELIVERY =================
 async function triggerDeliveryStart(courierId) {
-  const ordersRes = await docClient
-    .scan({
-      TableName: ORDER_TABLE,
-      FilterExpression:
-        "assignedCourierId = :c AND (#status = :picked OR #status = :accepted)",
-      ExpressionAttributeValues: {
-        ":c": courierId,
-        ":picked": "PICKED_UP",
-        ":accepted": "ACCEPTED",
-      },
-      ExpressionAttributeNames: {
-        "#status": "status",
-      },
-    })
-    .promise();
+  const orders = await getCourierActiveOrders(courierId);
 
-  const orders = ordersRes.Items;
-
-  // ✅ Safety: do nothing if no orders
-  if (!orders || orders.length === 0) {
+  if (!orders.length) {
     console.log("No orders to dispatch for courier:", courierId);
     return;
   }
 
   // ✅ Move orders to IN_TRANSIT
-  for (let order of orders) {
-    await docClient
-      .update({
+  for (const order of orders) {
+    await docClient.send(
+      new UpdateCommand({
         TableName: ORDER_TABLE,
         Key: { id: order.id },
         UpdateExpression: "SET #status = :inTransit",
@@ -88,26 +94,57 @@ async function triggerDeliveryStart(courierId) {
         ExpressionAttributeNames: {
           "#status": "status",
         },
-      })
-      .promise();
+      }),
+    );
   }
 
   // ✅ Reset courier capacity
-  await docClient
-    .update({
+  await docClient.send(
+    new UpdateCommand({
       TableName: COURIER_TABLE,
       Key: { id: courierId },
       UpdateExpression: `
-      SET currentBatchCount = :zero,
-          currentExpressCount = :zero,
-          lastBatchAssignedAt = :null
-    `,
+        SET currentBatchCount = :zero,
+            currentExpressCount = :zero,
+            lastBatchAssignedAt = :null
+      `,
       ExpressionAttributeValues: {
         ":zero": 0,
         ":null": null,
       },
-    })
-    .promise();
+    }),
+  );
 
-  console.log("Dispatch complete & courier reset:", courierId);
+  console.log("✅ Dispatch complete & courier reset:", courierId);
+}
+
+// ================= GET COURIER ORDERS (GSI) =================
+async function getCourierActiveOrders(courierId) {
+  let items = [];
+  let lastKey;
+
+  do {
+    const res = await docClient.send(
+      new QueryCommand({
+        TableName: ORDER_TABLE,
+        IndexName: "byAssignedCourier", // ✅ already in your schema
+        KeyConditionExpression: "assignedCourierId = :c",
+        FilterExpression: "#status = :picked OR #status = :accepted",
+        ExpressionAttributeValues: {
+          ":c": courierId,
+          ":picked": "PICKED_UP",
+          ":accepted": "ACCEPTED",
+        },
+        ExpressionAttributeNames: {
+          "#status": "status",
+        },
+        ExclusiveStartKey: lastKey,
+      }),
+    );
+
+    items.push(...(res.Items || []));
+    lastKey = res.LastEvaluatedKey;
+  } while (lastKey);
+
+  return items;
 }

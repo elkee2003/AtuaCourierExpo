@@ -59,8 +59,38 @@ const HomeComponent = () => {
       const newStatus = !freshUser.isOnline;
 
       await DataStore.save(
-        Courier.copyOf(freshUser, (updated) => {
+        Courier.copyOf(freshUser, async (updated) => {
           updated.isOnline = newStatus;
+
+          // If statusKey is not set correctly → courier will NEVER be found → no assignments.
+          // Remember to update in admin also:
+          // Wherever you do:
+          // isApproved = true
+          // 👉 ALSO set:
+          // statusKey = `ONLINE#APPROVED`
+          // Or Safer:
+          // statusKey = `${courier.isOnline ? "ONLINE" : "OFFLINE"}#APPROVED`
+          // An example for approval:
+          //  await DataStore.save(
+          //   Courier.copyOf(courier, (updated) => {
+          //     updated.isApproved = true;
+
+          //     updated.statusKey = `${courier.isOnline ? "ONLINE" : "OFFLINE"}#APPROVED`;
+          //   }),
+          // );
+
+          // An example for unapproval
+          //   await DataStore.save(
+          //   Courier.copyOf(courier, (updated) => {
+          //     updated.isApproved = false;
+
+          //     updated.statusKey = `${courier.isOnline ? "ONLINE" : "OFFLINE"}#NOT_APPROVED`;
+          //   }),
+          // );
+
+          updated.statusKey = `${newStatus ? "ONLINE" : "OFFLINE"}#${
+            freshUser.isApproved ? "APPROVED" : "NOT_APPROVED"
+          }`;
         }),
       );
 

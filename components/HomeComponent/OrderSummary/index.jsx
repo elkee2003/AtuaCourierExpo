@@ -20,7 +20,7 @@ import MediaPreviewModal from "./MediaPreviewModal/MediaPreviewModal";
 import VideoThumbnail from "./VideoThumbnail";
 import styles from "./styles";
 
-// This code is meant to be where courier is marking completion of orders. For couriers that finished their orders manually, which will not warant the lambda function to be triggered. we would need to update the fields in Courier model
+// This code is meant to be where courier is marking completion of orders. For couriers that finished their orders manually, which will not warant the lambda function to be triggered. we would need to update the fields in Courier model. Note that I have already fixed this with resetCourierIfIdle lambda
 // updated.currentBatchCount = 0;
 // updated.currentExpressCount = 0;
 // updated.lastBatchAssignedAt = null;

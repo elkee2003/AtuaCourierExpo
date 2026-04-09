@@ -21,6 +21,7 @@
     "@react-navigation/material-top-tabs": "^7.4.13",
     "@react-navigation/native": "^7.1.8",
     "aws-amplify": "^6.16.0",
+    "aws-sdk": "^2.1693.0",
     "axios": "^1.13.4",
     "buffer": "^6.0.3",
     "expo": "~54.0.32",

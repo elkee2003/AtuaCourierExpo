@@ -247,11 +247,11 @@ type EagerOrder = {
   readonly logisticsIntakeConfirmedAt?: string | null;
   readonly acceptedOfferID?: string | null;
   readonly assignedCourierId?: string | null;
-  readonly assignmentStatus?: string | null;
   readonly assignmentExpiresAt?: string | null;
   readonly assignmentAttempts?: number | null;
   readonly lastAssignedAt?: string | null;
   readonly rejectedCourierIds?: (string | null)[] | null;
+  readonly assignmentStatus?: string | null;
   readonly userID: string;
   readonly offers?: (Offer | null)[] | null;
   readonly assignedCourier?: Courier | null;
@@ -338,11 +338,11 @@ type LazyOrder = {
   readonly logisticsIntakeConfirmedAt?: string | null;
   readonly acceptedOfferID?: string | null;
   readonly assignedCourierId?: string | null;
-  readonly assignmentStatus?: string | null;
   readonly assignmentExpiresAt?: string | null;
   readonly assignmentAttempts?: number | null;
   readonly lastAssignedAt?: string | null;
   readonly rejectedCourierIds?: (string | null)[] | null;
+  readonly assignmentStatus?: string | null;
   readonly userID: string;
   readonly offers: AsyncCollection<Offer>;
   readonly assignedCourier: AsyncItem<Courier | undefined>;
@@ -402,6 +402,7 @@ type EagerCourier = {
   readonly currentBatchCount?: number | null;
   readonly currentExpressCount?: number | null;
   readonly lastBatchAssignedAt?: string | null;
+  readonly statusKey?: string | null;
   readonly offers?: (Offer | null)[] | null;
   readonly orders?: (Order | null)[] | null;
   readonly createdAt?: string | null;
@@ -454,6 +455,7 @@ type LazyCourier = {
   readonly currentBatchCount?: number | null;
   readonly currentExpressCount?: number | null;
   readonly lastBatchAssignedAt?: string | null;
+  readonly statusKey?: string | null;
   readonly offers: AsyncCollection<Offer>;
   readonly orders: AsyncCollection<Order>;
   readonly createdAt?: string | null;

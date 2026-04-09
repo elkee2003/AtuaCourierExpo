@@ -1,136 +1,204 @@
-const AWS = require("aws-sdk");
-const docClient = new AWS.DynamoDB.DocumentClient();
+// ================= AWS SDK v3 =================
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const {
+  DynamoDBDocumentClient,
+  QueryCommand,
+  UpdateCommand,
+  TransactWriteCommand,
+} = require("@aws-sdk/lib-dynamodb");
 
+const client = new DynamoDBClient({});
+const docClient = DynamoDBDocumentClient.from(client);
+
+// ================= CONFIG =================
 const COURIER_TABLE = "Courier-n4tb6ywvhnf3zesv5ibhpitqiq-staging";
 const ORDER_TABLE = "Order-n4tb6ywvhnf3zesv5ibhpitqiq-staging";
 
+// ================= HANDLER =================
 exports.handler = async () => {
   const now = new Date().toISOString();
 
-  const ordersRes = await docClient
-    .scan({
-      TableName: ORDER_TABLE,
-    })
-    .promise();
+  console.log("Checking expired assignments...");
 
-  const orders = ordersRes.Items;
+  const orders = await getExpiredOrders(now);
 
   for (let order of orders) {
-    const isExpired =
-      order.assignmentStatus === "PENDING" &&
-      order.assignmentExpiresAt &&
-      order.assignmentExpiresAt < now;
-
-    if (!isExpired) continue;
-
     console.log("Reassigning order:", order.id);
-
-    // 1️⃣ Clone rejected list safely
-    let rejected = [...(order.rejectedCourierIds || [])];
-
-    // 2️⃣ Add previous courier (avoid duplicates)
-    if (
-      order.assignedCourierId &&
-      !rejected.includes(order.assignedCourierId)
-    ) {
-      rejected.push(order.assignedCourierId);
-    }
-
-    // 3️⃣ Update order → expire + increment attempts
-    await docClient
-      .update({
-        TableName: ORDER_TABLE,
-        Key: { id: order.id },
-        UpdateExpression: `
-          SET assignmentStatus = :expired,
-              assignedCourierId = :null,
-              rejectedCourierIds = :r,
-              assignmentAttempts = if_not_exists(assignmentAttempts, :zero) + :inc
-        `,
-        ExpressionAttributeValues: {
-          ":expired": "EXPIRED",
-          ":null": null,
-          ":r": rejected,
-          ":zero": 0,
-          ":inc": 1,
-        },
-      })
-      .promise();
-
-    // 4️⃣ Try assign next courier
-    await assignNextCourier({
-      ...order,
-      rejectedCourierIds: rejected,
-    });
+    await processExpiredOrder(order);
   }
 };
 
-/* ================= ASSIGN LOGIC ================= */
+// ================= GET EXPIRED ORDERS =================
+async function getExpiredOrders(now) {
+  let items = [];
+  let lastKey;
 
+  do {
+    const res = await docClient.send(
+      new QueryCommand({
+        TableName: ORDER_TABLE,
+        IndexName: "byAssignmentStatus",
+        KeyConditionExpression:
+          "assignmentStatus = :pending AND assignmentExpiresAt <= :now",
+        ExpressionAttributeValues: {
+          ":pending": "PENDING",
+          ":now": now,
+        },
+        ExclusiveStartKey: lastKey,
+      }),
+    );
+
+    items.push(...(res.Items || []));
+    lastKey = res.LastEvaluatedKey;
+  } while (lastKey);
+
+  return items;
+}
+
+// ================= PROCESS EXPIRED =================
+async function processExpiredOrder(order) {
+  let rejected = [...(order.rejectedCourierIds || [])];
+
+  // Add previous courier
+  if (order.assignedCourierId && !rejected.includes(order.assignedCourierId)) {
+    rejected.push(order.assignedCourierId);
+  }
+
+  if (rejected.length > 50) rejected.shift();
+
+  // 🔥 1️⃣ Reduce courier capacity (VERY IMPORTANT)
+  if (order.assignedCourierId) {
+    const isExpress = order.transportationType?.includes("EXPRESS");
+
+    await docClient.send(
+      new UpdateCommand({
+        TableName: COURIER_TABLE,
+        Key: { id: order.assignedCourierId },
+        UpdateExpression: isExpress
+          ? "SET currentExpressCount = currentExpressCount - :one"
+          : "SET currentBatchCount = currentBatchCount - :one",
+        ConditionExpression: isExpress
+          ? "currentExpressCount > :zero"
+          : "currentBatchCount > :zero",
+        ExpressionAttributeValues: {
+          ":one": 1,
+          ":zero": 0,
+        },
+      }),
+    );
+  }
+
+  // 🔥 2️⃣ Expire assignment
+  await docClient.send(
+    new UpdateCommand({
+      TableName: ORDER_TABLE,
+      Key: { id: order.id },
+      UpdateExpression: `
+        SET assignmentStatus = :expired,
+            assignedCourierId = :null,
+            rejectedCourierIds = :r,
+            assignmentAttempts = if_not_exists(assignmentAttempts, :z) + :inc
+      `,
+      ExpressionAttributeValues: {
+        ":expired": "EXPIRED",
+        ":null": null,
+        ":r": rejected,
+        ":z": 0,
+        ":inc": 1,
+      },
+    }),
+  );
+
+  // 🔥 3️⃣ Reassign
+  await assignNextCourier({
+    ...order,
+    rejectedCourierIds: rejected,
+  });
+}
+
+// ================= ASSIGN NEXT =================
 async function assignNextCourier(order) {
-  const couriers = await getCouriers();
+  const couriers = await getAvailableCouriers();
+
+  if (!couriers.length) return;
 
   let rejected = [...(order.rejectedCourierIds || [])];
 
-  // 🔥 RESET if all couriers rejected
+  // Reset rejected list if exhausted
   if (rejected.length >= couriers.length) {
-    console.log("Resetting rejected list for order:", order.id);
-
     rejected = [];
 
-    // ✅ Persist reset to DB
-    await docClient
-      .update({
+    await docClient.send(
+      new UpdateCommand({
         TableName: ORDER_TABLE,
         Key: { id: order.id },
         UpdateExpression: "SET rejectedCourierIds = :r",
         ExpressionAttributeValues: {
           ":r": rejected,
         },
-      })
-      .promise();
+      }),
+    );
   }
 
-  // Sort by distance (nearest first)
-  const sorted = couriers.sort(
+  // Filter nearby
+  const nearby = couriers.filter((c) => {
+    if (!c.lat || !c.lng) return false;
+    return getDistance(c.lat, c.lng, order.originLat, order.originLng) <= 5;
+  });
+
+  const candidates = nearby.length ? nearby : couriers;
+
+  const sorted = candidates.sort(
     (a, b) =>
       getDistance(a.lat, a.lng, order.originLat, order.originLng) -
       getDistance(b.lat, b.lng, order.originLat, order.originLng),
   );
 
   for (let courier of sorted) {
-    if (canAccept(courier, order, rejected)) {
-      await assign(order.id, courier.id);
-      return;
-    }
+    if (!canAccept(courier, order, rejected)) continue;
+
+    const success = await assign(order, courier);
+
+    if (success) return;
   }
 
-  console.log("No available courier for order:", order.id);
+  console.log("No available courier:", order.id);
 }
 
-/* ================= HELPERS ================= */
+// ================= GET COURIERS =================
+async function getAvailableCouriers() {
+  let items = [];
+  let lastKey;
 
-async function getCouriers() {
-  const res = await docClient
-    .scan({
-      TableName: COURIER_TABLE,
-    })
-    .promise();
+  do {
+    const res = await docClient.send(
+      new QueryCommand({
+        TableName: COURIER_TABLE,
+        IndexName: "byStatus",
+        KeyConditionExpression: "statusKey = :s",
+        ExpressionAttributeValues: {
+          ":s": "ONLINE#APPROVED",
+        },
+        ExclusiveStartKey: lastKey,
+      }),
+    );
 
-  return res.Items.filter((c) => c.isOnline && c.isApproved);
+    items.push(...(res.Items || []));
+    lastKey = res.LastEvaluatedKey;
+  } while (lastKey);
+
+  return items;
 }
 
+// ================= ACCEPT RULE =================
 function canAccept(courier, order, rejected) {
-  // ❌ Already rejected in this cycle
   if (rejected.includes(courier.id)) return false;
 
-  // ❌ Max capacity reached
   const total =
     (courier.currentBatchCount || 0) + (courier.currentExpressCount || 0);
 
   if (total >= 10) return false;
 
-  // ❌ EXPRESS limit
   if (order.transportationType?.includes("EXPRESS")) {
     if ((courier.currentExpressCount || 0) >= 1) return false;
   }
@@ -138,31 +206,70 @@ function canAccept(courier, order, rejected) {
   return true;
 }
 
-async function assign(orderId, courierId) {
+// ================= ASSIGN =================
+async function assign(order, courier) {
   const expires = new Date(Date.now() + 25000).toISOString();
+  const now = new Date().toISOString();
 
-  await docClient
-    .update({
-      TableName: ORDER_TABLE,
-      Key: { id: orderId },
-      UpdateExpression: `
-        SET assignedCourierId = :c,
-            assignmentStatus = :s,
-            assignmentExpiresAt = :e
-      `,
-      ExpressionAttributeValues: {
-        ":c": courierId,
-        ":s": "PENDING",
-        ":e": expires,
-      },
-    })
-    .promise();
+  const isExpress = order.transportationType?.includes("EXPRESS");
 
-  console.log(`Assigned order ${orderId} → courier ${courierId}`);
+  try {
+    await docClient.send(
+      new TransactWriteCommand({
+        TransactItems: [
+          {
+            Update: {
+              TableName: ORDER_TABLE,
+              Key: { id: order.id },
+              UpdateExpression: `
+                SET assignedCourierId = :c,
+                    assignmentStatus = :s,
+                    assignmentExpiresAt = :e,
+                    lastAssignedAt = :now
+              `,
+              ConditionExpression:
+                "attribute_not_exists(assignedCourierId) OR assignmentStatus = :expired",
+              ExpressionAttributeValues: {
+                ":c": courier.id,
+                ":s": "PENDING",
+                ":e": expires,
+                ":now": now,
+                ":expired": "EXPIRED",
+              },
+            },
+          },
+          {
+            Update: {
+              TableName: COURIER_TABLE,
+              Key: { id: courier.id },
+              UpdateExpression: isExpress
+                ? "SET currentExpressCount = if_not_exists(currentExpressCount, :z) + :inc"
+                : "SET currentBatchCount = if_not_exists(currentBatchCount, :z) + :inc",
+              ExpressionAttributeValues: {
+                ":inc": 1,
+                ":z": 0,
+              },
+            },
+          },
+        ],
+      }),
+    );
+
+    console.log(`✅ Reassigned order ${order.id} → ${courier.id}`);
+
+    return true;
+  } catch (err) {
+    if (err.name === "TransactionCanceledException") {
+      console.log("Race condition, retry...");
+      return false;
+    }
+
+    console.error("Assignment error:", err);
+    throw err;
+  }
 }
 
-/* ================= DISTANCE ================= */
-
+// ================= DISTANCE =================
 function getDistance(lat1, lon1, lat2, lon2) {
   const R = 6371;
 
