@@ -38,6 +38,8 @@ const OrderSummary = ({ orderId }) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [resolvedMedia, setResolvedMedia] = useState([]);
 
+  const hasActiveExpressOrder = (courier?.currentExpressCount || 0) > 0;
+
   const isMaxi = order?.transportationType === "MAXI";
 
   // ✅ ONLY S3 MEDIA
@@ -65,11 +67,13 @@ const OrderSummary = ({ orderId }) => {
   // 1. Order already accepted
   // 2. Latest offer not from user
   // 3. Courier modified the offer (doesn't match latest user offer)
+  // 3. Courier already has an EXPRESS order
   const isAcceptDisabled = isMaxi
     ? order?.status === "ACCEPTED" ||
       (latestOffer && latestOffer.senderType !== "USER") ||
-      numericOffer !== latestUserOfferAmount
-    : order?.status === "ACCEPTED";
+      numericOffer !== latestUserOfferAmount ||
+      hasActiveExpressOrder
+    : order?.status === "ACCEPTED" || hasActiveExpressOrder;
 
   // Total Courier accepted orders
   const courierTotal =
@@ -202,6 +206,12 @@ const OrderSummary = ({ orderId }) => {
   // ✅ Accept Offer
   const onAccept = async () => {
     const courier = await DataStore.query(Courier, dbUser.id);
+
+    // if express delivery prevent from accepting more orders
+    if ((courier.currentExpressCount || 0) > 0) {
+      alert("You must finish your express delivery first.");
+      return;
+    }
 
     // To check total number of orders accepted
     const total =
@@ -626,8 +636,21 @@ const OrderSummary = ({ orderId }) => {
 
           {!isMaxi && order.status !== "ACCEPTED" && (
             <View style={styles.row}>
-              <TouchableOpacity style={styles.acceptBtn} onPress={onAccept}>
-                <Text style={styles.btnText}>Accept</Text>
+              <TouchableOpacity
+                style={[
+                  styles.acceptBtn,
+                  (isAcceptDisabled || isBlocked) && styles.buttonDisabled,
+                ]}
+                onPress={onAccept}
+                disabled={isAcceptDisabled || isBlocked}
+              >
+                <Text style={styles.btnText}>
+                  {hasActiveExpressOrder
+                    ? "Finish express delivery first"
+                    : isBlocked
+                      ? "Complete deliveries first"
+                      : "Accept"}
+                </Text>
               </TouchableOpacity>
             </View>
           )}

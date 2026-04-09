@@ -14,6 +14,9 @@ const docClient = DynamoDBDocumentClient.from(client);
 const COURIER_TABLE = "Courier-n4tb6ywvhnf3zesv5ibhpitqiq-staging";
 const ORDER_TABLE = "Order-n4tb6ywvhnf3zesv5ibhpitqiq-staging";
 
+// ✅ Radius expansion steps (IMPORTANT)
+const RADIUS_STEPS = [5, 10, 15]; // km
+
 // ================= HANDLER =================
 exports.handler = async (event) => {
   for (const record of event.Records) {
@@ -26,9 +29,9 @@ exports.handler = async (event) => {
     // ✅ Only assign READY orders
     if (order.status !== "READY_FOR_PICKUP") continue;
 
-    // ✅ Skip MAXI / bidding orders
+    // ✅ Skip MAXI / bidding
     if (order.transportationType === "MAXI" || order.status === "BIDDING") {
-      console.log("🚫 Skipping bidding/MAXI order:", order.id);
+      console.log("🚫 Skipping MAXI/bidding order:", order.id);
       continue;
     }
 
@@ -40,9 +43,8 @@ exports.handler = async (event) => {
 
 // ================= ASSIGN LOGIC =================
 async function assignNextCourier(order) {
-  // ✅ Extra safety (never trust caller)
   if (order.transportationType === "MAXI" || order.status === "BIDDING") {
-    console.log("🚫 Blocked MAXI inside assignNextCourier:", order.id);
+    console.log("🚫 Blocked MAXI inside assign:", order.id);
     return;
   }
 
@@ -53,41 +55,43 @@ async function assignNextCourier(order) {
     return;
   }
 
-  // ✅ Filter nearby (5km)
-  const nearby = couriers.filter((c) => {
-    if (!c.lat || !c.lng) return false;
+  // ✅ CORRECT radius loop (what you were trying to do)
+  for (let radius of RADIUS_STEPS) {
+    const filtered = couriers.filter((c) => {
+      if (!c.lat || !c.lng) return false;
 
-    const distance = getDistance(
-      c.lat,
-      c.lng,
-      order.originLat,
-      order.originLng,
+      const distance = getDistance(
+        c.lat,
+        c.lng,
+        order.originLat,
+        order.originLng,
+      );
+
+      return distance <= radius;
+    });
+
+    if (!filtered.length) continue;
+
+    console.log(`📍 Trying radius: ${radius}km (${filtered.length} couriers)`);
+
+    const sorted = filtered.sort(
+      (a, b) =>
+        getDistance(a.lat, a.lng, order.originLat, order.originLng) -
+        getDistance(b.lat, b.lng, order.originLat, order.originLng),
     );
 
-    return distance <= 5;
-  });
+    for (let courier of sorted) {
+      if (!canAccept(courier, order)) continue;
 
-  const candidates = nearby.length > 0 ? nearby : couriers;
-
-  // ✅ Sort by distance
-  const sorted = candidates.sort((a, b) => {
-    const d1 = getDistance(a.lat, a.lng, order.originLat, order.originLng);
-    const d2 = getDistance(b.lat, b.lng, order.originLat, order.originLng);
-    return d1 - d2;
-  });
-
-  for (let courier of sorted) {
-    if (!canAccept(courier, order)) continue;
-
-    const success = await assign(order, courier);
-
-    if (success) return;
+      const success = await assign(order, courier);
+      if (success) return;
+    }
   }
 
-  console.log("❌ No suitable courier found for order:", order.id);
+  console.log("❌ No suitable courier found within radius:", order.id);
 }
 
-// ================= GET COURIERS (GSI + PAGINATION) =================
+// ================= GET COURIERS =================
 async function getAvailableCouriers() {
   let items = [];
   let lastKey;
@@ -112,14 +116,14 @@ async function getAvailableCouriers() {
   return items;
 }
 
-// ================= ACCEPTANCE RULE =================
+// ================= ACCEPT RULE =================
 function canAccept(courier, order) {
   const batch = courier.currentBatchCount || 0;
   const express = courier.currentExpressCount || 0;
 
   const total = batch + express;
 
-  // ❌ Max capacity reached
+  // ❌ Max capacity
   if (total >= 10) return false;
 
   // ❌ EXPRESS limit
@@ -130,7 +134,7 @@ function canAccept(courier, order) {
   return true;
 }
 
-// ================= ATOMIC ASSIGN =================
+// ================= ASSIGN =================
 async function assign(order, courier) {
   const expires = new Date(Date.now() + 25000).toISOString();
   const now = new Date().toISOString();

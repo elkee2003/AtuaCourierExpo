@@ -84,12 +84,16 @@ async function triggerDeliveryStart(courierId) {
     return;
   }
 
+  let processed = 0;
+
   for (const order of orders) {
-    // 🚫 Skip MAXI orders (VERY IMPORTANT)
+    // 🚫 Skip MAXI orders
     if (order.transportationType === "MAXI") {
       console.log("⛔ Skipping MAXI order in dispatch:", order.id);
       continue;
     }
+
+    processed++;
 
     await docClient.send(
       new UpdateCommand({
@@ -104,6 +108,12 @@ async function triggerDeliveryStart(courierId) {
         },
       }),
     );
+  }
+
+  // ❗ CRITICAL FIX: don't reset if only MAXI orders existed
+  if (processed === 0) {
+    console.log("⛔ Only MAXI orders found, skipping reset:", courierId);
+    return;
   }
 
   // ✅ Reset courier capacity
@@ -137,11 +147,13 @@ async function getCourierActiveOrders(courierId) {
         TableName: ORDER_TABLE,
         IndexName: "byAssignedCourier",
         KeyConditionExpression: "assignedCourierId = :c",
-        FilterExpression: "#status = :picked OR #status = :accepted",
+        FilterExpression:
+          "#status = :picked OR #status = :accepted OR #status = :transit",
         ExpressionAttributeValues: {
           ":c": courierId,
           ":picked": "PICKED_UP",
           ":accepted": "ACCEPTED",
+          ":transit": "IN_TRANSIT",
         },
         ExpressionAttributeNames: {
           "#status": "status",

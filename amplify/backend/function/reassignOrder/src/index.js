@@ -14,6 +14,9 @@ const docClient = DynamoDBDocumentClient.from(client);
 const COURIER_TABLE = "Courier-n4tb6ywvhnf3zesv5ibhpitqiq-staging";
 const ORDER_TABLE = "Order-n4tb6ywvhnf3zesv5ibhpitqiq-staging";
 
+// ✅ SAME radius logic as assignOrder
+const RADIUS_STEPS = [5, 10, 15]; // km
+
 // ================= HANDLER =================
 exports.handler = async () => {
   const now = new Date().toISOString();
@@ -23,7 +26,7 @@ exports.handler = async () => {
   const orders = await getExpiredOrders(now);
 
   for (let order of orders) {
-    // 🚫 Skip MAXI completely (freight uses bidding)
+    // 🚫 Skip MAXI completely
     if (order.transportationType === "MAXI") {
       console.log("⛔ Skipping MAXI reassign:", order.id);
       continue;
@@ -65,15 +68,14 @@ async function getExpiredOrders(now) {
 async function processExpiredOrder(order) {
   let rejected = [...(order.rejectedCourierIds || [])];
 
-  // ✅ Add previous courier to rejected list
+  // ✅ Add previous courier to rejected
   if (order.assignedCourierId && !rejected.includes(order.assignedCourierId)) {
     rejected.push(order.assignedCourierId);
   }
 
-  // ✅ Prevent unbounded growth
   if (rejected.length > 50) rejected.shift();
 
-  // 🔥 1️⃣ Reduce courier capacity (CRITICAL FIX)
+  // 🔥 1️⃣ Reduce courier capacity
   if (order.assignedCourierId) {
     const isExpress = order.transportationType?.includes("EXPRESS");
 
@@ -120,7 +122,7 @@ async function processExpiredOrder(order) {
     }),
   );
 
-  // 🔥 3️⃣ Reassign
+  // 🔥 3️⃣ Reassign with updated rejected list
   await assignNextCourier({
     ...order,
     rejectedCourierIds: rejected,
@@ -138,7 +140,7 @@ async function assignNextCourier(order) {
   const couriers = await getAvailableCouriers();
 
   if (!couriers.length) {
-    console.log("No couriers available");
+    console.log("⚠️ No couriers available");
     return;
   }
 
@@ -162,30 +164,39 @@ async function assignNextCourier(order) {
     );
   }
 
-  // 📍 Filter nearby (5km)
-  const nearby = couriers.filter((c) => {
-    if (!c.lat || !c.lng) return false;
-    return getDistance(c.lat, c.lng, order.originLat, order.originLng) <= 5;
-  });
+  for (let radius of RADIUS_STEPS) {
+    const filtered = couriers.filter((c) => {
+      if (!c.lat || !c.lng) return false;
 
-  const candidates = nearby.length ? nearby : couriers;
+      const distance = getDistance(
+        c.lat,
+        c.lng,
+        order.originLat,
+        order.originLng,
+      );
 
-  // 📊 Sort by distance
-  const sorted = candidates.sort(
-    (a, b) =>
-      getDistance(a.lat, a.lng, order.originLat, order.originLng) -
-      getDistance(b.lat, b.lng, order.originLat, order.originLng),
-  );
+      return distance <= radius;
+    });
 
-  for (let courier of sorted) {
-    if (!canAccept(courier, order, rejected)) continue;
+    if (!filtered.length) continue;
 
-    const success = await assign(order, courier);
+    console.log(`📍 Trying radius: ${radius}km (${filtered.length} couriers)`);
 
-    if (success) return;
+    const sorted = filtered.sort(
+      (a, b) =>
+        getDistance(a.lat, a.lng, order.originLat, order.originLng) -
+        getDistance(b.lat, b.lng, order.originLat, order.originLng),
+    );
+
+    for (let courier of sorted) {
+      if (!canAccept(courier, order, rejected)) continue;
+
+      const success = await assign(order, courier);
+      if (success) return;
+    }
   }
 
-  console.log("❌ No available courier:", order.id);
+  console.log("❌ No available courier after filtering:", order.id);
 }
 
 // ================= GET COURIERS =================
