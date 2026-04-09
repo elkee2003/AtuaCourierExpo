@@ -4,6 +4,7 @@ const {
   DynamoDBDocumentClient,
   QueryCommand,
   UpdateCommand,
+  GetCommand,
 } = require("@aws-sdk/lib-dynamodb");
 
 const { unmarshall } = require("@aws-sdk/util-dynamodb");
@@ -35,6 +36,20 @@ exports.handler = async (event) => {
 
   console.log("Checking courier:", courierId);
 
+  // 🚫 Get courier first (to check type)
+  const courier = await getCourier(courierId);
+
+  if (!courier) {
+    console.log("⚠️ Courier not found:", courierId);
+    return;
+  }
+
+  // 🚫 Skip MAXI (freight logic is separate)
+  if (courier.transportationType === "MAXI") {
+    console.log("⛔ Skipping reset for MAXI courier:", courierId);
+    return;
+  }
+
   const activeOrders = await getCourierActiveOrders(courierId);
 
   if (activeOrders.length === 0) {
@@ -46,6 +61,18 @@ exports.handler = async (event) => {
   }
 };
 
+// ================= GET COURIER =================
+async function getCourier(courierId) {
+  const res = await docClient.send(
+    new GetCommand({
+      TableName: COURIER_TABLE,
+      Key: { id: courierId },
+    }),
+  );
+
+  return res.Item;
+}
+
 // ================= GET ACTIVE ORDERS (GSI) =================
 async function getCourierActiveOrders(courierId) {
   let items = [];
@@ -55,7 +82,7 @@ async function getCourierActiveOrders(courierId) {
     const res = await docClient.send(
       new QueryCommand({
         TableName: ORDER_TABLE,
-        IndexName: "byAssignedCourier", // ✅ from your schema
+        IndexName: "byAssignedCourier",
         KeyConditionExpression: "assignedCourierId = :c",
         FilterExpression: "#s = :accepted OR #s = :picked OR #s = :transit",
         ExpressionAttributeValues: {

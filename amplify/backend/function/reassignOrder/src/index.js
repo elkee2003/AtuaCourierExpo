@@ -18,12 +18,18 @@ const ORDER_TABLE = "Order-n4tb6ywvhnf3zesv5ibhpitqiq-staging";
 exports.handler = async () => {
   const now = new Date().toISOString();
 
-  console.log("Checking expired assignments...");
+  console.log("🔄 Checking expired assignments...");
 
   const orders = await getExpiredOrders(now);
 
   for (let order of orders) {
-    console.log("Reassigning order:", order.id);
+    // 🚫 Skip MAXI completely (freight uses bidding)
+    if (order.transportationType === "MAXI") {
+      console.log("⛔ Skipping MAXI reassign:", order.id);
+      continue;
+    }
+
+    console.log("♻️ Reassigning order:", order.id);
     await processExpiredOrder(order);
   }
 };
@@ -59,33 +65,38 @@ async function getExpiredOrders(now) {
 async function processExpiredOrder(order) {
   let rejected = [...(order.rejectedCourierIds || [])];
 
-  // Add previous courier
+  // ✅ Add previous courier to rejected list
   if (order.assignedCourierId && !rejected.includes(order.assignedCourierId)) {
     rejected.push(order.assignedCourierId);
   }
 
+  // ✅ Prevent unbounded growth
   if (rejected.length > 50) rejected.shift();
 
-  // 🔥 1️⃣ Reduce courier capacity (VERY IMPORTANT)
+  // 🔥 1️⃣ Reduce courier capacity (CRITICAL FIX)
   if (order.assignedCourierId) {
     const isExpress = order.transportationType?.includes("EXPRESS");
 
-    await docClient.send(
-      new UpdateCommand({
-        TableName: COURIER_TABLE,
-        Key: { id: order.assignedCourierId },
-        UpdateExpression: isExpress
-          ? "SET currentExpressCount = currentExpressCount - :one"
-          : "SET currentBatchCount = currentBatchCount - :one",
-        ConditionExpression: isExpress
-          ? "currentExpressCount > :zero"
-          : "currentBatchCount > :zero",
-        ExpressionAttributeValues: {
-          ":one": 1,
-          ":zero": 0,
-        },
-      }),
-    );
+    try {
+      await docClient.send(
+        new UpdateCommand({
+          TableName: COURIER_TABLE,
+          Key: { id: order.assignedCourierId },
+          UpdateExpression: isExpress
+            ? "SET currentExpressCount = currentExpressCount - :one"
+            : "SET currentBatchCount = currentBatchCount - :one",
+          ConditionExpression: isExpress
+            ? "currentExpressCount > :zero"
+            : "currentBatchCount > :zero",
+          ExpressionAttributeValues: {
+            ":one": 1,
+            ":zero": 0,
+          },
+        }),
+      );
+    } catch (err) {
+      console.log("⚠️ Capacity already zero, skipping decrement");
+    }
   }
 
   // 🔥 2️⃣ Expire assignment
@@ -118,14 +129,25 @@ async function processExpiredOrder(order) {
 
 // ================= ASSIGN NEXT =================
 async function assignNextCourier(order) {
+  // 🚫 Double safety
+  if (order.transportationType === "MAXI") {
+    console.log("⛔ MAXI should not be auto-assigned:", order.id);
+    return;
+  }
+
   const couriers = await getAvailableCouriers();
 
-  if (!couriers.length) return;
+  if (!couriers.length) {
+    console.log("No couriers available");
+    return;
+  }
 
   let rejected = [...(order.rejectedCourierIds || [])];
 
-  // Reset rejected list if exhausted
+  // 🔁 Reset rejected list if exhausted
   if (rejected.length >= couriers.length) {
+    console.log("🔄 Resetting rejected list:", order.id);
+
     rejected = [];
 
     await docClient.send(
@@ -140,7 +162,7 @@ async function assignNextCourier(order) {
     );
   }
 
-  // Filter nearby
+  // 📍 Filter nearby (5km)
   const nearby = couriers.filter((c) => {
     if (!c.lat || !c.lng) return false;
     return getDistance(c.lat, c.lng, order.originLat, order.originLng) <= 5;
@@ -148,6 +170,7 @@ async function assignNextCourier(order) {
 
   const candidates = nearby.length ? nearby : couriers;
 
+  // 📊 Sort by distance
   const sorted = candidates.sort(
     (a, b) =>
       getDistance(a.lat, a.lng, order.originLat, order.originLng) -
@@ -162,7 +185,7 @@ async function assignNextCourier(order) {
     if (success) return;
   }
 
-  console.log("No available courier:", order.id);
+  console.log("❌ No available courier:", order.id);
 }
 
 // ================= GET COURIERS =================
@@ -256,15 +279,14 @@ async function assign(order, courier) {
     );
 
     console.log(`✅ Reassigned order ${order.id} → ${courier.id}`);
-
     return true;
   } catch (err) {
     if (err.name === "TransactionCanceledException") {
-      console.log("Race condition, retry...");
+      console.log("⚠️ Race condition, retry...");
       return false;
     }
 
-    console.error("Assignment error:", err);
+    console.error("❌ Assignment error:", err);
     throw err;
   }
 }

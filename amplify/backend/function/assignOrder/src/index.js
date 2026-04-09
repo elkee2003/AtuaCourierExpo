@@ -21,9 +21,18 @@ exports.handler = async (event) => {
 
     const order = unmarshall(record.dynamodb.NewImage);
 
+    if (!order) continue;
+
+    // ✅ Only assign READY orders
     if (order.status !== "READY_FOR_PICKUP") continue;
 
-    console.log("Assigning order:", order.id);
+    // ✅ Skip MAXI / bidding orders
+    if (order.transportationType === "MAXI" || order.status === "BIDDING") {
+      console.log("🚫 Skipping bidding/MAXI order:", order.id);
+      continue;
+    }
+
+    console.log("📦 Assigning order:", order.id);
 
     await assignNextCourier(order);
   }
@@ -31,27 +40,41 @@ exports.handler = async (event) => {
 
 // ================= ASSIGN LOGIC =================
 async function assignNextCourier(order) {
+  // ✅ Extra safety (never trust caller)
+  if (order.transportationType === "MAXI" || order.status === "BIDDING") {
+    console.log("🚫 Blocked MAXI inside assignNextCourier:", order.id);
+    return;
+  }
+
   const couriers = await getAvailableCouriers();
 
   if (!couriers.length) {
-    console.log("No couriers available");
+    console.log("⚠️ No couriers available");
     return;
   }
 
   // ✅ Filter nearby (5km)
   const nearby = couriers.filter((c) => {
     if (!c.lat || !c.lng) return false;
-    return getDistance(c.lat, c.lng, order.originLat, order.originLng) <= 5;
+
+    const distance = getDistance(
+      c.lat,
+      c.lng,
+      order.originLat,
+      order.originLng,
+    );
+
+    return distance <= 5;
   });
 
   const candidates = nearby.length > 0 ? nearby : couriers;
 
   // ✅ Sort by distance
-  const sorted = candidates.sort(
-    (a, b) =>
-      getDistance(a.lat, a.lng, order.originLat, order.originLng) -
-      getDistance(b.lat, b.lng, order.originLat, order.originLng),
-  );
+  const sorted = candidates.sort((a, b) => {
+    const d1 = getDistance(a.lat, a.lng, order.originLat, order.originLng);
+    const d2 = getDistance(b.lat, b.lng, order.originLat, order.originLng);
+    return d1 - d2;
+  });
 
   for (let courier of sorted) {
     if (!canAccept(courier, order)) continue;
@@ -61,7 +84,7 @@ async function assignNextCourier(order) {
     if (success) return;
   }
 
-  console.log("No suitable courier found for order:", order.id);
+  console.log("❌ No suitable courier found for order:", order.id);
 }
 
 // ================= GET COURIERS (GSI + PAGINATION) =================
@@ -91,13 +114,17 @@ async function getAvailableCouriers() {
 
 // ================= ACCEPTANCE RULE =================
 function canAccept(courier, order) {
-  const total =
-    (courier.currentBatchCount || 0) + (courier.currentExpressCount || 0);
+  const batch = courier.currentBatchCount || 0;
+  const express = courier.currentExpressCount || 0;
 
+  const total = batch + express;
+
+  // ❌ Max capacity reached
   if (total >= 10) return false;
 
+  // ❌ EXPRESS limit
   if (order.transportationType?.includes("EXPRESS")) {
-    if ((courier.currentExpressCount || 0) >= 1) return false;
+    if (express >= 1) return false;
   }
 
   return true;
@@ -156,11 +183,10 @@ async function assign(order, courier) {
     );
 
     console.log(`✅ Assigned order ${order.id} → courier ${courier.id}`);
-
     return true;
   } catch (err) {
     if (err.name === "TransactionCanceledException") {
-      console.log(`⚠️ Assignment skipped (race condition): ${order.id}`);
+      console.log(`⚠️ Race condition (skipped): ${order.id}`);
       return false;
     }
 

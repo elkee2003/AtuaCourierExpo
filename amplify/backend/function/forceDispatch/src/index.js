@@ -20,6 +20,12 @@ exports.handler = async () => {
   const couriers = await getOnlineCouriers();
 
   for (const courier of couriers) {
+    // 🚫 HARD BLOCK: skip MAXI couriers
+    if (courier.transportationType === "MAXI") {
+      console.log("⛔ Skipping MAXI courier:", courier.id);
+      continue;
+    }
+
     await checkForceDispatch(courier);
   }
 };
@@ -33,7 +39,7 @@ async function getOnlineCouriers() {
     const res = await docClient.send(
       new QueryCommand({
         TableName: COURIER_TABLE,
-        IndexName: "byStatus", // ✅ uses your GSI
+        IndexName: "byStatus",
         KeyConditionExpression: "statusKey = :s",
         ExpressionAttributeValues: {
           ":s": "ONLINE#APPROVED",
@@ -51,11 +57,8 @@ async function getOnlineCouriers() {
 
 // ================= FORCE LOGIC =================
 async function checkForceDispatch(courier) {
-  // 🚫 Skip MAXI completely
-  if (courier.transportationType === "MAXI") return;
-
   const MAX_CAPACITY = 10;
-  const BATCH_TIMEOUT = 3 * 60 * 60 * 1000; // 3 hours
+  const BATCH_TIMEOUT = 3 * 60 * 60 * 1000;
 
   const total =
     (courier.currentBatchCount || 0) + (courier.currentExpressCount || 0);
@@ -81,8 +84,13 @@ async function triggerDeliveryStart(courierId) {
     return;
   }
 
-  // ✅ Move orders to IN_TRANSIT
   for (const order of orders) {
+    // 🚫 Skip MAXI orders (VERY IMPORTANT)
+    if (order.transportationType === "MAXI") {
+      console.log("⛔ Skipping MAXI order in dispatch:", order.id);
+      continue;
+    }
+
     await docClient.send(
       new UpdateCommand({
         TableName: ORDER_TABLE,
@@ -127,7 +135,7 @@ async function getCourierActiveOrders(courierId) {
     const res = await docClient.send(
       new QueryCommand({
         TableName: ORDER_TABLE,
-        IndexName: "byAssignedCourier", // ✅ already in your schema
+        IndexName: "byAssignedCourier",
         KeyConditionExpression: "assignedCourierId = :c",
         FilterExpression: "#status = :picked OR #status = :accepted",
         ExpressionAttributeValues: {
