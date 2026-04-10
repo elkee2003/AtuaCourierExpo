@@ -7,7 +7,7 @@ import { useAuthContext } from "./AuthProvider";
 const ProfileContext = createContext({});
 
 const ProfileProvider = ({ children }) => {
-  const { dbUser } = useAuthContext();
+  const { dbCourier } = useAuthContext();
 
   const [isOnline, setIsOnline] = useState(false);
   const [profilePic, setProfilePic] = useState(null);
@@ -212,43 +212,43 @@ const ProfileProvider = ({ children }) => {
     }
   }, [transportationType]);
 
-  // useEffect for setting dbUser
+  // useEffect for setting dbCourier
   useEffect(() => {
-    if (dbUser) {
-      setIsOnline(dbUser?.isOnline || false);
-      setProfilePic(dbUser?.profilePic);
-      setFirstName(dbUser?.firstName || "");
-      setLastName(dbUser?.lastName || "");
-      setTransportationType(dbUser.transportationType || "");
-      setVehicleClass(dbUser?.vehicleClass || "");
-      setModel(dbUser?.model || "");
-      setVehicleColour(dbUser?.vehicleColour || "");
-      setPlateNumber(dbUser.plateNumber || "");
-      setMaxiImages(dbUser?.maxiImages || []);
-      setMaxiDescription(dbUser?.maxiDescription || "");
-      setAddress(dbUser?.address || "");
-      setLandMark(dbUser?.landMark || "");
-      setPhoneNumber(dbUser?.phoneNumber || "");
-      setCourierNIN(dbUser?.courierNIN || "");
-      setCourierNINImage(dbUser?.courierNINImage || "");
-      setBankCode(dbUser?.bankCode || "");
-      setBankName(dbUser?.bankName || "");
-      setAccountName(dbUser?.accountName || "");
-      setAccountNumber(dbUser?.accountNumber || "");
-      setGuarantorName(dbUser?.guarantorName || "");
-      setGuarantorLastName(dbUser?.guarantorLastName || "");
-      setGuarantorProfession(dbUser?.guarantorProfession || "");
-      setGuarantorNumber(dbUser?.guarantorNumber || "");
-      setGuarantorRelationship(dbUser?.guarantorRelationship || "");
-      setGuarantorAddress(dbUser?.guarantorAddress || "");
-      setGuarantorEmail(dbUser?.guarantorEmail || "");
-      setGuarantorNIN(dbUser?.guarantorNIN || "");
-      setGuarantorNINImage(dbUser?.guarantorNINImage || "");
-      setLat(dbUser?.lat?.toString() || "0");
-      setLng(dbUser?.lng?.toString() || "0");
-      setHeading(dbUser.heading || heading);
+    if (dbCourier) {
+      setIsOnline(dbCourier?.isOnline || false);
+      setProfilePic(dbCourier?.profilePic);
+      setFirstName(dbCourier?.firstName || "");
+      setLastName(dbCourier?.lastName || "");
+      setTransportationType(dbCourier.transportationType || "");
+      setVehicleClass(dbCourier?.vehicleClass || "");
+      setModel(dbCourier?.model || "");
+      setVehicleColour(dbCourier?.vehicleColour || "");
+      setPlateNumber(dbCourier.plateNumber || "");
+      setMaxiImages(dbCourier?.maxiImages || []);
+      setMaxiDescription(dbCourier?.maxiDescription || "");
+      setAddress(dbCourier?.address || "");
+      setLandMark(dbCourier?.landMark || "");
+      setPhoneNumber(dbCourier?.phoneNumber || "");
+      setCourierNIN(dbCourier?.courierNIN || "");
+      setCourierNINImage(dbCourier?.courierNINImage || "");
+      setBankCode(dbCourier?.bankCode || "");
+      setBankName(dbCourier?.bankName || "");
+      setAccountName(dbCourier?.accountName || "");
+      setAccountNumber(dbCourier?.accountNumber || "");
+      setGuarantorName(dbCourier?.guarantorName || "");
+      setGuarantorLastName(dbCourier?.guarantorLastName || "");
+      setGuarantorProfession(dbCourier?.guarantorProfession || "");
+      setGuarantorNumber(dbCourier?.guarantorNumber || "");
+      setGuarantorRelationship(dbCourier?.guarantorRelationship || "");
+      setGuarantorAddress(dbCourier?.guarantorAddress || "");
+      setGuarantorEmail(dbCourier?.guarantorEmail || "");
+      setGuarantorNIN(dbCourier?.guarantorNIN || "");
+      setGuarantorNINImage(dbCourier?.guarantorNINImage || "");
+      setLat(dbCourier?.lat?.toString() || "0");
+      setLng(dbCourier?.lng?.toString() || "0");
+      setHeading(dbCourier.heading || heading);
     }
-  }, [dbUser]); // This effect runs whenever dbUser changes
+  }, [dbCourier]); // This effect runs whenever dbCourier changes
 
   return (
     <ProfileContext.Provider

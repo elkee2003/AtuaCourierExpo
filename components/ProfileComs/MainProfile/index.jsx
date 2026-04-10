@@ -1,44 +1,49 @@
+import { useAuthContext } from "@/providers/AuthProvider";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { signOut } from "aws-amplify/auth";
+import { getUrl } from "aws-amplify/storage";
+import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  ScrollView,
   Alert,
-} from 'react-native';
-import React, { useEffect, useState } from 'react';
-import { useProfileContext } from '../../../providers/ProfileProvider';
-import { useAuthContext } from '@/providers/AuthProvider';
-import Placeholder from '../../../assets/images/placeholder.png';
-import { getUrl } from 'aws-amplify/storage';
-import { signOut } from 'aws-amplify/auth';
-import { router } from 'expo-router';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import styles from './styles';
+  Image,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Placeholder from "../../../assets/images/placeholder.png";
+import { useProfileContext } from "../../../providers/ProfileProvider";
+import styles from "./styles";
 
 const MainProfile = () => {
   const {
-    firstName, lastName, phoneNumber, bankName, accountName, accountNumber, transportationType, profilePic, setProfilePic, maxiDescription,
+    firstName,
+    lastName,
+    phoneNumber,
+    bankName,
+    accountName,
+    accountNumber,
+    transportationType,
+    profilePic,
+    setProfilePic,
+    maxiDescription,
   } = useProfileContext();
 
-  const { dbUser } = useAuthContext();
+  const { dbCourier } = useAuthContext();
   const [loading, setLoading] = useState(true);
 
   const onSignout = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Sign Out', style: 'destructive', onPress: signOut },
-      ],
-    );
+    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Sign Out", style: "destructive", onPress: signOut },
+    ]);
   };
 
   const fetchImageUrl = async () => {
-    if (!dbUser?.profilePic || dbUser.profilePic.startsWith('http')) {
-      setProfilePic(dbUser?.profilePic || null);
+    if (!dbCourier?.profilePic || dbCourier.profilePic.startsWith("http")) {
+      setProfilePic(dbCourier?.profilePic || null);
       setLoading(false);
       return;
     }
@@ -46,7 +51,7 @@ const MainProfile = () => {
     setLoading(true);
     try {
       const result = await getUrl({
-        path: dbUser.profilePic,
+        path: dbCourier.profilePic,
         options: { validateObjectExistence: true },
       });
       setProfilePic(result.url.toString());
@@ -59,7 +64,7 @@ const MainProfile = () => {
 
   useEffect(() => {
     fetchImageUrl();
-  }, [dbUser?.profilePic]);
+  }, [dbCourier?.profilePic]);
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -72,11 +77,7 @@ const MainProfile = () => {
 
         <View style={styles.avatarWrapper}>
           <Image
-            source={
-              loading || !profilePic
-                ? Placeholder
-                : { uri: profilePic }
-            }
+            source={loading || !profilePic ? Placeholder : { uri: profilePic }}
             style={styles.avatar}
           />
         </View>
@@ -85,14 +86,26 @@ const MainProfile = () => {
           {firstName} {lastName}
         </Text>
         <Text style={styles.role}>Courier Partner</Text>
+
+        {/* Approval section */}
+        <View
+          style={[
+            styles.statusBadge,
+            isApproved ? styles.approved : styles.pending,
+          ]}
+        >
+          <Text style={styles.statusText}>
+            {isApproved ? "Approved" : "Pending Approval"}
+          </Text>
+        </View>
       </View>
 
       {/* Info Card */}
       <View style={styles.card}>
-        <InfoRow 
+        <InfoRow
           icon={<Ionicons name="call-outline" size={18} color="#6B7280" />}
-          label="Phone" 
-          value={phoneNumber} 
+          label="Phone"
+          value={phoneNumber}
         />
 
         <InfoRow
@@ -102,30 +115,36 @@ const MainProfile = () => {
         />
 
         {/* SHOW ONLY IF MAXI */}
-        {transportationType === 'Maxi' && (
+        {transportationType === "Maxi" && (
           <InfoRow
-            icon={<Ionicons name="document-text-outline" size={18} color="#6B7280" />}
+            icon={
+              <Ionicons
+                name="document-text-outline"
+                size={18}
+                color="#6B7280"
+              />
+            }
             label="Maxi Description"
             value={maxiDescription}
           />
         )}
-        
-        <InfoRow 
-          icon={<Ionicons name="business-outline" size={18} color="#6B7280" />} 
-          label="Bank" 
-          value={bankName} 
+
+        <InfoRow
+          icon={<Ionicons name="business-outline" size={18} color="#6B7280" />}
+          label="Bank"
+          value={bankName}
         />
 
-        <InfoRow 
-          icon={<Ionicons name="person-outline" size={18} color="#6B7280" />}  
-          label="Account Name" 
-          value={accountName} 
+        <InfoRow
+          icon={<Ionicons name="person-outline" size={18} color="#6B7280" />}
+          label="Account Name"
+          value={accountName}
         />
 
-        <InfoRow 
-          icon={<Ionicons name="card-outline"  size={18} color="#6B7280" />}  
-          label="Account Number" 
-          value={accountNumber} 
+        <InfoRow
+          icon={<Ionicons name="card-outline" size={18} color="#6B7280" />}
+          label="Account Number"
+          value={accountNumber}
         />
       </View>
 
@@ -133,14 +152,14 @@ const MainProfile = () => {
       <View style={styles.actions}>
         <TouchableOpacity
           style={styles.primaryBtn}
-          onPress={() => router.push('/profile/editprofile')}
+          onPress={() => router.push("/profile/editprofile")}
         >
           <Text style={styles.primaryText}>Edit Profile</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.secondaryBtn}
-          onPress={() => router.push('/profile/reviewinfo/reviewcourier')}
+          onPress={() => router.push("/profile/reviewinfo/reviewcourier")}
         >
           <Text style={styles.secondaryText}>View Full Info</Text>
         </TouchableOpacity>
@@ -150,11 +169,11 @@ const MainProfile = () => {
       <View style={styles.card}>
         <SettingItem
           label="Transportation Type"
-          onPress={() => router.push('/transportationtype')}
+          onPress={() => router.push("/transportationtype")}
         />
         <SettingItem
           label="Policies & Terms"
-          onPress={() => router.push('/policies')}
+          onPress={() => router.push("/policies")}
         />
       </View>
     </ScrollView>
@@ -170,7 +189,7 @@ const InfoRow = ({ icon, label, value }) => (
     {icon}
     <View style={{ marginLeft: 12 }}>
       <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value || '—'}</Text>
+      <Text style={styles.infoValue}>{value || "—"}</Text>
     </View>
   </View>
 );

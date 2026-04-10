@@ -1,76 +1,106 @@
-import { useAuthContext } from "@/providers/AuthProvider";
-import { Order } from "@/src/models";
-import { DataStore } from "aws-amplify/datastore";
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, FlatList, Text, View } from "react-native";
-import PendingSingle from "../PendingSingle";
+import { router } from "expo-router";
+import { useState } from "react";
+import { Text, TouchableOpacity, View } from "react-native";
+import Collapsible from "react-native-collapsible";
 import styles from "./styles";
 
-const PendingDeliveryMain = () => {
-  const { dbUser } = useAuthContext();
+const PendingDeliverySingle = ({ item }) => {
+  const [expanded, setExpanded] = useState(false);
 
-  const [orders, setOrders] = useState([]);
-  const [courier, setCourier] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const toggleExpand = () => {
+    setExpanded((prev) => !prev);
+  };
 
-  const fetchOrders = async () => {
-    if (!dbUser?.id) return;
-    setLoading(true);
+  const goToTracking = () => {
+    router.push(`/screens/orderTrackingScreen/${item.id}`);
+  };
 
-    try {
-      const fetchedOrders = await DataStore.query(Order, (o) =>
-        o.orderCourierId.eq(dbUser.id),
-      );
+  const goToDetails = () => {
+    router.push(`/screens/orderdetails/${item.id}`);
+  };
 
-      const filteredOrders = fetchedOrders
-        .filter(
-          (order) => order.status === "ACCEPTED" || order.status === "PICKEDUP",
-        )
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-      // const sortedOrders = fetchedOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-      setOrders(filteredOrders);
-    } catch (e) {
-      Alert.alert("Error", e.message);
-    } finally {
-      setLoading(false);
+  const getStatusColor = () => {
+    switch (item.status) {
+      case "IN_TRANSIT":
+        return styles.statusBlue;
+      case "ARRIVED_PICKUP":
+      case "ARRIVED_DROPOFF":
+        return styles.statusPurple;
+      case "LOADING":
+      case "UNLOADING":
+        return styles.statusOrange;
+      default:
+        return styles.statusGray;
     }
   };
 
-  useEffect(() => {
-    fetchOrders();
-
-    const subscription = DataStore.observe(Order).subscribe(({ opType }) => {
-      if (opType === "INSERT" || opType === "UPDATE" || opType === "DELETE") {
-        fetchOrders();
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  if (loading) {
-    return <ActivityIndicator size={"large"} style={styles.loading} />;
-  }
-
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Pending Delivery</Text>
-      {orders.length === 0 ? (
-        <View style={styles.noPendingOrdersCon}>
-          <Text style={styles.noPendingOrders}>No Pending Orders</Text>
+    <TouchableOpacity
+      activeOpacity={0.95}
+      style={styles.card}
+      onPress={toggleExpand}
+    >
+      {/* Header */}
+      <View style={styles.topRow}>
+        <Text style={styles.date}>{item?.createdAt?.substring(0, 10)}</Text>
+
+        <View style={[styles.statusBadge, getStatusColor()]}>
+          <Text style={styles.statusText}>{item.status}</Text>
         </View>
-      ) : (
-        <FlatList
-          data={orders}
-          showsVerticalScrollIndicator={false}
-          keyExtractor={(item, index) => item.id.toString()}
-          renderItem={({ item }) => <PendingSingle item={item} />}
-        />
-      )}
-    </View>
+      </View>
+
+      {/* COLLAPSED VIEW */}
+      <Text style={styles.address} numberOfLines={1}>
+        📍 {item.originAddress}
+      </Text>
+
+      <Text style={styles.address} numberOfLines={1}>
+        📦 {item.destinationAddress}
+      </Text>
+
+      <View style={styles.bottomRow}>
+        <Text style={styles.price}>₦{item?.totalPrice?.toLocaleString()}</Text>
+
+        <Text style={styles.vehicle}>{item.vehicleClass}</Text>
+      </View>
+
+      <Text style={styles.expandHint}>
+        {expanded ? "Tap to collapse ▲" : "Tap to expand ▼"}
+      </Text>
+
+      {/* EXPANDED */}
+      <Collapsible collapsed={!expanded}>
+        <View style={styles.expanded}>
+          <Text style={styles.details}>{item.orderDetails}</Text>
+
+          <View style={styles.divider} />
+
+          {/* BUTTONS */}
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={(e) => {
+                e.stopPropagation();
+                goToTracking();
+              }}
+            >
+              <Text style={styles.primaryText}>Track</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={(e) => {
+                e.stopPropagation();
+                goToDetails();
+              }}
+            >
+              <Text style={styles.secondaryText}>Details</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Collapsible>
+    </TouchableOpacity>
   );
 };
 
-export default PendingDeliveryMain;
+export default PendingDeliverySingle;

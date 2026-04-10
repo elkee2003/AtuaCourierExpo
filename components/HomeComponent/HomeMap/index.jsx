@@ -13,7 +13,7 @@ const Map = ({ location, setLocation, orders }) => {
   const mapRef = useRef(null);
   const [errorMsg, setErrorMsg] = useState(null);
 
-  const { dbUser } = useAuthContext();
+  const { dbCourier } = useAuthContext();
 
   // 🔒 Refs for controlling updates
   const lastSavedLocation = useRef(null);
@@ -86,7 +86,7 @@ const Map = ({ location, setLocation, orders }) => {
 
   // ✅ 2. Update courier location (THROTTLED)
   useEffect(() => {
-    if (!location || !dbUser?.id) return;
+    if (!location || !dbCourier?.id) return;
 
     const updateLocation = async () => {
       const now = Date.now();
@@ -111,7 +111,7 @@ const Map = ({ location, setLocation, orders }) => {
 
       try {
         // ✅ ALWAYS GET FRESH USER
-        const freshUser = await DataStore.query(Courier, dbUser.id);
+        const freshUser = await DataStore.query(Courier, dbCourier.id);
 
         if (!freshUser) return;
 
@@ -127,7 +127,7 @@ const Map = ({ location, setLocation, orders }) => {
     };
 
     updateLocation();
-  }, [location, dbUser?.id]);
+  }, [location, dbCourier?.id]);
 
   // ✅ Loading state
   if (!location) {

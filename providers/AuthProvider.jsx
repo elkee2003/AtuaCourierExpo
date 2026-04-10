@@ -10,7 +10,7 @@ const AuthContext = createContext({});
 const AuthProvider = ({ children }) => {
   // Amplify states
   const [authUser, setAuthUser] = useState(null);
-  const [dbUser, setDbUser] = useState(null);
+  const [dbCourier, setDbCourier] = useState(null);
   const [sub, setSub] = useState(null);
   const [userMail, setUserMail] = useState(null);
 
@@ -25,7 +25,7 @@ const AuthProvider = ({ children }) => {
       console.log("Error clearing session:", err);
     } finally {
       setAuthUser(null);
-      setDbUser(null);
+      setDbCourier(null);
       setSub(null);
       router.push("/login"); // navigate back to login
     }
@@ -55,34 +55,36 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  const dbCurrentUser = async () => {
+  const dbCurrentCourier = async () => {
     try {
-      let dbusercurrent = await DataStore.query(Courier, (u) => u.sub.eq(sub));
+      let dbCouriercurrent = await DataStore.query(Courier, (u) =>
+        u.sub.eq(sub),
+      );
 
-      if (dbusercurrent.length === 0) {
+      if (dbCouriercurrent.length === 0) {
         console.log("No local user — forcing sync retry...");
 
         await DataStore.clear();
         await DataStore.start();
 
         // retry AFTER sync
-        dbusercurrent = await DataStore.query(Courier, (u) => u.sub.eq(sub));
+        dbCouriercurrent = await DataStore.query(Courier, (u) => u.sub.eq(sub));
       }
       //   DataStore.delete(Courier, Predicates.ALL)
       // DataStore.clear()
 
-      // If statement to check dbuser in the database
-      if (dbusercurrent.length > 0) {
-        setDbUser(dbusercurrent[0]);
+      // If statement to check dbCourier in the database
+      if (dbCouriercurrent.length > 0) {
+        setDbCourier(dbCouriercurrent[0]);
       } else {
         // DO NOTHING — wait for sync
         console.log("Waiting for DataStore sync...");
       }
 
-      // I commented this out because it is the same with the else if you look above. It was part of the old code before the if statement, therefore if I remove the if statement, I should uncomment setDbUser(dbusercurrent[0])
-      // setDbUser(dbusercurrent[0])
+      // I commented this out because it is the same with the else if you look above. It was part of the old code before the if statement, therefore if I remove the if statement, I should uncomment setDbCourier(dbCouriercurrent[0])
+      // setDbCourier(dbCouriercurrent[0])
     } catch (error) {
-      console.error("Error getting dbuser: ", error);
+      console.error("Error getting dbCourier: ", error);
     }
   };
 
@@ -115,46 +117,46 @@ const AuthProvider = ({ children }) => {
       return;
     }
 
-    dbCurrentUser();
+    dbCurrentCourier();
   }, [sub]);
 
   // Set up a subscription to listen to changes on the current user's Courier instance
   useEffect(() => {
-    if (!dbUser) return;
+    if (!dbCourier) return;
 
-    const subscription = DataStore.observe(Courier, dbUser.id).subscribe(
+    const subscription = DataStore.observe(Courier, dbCourier.id).subscribe(
       ({ element, opType }) => {
         if (opType === "UPDATE") {
-          setDbUser(element);
+          setDbCourier(element);
         }
       },
     );
 
     return () => subscription.unsubscribe();
-  }, [dbUser]);
+  }, [dbCourier]);
 
   useEffect(() => {
-    if (!dbUser) return;
+    if (!dbCourier) return;
 
     // Observe for deletion of the Realtor record
     const deleteSubscription = DataStore.observe(Courier).subscribe(
       async ({ element, opType }) => {
-        if (opType === "DELETE" && element.id === dbUser.id) {
+        if (opType === "DELETE" && element.id === dbCourier.id) {
           await DataStore.clear();
-          setDbUser(null); // Clear dbUser when the record is deleted
+          setDbCourier(null); // Clear dbCourier when the record is deleted
         }
       },
     );
 
     return () => deleteSubscription.unsubscribe();
-  }, [dbUser]);
+  }, [dbCourier]);
 
   return (
     <AuthContext.Provider
       value={{
         authUser,
-        dbUser,
-        setDbUser,
+        dbCourier,
+        setDbCourier,
         sub,
         userMail,
       }}

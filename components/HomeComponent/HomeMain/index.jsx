@@ -31,7 +31,7 @@ const getDistance = (lat1, lng1, lat2, lng2) => {
 };
 
 const HomeComponent = () => {
-  const { dbUser } = useAuthContext();
+  const { dbCourier } = useAuthContext();
   const { isOnline, setIsOnline } = useProfileContext();
   // useState Hooks
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -51,10 +51,19 @@ const HomeComponent = () => {
 
   // Refferenced functions
   const onGoPress = async () => {
-    if (!location || !dbUser?.id) return;
+    if (!location || !dbCourier?.id) return;
+
+    // 🚫 BLOCK if not approved
+    if (!dbCourier?.isApproved) {
+      Alert.alert(
+        "Account Not Approved",
+        "Your account is still under review. You cannot go online yet.",
+      );
+      return;
+    }
 
     try {
-      const freshUser = await DataStore.query(Courier, dbUser.id);
+      const freshUser = await DataStore.query(Courier, dbCourier.id);
 
       const newStatus = !freshUser.isOnline;
 
@@ -112,7 +121,7 @@ const HomeComponent = () => {
   };
 
   const fetchOrders = async () => {
-    if (!location || !dbUser) {
+    if (!location || !dbCourier) {
       setLoading(false);
       return;
     }
@@ -120,19 +129,19 @@ const HomeComponent = () => {
     setLoading(true);
 
     try {
-      const isMaxi = dbUser.transportationType === "MAXI";
+      const isMaxi = dbCourier.transportationType === "MAXI";
 
       let processedOrders = [];
       let nearbyCount = 0;
 
       let availableOrders = [];
 
-      if (isMaxi && dbUser?.vehicleClass) {
+      if (isMaxi && dbCourier?.vehicleClass) {
         // ✅ First: strict match (vehicleClass)
         availableOrders = await DataStore.query(Order, (o) =>
           o.and((o2) => [
             o2.transportationType.eq("MAXI"),
-            o2.vehicleClass.eq(dbUser.vehicleClass),
+            o2.vehicleClass.eq(dbCourier.vehicleClass),
             o2.or((o3) => [
               o3.status.eq("READY_FOR_PICKUP"),
               o3.status.eq("BIDDING"),
@@ -172,7 +181,7 @@ const HomeComponent = () => {
       // else {
       //   // ✅ ONLY assigned orders
       //   availableOrders = await DataStore.query(Order, (o) =>
-      //     o.assignedCourierId.eq(dbUser.id)
+      //     o.assignedCourierId.eq(dbCourier.id)
       //   );
       // }
 
@@ -287,7 +296,7 @@ const HomeComponent = () => {
 
   // useEffect to handle subscription
   useEffect(() => {
-    if (!isOnline || !location || !dbUser) {
+    if (!isOnline || !location || !dbCourier) {
       setOrders([]);
       setLoading(false);
       return;
@@ -306,7 +315,7 @@ const HomeComponent = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [isOnline, dbUser]);
+  }, [isOnline, dbCourier]);
 
   if (loading && isOnline) {
     return <ActivityIndicator size={"large"} style={styles.loading} />;
@@ -352,7 +361,7 @@ const HomeComponent = () => {
             stats={stats}
             onRefresh={fetchOrders}
             onToggleOnline={onGoPress}
-            transportationType={dbUser?.transportationType}
+            transportationType={dbCourier?.transportationType}
           />
 
           {/* ✅ EMPTY STATE */}

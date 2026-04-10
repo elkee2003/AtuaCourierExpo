@@ -1,32 +1,30 @@
-import { StyleSheet,} from 'react-native'
+import { StyleSheet } from "react-native";
 
-const styles = StyleSheet.create({
-    container:{
-        flex:1,
-        marginTop:10,
-        marginHorizontal:10,
-    },
-    loading:{
-        flex:1,
-        color:'#3cff00',
-        justifyContent:'center',
-        alignItems:'center',
-    },
-    title:{
-        fontSize:30,
-        fontWeight:'bold',
-        textAlign:'center',
-    },
-    noCompletedOrdersCon:{
-        flex:1, 
-        justifyContent:'center', 
-        alignItems:'center',
-    },
-    noCompletedOrders:{
-        fontSize:30, 
-        fontWeight:'bold', 
-        color:'#afadad',
-    }
-})
+export default StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f9fafb",
+    padding: 16,
+  },
 
-export default styles
+  header: {
+    fontSize: 22,
+    fontWeight: "700",
+    marginBottom: 12,
+    color: "#111",
+  },
+
+  loader: {
+    marginTop: 60,
+  },
+
+  emptyContainer: {
+    marginTop: 80,
+    alignItems: "center",
+  },
+
+  emptyText: {
+    fontSize: 14,
+    color: "#888",
+  },
+});

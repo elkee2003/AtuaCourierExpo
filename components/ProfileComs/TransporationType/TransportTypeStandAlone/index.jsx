@@ -46,7 +46,7 @@ const StandaloneTtypeCom = () => {
     validateVehicleInfo,
   } = useProfileContext();
 
-  const { dbUser, setDbUser, sub } = useAuthContext();
+  const { dbCourier, setDbCourier, sub } = useAuthContext();
 
   const [saving, setSaving] = useState(false);
 
@@ -152,7 +152,7 @@ const StandaloneTtypeCom = () => {
   const uploadImagesToS3 = async () => {
     try {
       if (!maxiImages || maxiImages.length === 0) {
-        return dbUser?.maxiImages || [];
+        return dbCourier?.maxiImages || [];
       }
 
       const uploadedPaths = [];
@@ -197,8 +197,8 @@ const StandaloneTtypeCom = () => {
       }
 
       // ✅ Delete removed images from S3
-      if (dbUser?.maxiImages?.length) {
-        const removedImages = dbUser.maxiImages.filter(
+      if (dbCourier?.maxiImages?.length) {
+        const removedImages = dbCourier.maxiImages.filter(
           (oldPath) => !uploadedPaths.includes(oldPath),
         );
         await Promise.all(
@@ -227,17 +227,17 @@ const StandaloneTtypeCom = () => {
     setSaving(true);
 
     try {
-      let imagesToSave = dbUser?.maxiImages || [];
+      let imagesToSave = dbCourier?.maxiImages || [];
 
       // 🚨 ✅ 1️⃣ DELETE FIRST: Delete all maxi images if switching away from Maxi
       if (
-        dbUser?.transportationType === "MAXI" &&
+        dbCourier?.transportationType === "MAXI" &&
         transportationType !== "MAXI" &&
-        dbUser?.maxiImages?.length
+        dbCourier?.maxiImages?.length
       ) {
         try {
           await Promise.all(
-            dbUser.maxiImages.map((path) =>
+            dbCourier.maxiImages.map((path) =>
               remove({ path }).catch((err) => {
                 console.log("Failed to delete:", path, err);
               }),
@@ -257,7 +257,7 @@ const StandaloneTtypeCom = () => {
 
       // ✅ 3️⃣ THEN SAVE
       const updatedCourier = await DataStore.save(
-        Courier.copyOf(dbUser, (updated) => {
+        Courier.copyOf(dbCourier, (updated) => {
           updated.transportationType = transportationType;
           updated.vehicleClass = vehicleClass;
 
@@ -283,7 +283,7 @@ const StandaloneTtypeCom = () => {
         }),
       );
 
-      setDbUser(updatedCourier);
+      setDbCourier(updatedCourier);
 
       Alert.alert("Success", "Transport updated successfully");
 
@@ -299,12 +299,12 @@ const StandaloneTtypeCom = () => {
   /* ------------------ LOAD EXISTING IMAGES INTO CONTEXT ------------------ */
 
   useEffect(() => {
-    if (dbUser?.maxiImages?.length) {
+    if (dbCourier?.maxiImages?.length) {
       if (localMaxiImages.length === 0) {
-        setMaxiImages(dbUser?.maxiImages);
+        setMaxiImages(dbCourier?.maxiImages);
       }
     }
-  }, [dbUser]);
+  }, [dbCourier]);
 
   /* ------------------ FETCH SIGNED URLS ------------------ */
 
@@ -315,7 +315,7 @@ const StandaloneTtypeCom = () => {
         return;
       }
 
-      if (!dbUser?.maxiImages?.length) {
+      if (!dbCourier?.maxiImages?.length) {
         setSignedMaxiImages([]);
         return;
       }
@@ -324,7 +324,7 @@ const StandaloneTtypeCom = () => {
 
       try {
         const urls = await Promise.all(
-          dbUser.maxiImages.map(async (key) => {
+          dbCourier.maxiImages.map(async (key) => {
             // already local
             if (key.startsWith("file://")) {
               return key;
@@ -348,7 +348,7 @@ const StandaloneTtypeCom = () => {
     };
 
     fetchImages();
-  }, [transportationType, dbUser]);
+  }, [transportationType, dbCourier]);
 
   /* ------------------ UI ------------------ */
 

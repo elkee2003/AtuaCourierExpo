@@ -2,35 +2,43 @@ import { useAuthContext } from "@/providers/AuthProvider";
 import { Order } from "@/src/models";
 import { DataStore } from "aws-amplify/datastore";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, FlatList, Text, View } from "react-native";
-import CompletedSingle from "../CompletedSingle";
+import { ActivityIndicator, FlatList, Text, View } from "react-native";
+import CompletedDeliverySingle from "../CompletedSingle";
 import styles from "./styles";
 
-const CompletedDeliveryMain = () => {
-  const { dbUser } = useAuthContext();
-  // console.log('sub from ordrer:',sub)
-  // const {firstName} = useProfileContext()
+const COMPLETED_STATUSES = [
+  "DELIVERED",
+  "HANDOVER_TO_LOGISTICS",
+  "CANCELLED",
+  "DISPUTED",
+];
 
-  const [orders, setOrders] = useState(null);
-  const [courier, setCourier] = useState(null);
+const CompletedDeliveryMain = () => {
+  const { dbCourier } = useAuthContext();
+
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchOrders = async () => {
+    if (!dbCourier?.id) return;
+
     setLoading(true);
+
     try {
       const fetchedOrders = await DataStore.query(Order, (o) =>
-        o.orderCourierId.eq(dbUser.id),
+        o.assignedCourierId.eq(dbCourier.id),
       );
 
       const filteredOrders = fetchedOrders
-        .filter((order) => order.status === "DELIVERED")
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-      // const sortedOrders = fetchedOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        .filter((order) => COMPLETED_STATUSES.includes(order.status))
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
 
       setOrders(filteredOrders);
     } catch (e) {
-      Alert.alert("Error", e.message);
+      console.log(e);
     } finally {
       setLoading(false);
     }
@@ -39,32 +47,31 @@ const CompletedDeliveryMain = () => {
   useEffect(() => {
     fetchOrders();
 
-    const subscription = DataStore.observe(Order).subscribe(({ opType }) => {
-      if (opType === "INSERT" || opType === "UPDATE" || opType === "DELETE") {
-        fetchOrders();
-      }
+    const sub = DataStore.observe(Order).subscribe(() => {
+      fetchOrders();
     });
 
-    return () => subscription.unsubscribe();
+    return () => sub.unsubscribe();
   }, []);
 
   if (loading) {
-    return <ActivityIndicator size={"large"} style={styles.loading} />;
+    return <ActivityIndicator size="large" style={styles.loader} />;
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Completed Delivery</Text>
-      {orders?.length === 0 ? (
-        <View style={styles.noCompletedOrdersCon}>
-          <Text style={styles.noCompletedOrders}>No Completed Orders</Text>
+      <Text style={styles.header}>Completed Orders</Text>
+
+      {orders.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No Completed Orders</Text>
         </View>
       ) : (
         <FlatList
           data={orders}
           showsVerticalScrollIndicator={false}
-          keyExtractor={(item, index) => item.id.toString()}
-          renderItem={({ item }) => <CompletedSingle item={item} />}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <CompletedDeliverySingle item={item} />}
         />
       )}
     </View>

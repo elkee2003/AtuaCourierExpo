@@ -5,15 +5,15 @@ import { Text, View } from "react-native";
 import PendingMain from "../../../components/DeliveryHistoryCom/PendingDelivery/PendingMain";
 
 const PendingOrdersScreen = () => {
-  const { dbUser } = useAuthContext();
+  const { dbCourier } = useAuthContext();
 
   useEffect(() => {
-    if (!dbUser) {
+    if (!dbCourier) {
       router.replace("/profile");
     }
-  }, [dbUser]);
+  }, [dbCourier]);
 
-  if (!dbUser) {
+  if (!dbCourier) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <Text style={{ fontSize: 20, fontWeight: "bold", color: "#afadad" }}>

@@ -50,9 +50,9 @@ const ReviewGuarantorCom = () => {
     guarantorNINImage,
   } = useProfileContext();
 
-  const { dbUser, setDbUser, sub, userMail } = useAuthContext();
+  const { dbCourier, setDbCourier, sub, userMail } = useAuthContext();
 
-  console.log(dbUser, firstName, lastName);
+  console.log(dbCourier, firstName, lastName);
 
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -86,7 +86,7 @@ const ReviewGuarantorCom = () => {
   const uploadMaxiImages = async () => {
     try {
       if (!maxiImages || maxiImages.length === 0) {
-        return dbUser?.maxiImages || [];
+        return dbCourier?.maxiImages || [];
       }
 
       const uploadedPaths = [];
@@ -135,8 +135,8 @@ const ReviewGuarantorCom = () => {
       }
 
       // ✅ Delete only removed images
-      if (dbUser?.maxiImages?.length) {
-        const removedImages = dbUser.maxiImages.filter(
+      if (dbCourier?.maxiImages?.length) {
+        const removedImages = dbCourier.maxiImages.filter(
           (oldPath) => !uploadedPaths.includes(oldPath),
         );
 
@@ -207,7 +207,7 @@ const ReviewGuarantorCom = () => {
       if (existingCouriers.length > 0) {
         console.log("Courier already exists, skipping creation");
 
-        setDbUser(existingCouriers[0]);
+        setDbCourier(existingCouriers[0]);
         return;
       }
 
@@ -264,7 +264,7 @@ const ReviewGuarantorCom = () => {
         }),
       );
 
-      setDbUser(courier);
+      setDbCourier(courier);
     } catch (e) {
       Alert.alert("Error", e.message);
     } finally {
@@ -276,16 +276,16 @@ const ReviewGuarantorCom = () => {
     if (uploading) return;
     setUploading(true);
     try {
-      let uploadedProfilePic = dbUser?.profilePic;
+      let uploadedProfilePic = dbCourier?.profilePic;
 
       if (
-        dbUser?.transportationType === "MAXI" &&
+        dbCourier?.transportationType === "MAXI" &&
         transportationType !== "MAXI" &&
-        dbUser?.maxiImages?.length
+        dbCourier?.maxiImages?.length
       ) {
         try {
           await Promise.all(
-            dbUser.maxiImages.map((path) =>
+            dbCourier.maxiImages.map((path) =>
               remove({ path }).catch((err) => {
                 console.log("Failed to delete:", path, err);
               }),
@@ -302,13 +302,13 @@ const ReviewGuarantorCom = () => {
         uploadedMaxiImages = await uploadMaxiImages();
       }
 
-      let uploadedCourierNINImage = dbUser?.courierNINImage;
-      let uploadedGuarantorNINImage = dbUser?.guarantorNINImage;
+      let uploadedCourierNINImage = dbCourier?.courierNINImage;
+      let uploadedGuarantorNINImage = dbCourier?.guarantorNINImage;
 
       // Only uploads if changed; deletes if replaced
 
       // Only upload if profilePic changed
-      if (profilePic && profilePic !== dbUser?.profilePic) {
+      if (profilePic && profilePic !== dbCourier?.profilePic) {
         // 1️⃣ Upload first
         uploadedProfilePic = await uploadSingleImage(
           profilePic,
@@ -316,38 +316,38 @@ const ReviewGuarantorCom = () => {
         );
 
         // 2️⃣ Delete old AFTER successful upload
-        if (dbUser?.profilePic) {
-          await remove({ path: dbUser.profilePic });
+        if (dbCourier?.profilePic) {
+          await remove({ path: dbCourier.profilePic });
         }
       }
 
       // courierNIN Image
-      if (courierNINImage && courierNINImage !== dbUser?.courierNINImage) {
+      if (courierNINImage && courierNINImage !== dbCourier?.courierNINImage) {
         uploadedCourierNINImage = await uploadSingleImage(
           courierNINImage,
           "courierNIN",
         );
-        if (dbUser?.courierNINImage) {
-          await remove({ path: dbUser.courierNINImage });
+        if (dbCourier?.courierNINImage) {
+          await remove({ path: dbCourier.courierNINImage });
         }
       }
 
       // guarantorNIN Image
       if (
         guarantorNINImage &&
-        guarantorNINImage !== dbUser?.guarantorNINImage
+        guarantorNINImage !== dbCourier?.guarantorNINImage
       ) {
         uploadedGuarantorNINImage = await uploadSingleImage(
           guarantorNINImage,
           "guarantorNIN",
         );
-        if (dbUser?.guarantorNINImage) {
-          await remove({ path: dbUser.guarantorNINImage });
+        if (dbCourier?.guarantorNINImage) {
+          await remove({ path: dbCourier.guarantorNINImage });
         }
       }
 
       const courier = await DataStore.save(
-        Courier.copyOf(dbUser, (updated) => {
+        Courier.copyOf(dbCourier, (updated) => {
           updated.firstName = firstName;
           updated.lastName = lastName;
           updated.profilePic = uploadedProfilePic;
@@ -395,7 +395,7 @@ const ReviewGuarantorCom = () => {
           updated.guarantorNINImage = uploadedGuarantorNINImage;
         }),
       );
-      setDbUser(courier);
+      setDbCourier(courier);
     } catch (e) {
       Alert.alert("Error", e.message);
     } finally {
@@ -407,7 +407,7 @@ const ReviewGuarantorCom = () => {
   const handleSave = async () => {
     if (!validateMaxiRequirements()) return;
 
-    if (dbUser) {
+    if (dbCourier) {
       await updateCourier();
       router.push("/profile");
 

@@ -26,7 +26,7 @@ import styles from "./styles";
 // updated.lastBatchAssignedAt = null;
 
 const OrderSummary = ({ orderId }) => {
-  const { dbUser } = useAuthContext();
+  const { dbCourier } = useAuthContext();
   const [order, setOrder] = useState(null);
   const [user, setUser] = useState(null);
   const [courier, setCourier] = useState(null);
@@ -99,22 +99,22 @@ const OrderSummary = ({ orderId }) => {
   // To fetch couriers
   useEffect(() => {
     const fetchCourier = async () => {
-      if (!dbUser?.id) return;
+      if (!dbCourier?.id) return;
 
-      const c = await DataStore.query(Courier, dbUser.id);
+      const c = await DataStore.query(Courier, dbCourier.id);
       setCourier(c);
     };
 
     fetchCourier();
 
-    const sub = DataStore.observe(Courier, dbUser.id).subscribe((msg) => {
+    const sub = DataStore.observe(Courier, dbCourier.id).subscribe((msg) => {
       if (msg.opType === "UPDATE") {
         setCourier(msg.element);
       }
     });
 
     return () => sub.unsubscribe();
-  }, [dbUser]);
+  }, [dbCourier]);
 
   // ✅ Fetch order + user
   useEffect(() => {
@@ -194,7 +194,7 @@ const OrderSummary = ({ orderId }) => {
     await DataStore.save(
       new Offer({
         orderID: order.id,
-        courierID: dbUser.id,
+        courierID: dbCourier.id,
         senderType: "COURIER",
         amount: price,
         status: "ACTIVE",
@@ -205,7 +205,7 @@ const OrderSummary = ({ orderId }) => {
 
   // ✅ Accept Offer
   const onAccept = async () => {
-    const courier = await DataStore.query(Courier, dbUser.id);
+    const courier = await DataStore.query(Courier, dbCourier.id);
 
     // if express delivery prevent from accepting more orders
     if ((courier.currentExpressCount || 0) > 0) {
@@ -263,7 +263,7 @@ const OrderSummary = ({ orderId }) => {
             updated.status = "ACCEPTED";
             updated.totalPrice = priceToAccept;
             updated.acceptedOfferID = offerToAccept?.id;
-            updated.assignedCourierId = dbUser.id;
+            updated.assignedCourierId = dbCourier.id;
           }),
         );
 
@@ -279,7 +279,7 @@ const OrderSummary = ({ orderId }) => {
         await DataStore.save(
           Order.copyOf(order, (updated) => {
             updated.status = "ACCEPTED";
-            updated.assignedCourierId = dbUser.id;
+            updated.assignedCourierId = dbCourier.id;
           }),
         );
 
