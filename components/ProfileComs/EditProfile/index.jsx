@@ -9,6 +9,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  RefreshControl,
   ScrollView,
   Text,
   TextInput,
@@ -20,7 +21,7 @@ import TranportionType from "../TransporationType";
 import BankDetails from "./bankDetails";
 import styles from "./styles";
 
-const EditProfile = () => {
+const EditProfile = ({ onRefresh, refreshing }) => {
   const {
     firstName,
     setFirstName,
@@ -201,7 +202,12 @@ const EditProfile = () => {
           <Text style={styles.signoutTxt}>Sign Out</Text>
         </TouchableOpacity>
 
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
           {/* Upload Profile Picture */}
           <View style={styles.profilePicWrapper}>
             <TouchableOpacity

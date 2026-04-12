@@ -1,106 +1,87 @@
-import { router } from "expo-router";
-import { useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
-import Collapsible from "react-native-collapsible";
+import { useAuthContext } from "@/providers/AuthProvider";
+import { Order } from "@/src/models";
+import { DataStore } from "aws-amplify/datastore";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, FlatList, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import PendingDeliverySingle from "../PendingSingle";
 import styles from "./styles";
 
-const PendingDeliverySingle = ({ item }) => {
-  const [expanded, setExpanded] = useState(false);
+const ACTIVE_STATUSES = [
+  "ACCEPTED",
+  "ARRIVED_PICKUP",
+  "LOADING",
+  "PICKED_UP",
+  "IN_TRANSIT",
+  "ARRIVED_DROPOFF",
+  "UNLOADING",
+];
 
-  const toggleExpand = () => {
-    setExpanded((prev) => !prev);
-  };
+const PendingDeliveryMain = () => {
+  const { dbCourier } = useAuthContext();
 
-  const goToTracking = () => {
-    router.push(`/screens/orderTrackingScreen/${item.id}`);
-  };
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const goToDetails = () => {
-    router.push(`/screens/orderdetails/${item.id}`);
-  };
+  const fetchOrders = async () => {
+    if (!dbCourier?.id) return;
 
-  const getStatusColor = () => {
-    switch (item.status) {
-      case "IN_TRANSIT":
-        return styles.statusBlue;
-      case "ARRIVED_PICKUP":
-      case "ARRIVED_DROPOFF":
-        return styles.statusPurple;
-      case "LOADING":
-      case "UNLOADING":
-        return styles.statusOrange;
-      default:
-        return styles.statusGray;
+    setLoading(true);
+
+    try {
+      const fetchedOrders = await DataStore.query(Order, (o) =>
+        o.assignedCourierId.eq(dbCourier.id),
+      );
+
+      const filteredOrders = fetchedOrders
+        .filter((order) => ACTIVE_STATUSES.includes(order.status))
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+
+      setOrders(filteredOrders);
+    } catch (error) {
+      console.log("Error fetching orders:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchOrders();
+
+    const subscription = DataStore.observe(Order).subscribe(() => {
+      fetchOrders();
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (loading) {
+    return <ActivityIndicator size="large" style={styles.loader} />;
+  }
+
   return (
-    <TouchableOpacity
-      activeOpacity={0.95}
-      style={styles.card}
-      onPress={toggleExpand}
-    >
-      {/* Header */}
-      <View style={styles.topRow}>
-        <Text style={styles.date}>{item?.createdAt?.substring(0, 10)}</Text>
+    <SafeAreaView style={styles.container}>
+      <View>
+        <Text style={styles.header}>Active Orders</Text>
 
-        <View style={[styles.statusBadge, getStatusColor()]}>
-          <Text style={styles.statusText}>{item.status}</Text>
-        </View>
-      </View>
-
-      {/* COLLAPSED VIEW */}
-      <Text style={styles.address} numberOfLines={1}>
-        📍 {item.originAddress}
-      </Text>
-
-      <Text style={styles.address} numberOfLines={1}>
-        📦 {item.destinationAddress}
-      </Text>
-
-      <View style={styles.bottomRow}>
-        <Text style={styles.price}>₦{item?.totalPrice?.toLocaleString()}</Text>
-
-        <Text style={styles.vehicle}>{item.vehicleClass}</Text>
-      </View>
-
-      <Text style={styles.expandHint}>
-        {expanded ? "Tap to collapse ▲" : "Tap to expand ▼"}
-      </Text>
-
-      {/* EXPANDED */}
-      <Collapsible collapsed={!expanded}>
-        <View style={styles.expanded}>
-          <Text style={styles.details}>{item.orderDetails}</Text>
-
-          <View style={styles.divider} />
-
-          {/* BUTTONS */}
-          <View style={styles.buttonRow}>
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={(e) => {
-                e.stopPropagation();
-                goToTracking();
-              }}
-            >
-              <Text style={styles.primaryText}>Track</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={(e) => {
-                e.stopPropagation();
-                goToDetails();
-              }}
-            >
-              <Text style={styles.secondaryText}>Details</Text>
-            </TouchableOpacity>
+        {orders.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No Active Orders</Text>
           </View>
-        </View>
-      </Collapsible>
-    </TouchableOpacity>
+        ) : (
+          <FlatList
+            data={orders}
+            showsVerticalScrollIndicator={false}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <PendingDeliverySingle item={item} />}
+          />
+        )}
+      </View>
+    </SafeAreaView>
   );
 };
 
-export default PendingDeliverySingle;
+export default PendingDeliveryMain;

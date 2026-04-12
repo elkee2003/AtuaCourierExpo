@@ -49,7 +49,7 @@ const CompletedDeliverySingle = ({ item }) => {
   const isMaxi = item?.transportationType === "MAXI";
 
   const displayPrice = isMaxi
-    ? (item?.totalPrice ?? item?.currentOfferPrice ?? item?.initialOfferPrice)
+    ? (item?.currentOfferPrice ?? item?.initialOfferPrice)
     : item?.courierEarnings;
 
   const price = Number(displayPrice || 0).toLocaleString();

@@ -3,6 +3,7 @@ import { Order } from "@/src/models";
 import { DataStore } from "aws-amplify/datastore";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import CompletedDeliverySingle from "../CompletedSingle";
 import styles from "./styles";
 
@@ -59,22 +60,24 @@ const CompletedDeliveryMain = () => {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Completed Orders</Text>
+    <SafeAreaView style={styles.container}>
+      <View>
+        <Text style={styles.header}>Completed Orders</Text>
 
-      {orders.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No Completed Orders</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={orders}
-          showsVerticalScrollIndicator={false}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <CompletedDeliverySingle item={item} />}
-        />
-      )}
-    </View>
+        {orders.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No Completed Orders</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={orders}
+            showsVerticalScrollIndicator={false}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <CompletedDeliverySingle item={item} />}
+          />
+        )}
+      </View>
+    </SafeAreaView>
   );
 };
 

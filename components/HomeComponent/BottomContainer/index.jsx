@@ -5,6 +5,7 @@ import styles from "./styles";
 
 const BottomContainer = ({
   isOnline,
+  isApproved,
   orders,
   stats,
   onRefresh,
@@ -44,15 +45,31 @@ const BottomContainer = ({
                 ? "Receiving delivery requests nearby"
                 : "Go online to start receiving orders"}
             </Text>
+
+            {/* 🚫 NOT APPROVED MESSAGE */}
+            {!isApproved && (
+              <Text style={styles.warningText}>
+                Your account is under review. You’ll be able to go online once
+                approved.
+              </Text>
+            )}
           </View>
         </View>
 
         <Pressable
-          style={isOnline ? styles.endBtn : styles.goBtn}
+          style={[
+            isOnline ? styles.endBtn : styles.goBtn,
+            !isApproved && styles.disabledBtn,
+          ]}
           onPress={onToggleOnline}
+          disabled={!isApproved}
         >
           <Text style={styles.btnText}>
-            {isOnline ? "Go Offline" : "Go Online"}
+            {!isApproved
+              ? "Approval Required"
+              : isOnline
+                ? "Go Offline"
+                : "Go Online"}
           </Text>
         </Pressable>
       </View>

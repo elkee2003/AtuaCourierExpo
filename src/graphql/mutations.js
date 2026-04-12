@@ -204,10 +204,11 @@ export const createOffer = /* GraphQL */ `
         estimatedMinPrice
         estimatedMaxPrice
         initialOfferPrice
-        currentOfferPrice
-        lastOfferBy
         loadingFee
         unloadingFee
+        floorSurcharge
+        fragileSurcharge
+        extrasTotal
         totalPrice
         courierEarnings
         commissionAmount
@@ -310,6 +311,7 @@ export const createOffer = /* GraphQL */ `
         approvedById
         currentBatchCount
         currentExpressCount
+        currentMaxiCount
         lastBatchAssignedAt
         statusKey
         createdAt
@@ -363,10 +365,11 @@ export const updateOffer = /* GraphQL */ `
         estimatedMinPrice
         estimatedMaxPrice
         initialOfferPrice
-        currentOfferPrice
-        lastOfferBy
         loadingFee
         unloadingFee
+        floorSurcharge
+        fragileSurcharge
+        extrasTotal
         totalPrice
         courierEarnings
         commissionAmount
@@ -469,6 +472,7 @@ export const updateOffer = /* GraphQL */ `
         approvedById
         currentBatchCount
         currentExpressCount
+        currentMaxiCount
         lastBatchAssignedAt
         statusKey
         createdAt
@@ -522,10 +526,11 @@ export const deleteOffer = /* GraphQL */ `
         estimatedMinPrice
         estimatedMaxPrice
         initialOfferPrice
-        currentOfferPrice
-        lastOfferBy
         loadingFee
         unloadingFee
+        floorSurcharge
+        fragileSurcharge
+        extrasTotal
         totalPrice
         courierEarnings
         commissionAmount
@@ -628,6 +633,7 @@ export const deleteOffer = /* GraphQL */ `
         approvedById
         currentBatchCount
         currentExpressCount
+        currentMaxiCount
         lastBatchAssignedAt
         statusKey
         createdAt
@@ -678,10 +684,11 @@ export const createOrder = /* GraphQL */ `
       estimatedMinPrice
       estimatedMaxPrice
       initialOfferPrice
-      currentOfferPrice
-      lastOfferBy
       loadingFee
       unloadingFee
+      floorSurcharge
+      fragileSurcharge
+      extrasTotal
       totalPrice
       courierEarnings
       commissionAmount
@@ -781,6 +788,7 @@ export const createOrder = /* GraphQL */ `
         approvedById
         currentBatchCount
         currentExpressCount
+        currentMaxiCount
         lastBatchAssignedAt
         statusKey
         createdAt
@@ -828,10 +836,11 @@ export const updateOrder = /* GraphQL */ `
       estimatedMinPrice
       estimatedMaxPrice
       initialOfferPrice
-      currentOfferPrice
-      lastOfferBy
       loadingFee
       unloadingFee
+      floorSurcharge
+      fragileSurcharge
+      extrasTotal
       totalPrice
       courierEarnings
       commissionAmount
@@ -931,6 +940,7 @@ export const updateOrder = /* GraphQL */ `
         approvedById
         currentBatchCount
         currentExpressCount
+        currentMaxiCount
         lastBatchAssignedAt
         statusKey
         createdAt
@@ -978,10 +988,11 @@ export const deleteOrder = /* GraphQL */ `
       estimatedMinPrice
       estimatedMaxPrice
       initialOfferPrice
-      currentOfferPrice
-      lastOfferBy
       loadingFee
       unloadingFee
+      floorSurcharge
+      fragileSurcharge
+      extrasTotal
       totalPrice
       courierEarnings
       commissionAmount
@@ -1081,6 +1092,7 @@ export const deleteOrder = /* GraphQL */ `
         approvedById
         currentBatchCount
         currentExpressCount
+        currentMaxiCount
         lastBatchAssignedAt
         statusKey
         createdAt
@@ -1145,6 +1157,7 @@ export const createCourier = /* GraphQL */ `
       approvedById
       currentBatchCount
       currentExpressCount
+      currentMaxiCount
       lastBatchAssignedAt
       statusKey
       offers {
@@ -1212,6 +1225,7 @@ export const updateCourier = /* GraphQL */ `
       approvedById
       currentBatchCount
       currentExpressCount
+      currentMaxiCount
       lastBatchAssignedAt
       statusKey
       offers {
@@ -1279,6 +1293,7 @@ export const deleteCourier = /* GraphQL */ `
       approvedById
       currentBatchCount
       currentExpressCount
+      currentMaxiCount
       lastBatchAssignedAt
       statusKey
       offers {
@@ -1317,6 +1332,7 @@ export const createUser = /* GraphQL */ `
       exactAddress
       lat
       lng
+      isBlocked
       push_token
       Orders {
         nextToken
@@ -1349,6 +1365,7 @@ export const updateUser = /* GraphQL */ `
       exactAddress
       lat
       lng
+      isBlocked
       push_token
       Orders {
         nextToken
@@ -1381,6 +1398,7 @@ export const deleteUser = /* GraphQL */ `
       exactAddress
       lat
       lng
+      isBlocked
       push_token
       Orders {
         nextToken

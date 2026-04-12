@@ -50,6 +50,16 @@ export default StyleSheet.create({
     marginTop: 2,
   },
 
+  warningText: {
+    color: "#F59E0B",
+    fontSize: 12,
+    marginTop: 6,
+  },
+
+  disabledBtn: {
+    opacity: 0.5,
+  },
+
   goBtn: {
     backgroundColor: "#22c55e",
     paddingVertical: 12,

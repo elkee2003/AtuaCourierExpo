@@ -572,20 +572,6 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
-                "currentOfferPrice": {
-                    "name": "currentOfferPrice",
-                    "isArray": false,
-                    "type": "Float",
-                    "isRequired": false,
-                    "attributes": []
-                },
-                "lastOfferBy": {
-                    "name": "lastOfferBy",
-                    "isArray": false,
-                    "type": "String",
-                    "isRequired": false,
-                    "attributes": []
-                },
                 "loadingFee": {
                     "name": "loadingFee",
                     "isArray": false,
@@ -595,6 +581,27 @@ export const schema = {
                 },
                 "unloadingFee": {
                     "name": "unloadingFee",
+                    "isArray": false,
+                    "type": "Float",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "floorSurcharge": {
+                    "name": "floorSurcharge",
+                    "isArray": false,
+                    "type": "Float",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "fragileSurcharge": {
+                    "name": "fragileSurcharge",
+                    "isArray": false,
+                    "type": "Float",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "extrasTotal": {
+                    "name": "extrasTotal",
                     "isArray": false,
                     "type": "Float",
                     "isRequired": false,
@@ -1365,6 +1372,13 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
+                "currentMaxiCount": {
+                    "name": "currentMaxiCount",
+                    "isArray": false,
+                    "type": "Int",
+                    "isRequired": false,
+                    "attributes": []
+                },
                 "lastBatchAssignedAt": {
                     "name": "lastBatchAssignedAt",
                     "isArray": false,
@@ -1543,6 +1557,13 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
+                "isBlocked": {
+                    "name": "isBlocked",
+                    "isArray": false,
+                    "type": "Boolean",
+                    "isRequired": false,
+                    "attributes": []
+                },
                 "push_token": {
                     "name": "push_token",
                     "isArray": false,
@@ -1649,5 +1670,5 @@ export const schema = {
     },
     "nonModels": {},
     "codegenVersion": "3.4.4",
-    "version": "9de4e1cc11a3e73ac36951380e167ce9"
+    "version": "4805f5ddb9445d1860fdd4dd356cbe93"
 };

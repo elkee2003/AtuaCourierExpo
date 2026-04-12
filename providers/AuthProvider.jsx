@@ -13,6 +13,7 @@ const AuthProvider = ({ children }) => {
   const [dbCourier, setDbCourier] = useState(null);
   const [sub, setSub] = useState(null);
   const [userMail, setUserMail] = useState(null);
+  const [loadingCourier, setLoadingCourier] = useState(true);
 
   // ✅ Function to handle full logout and cleanup
   const handleUserDeleted = async () => {
@@ -39,7 +40,7 @@ const AuthProvider = ({ children }) => {
       // const subId = authUser?.userId;
       // setSub(subId);
       setSub(user.userId);
-      const email = authUser?.signInDetails?.loginId;
+      const email = user?.signInDetails?.loginId;
       setUserMail(email);
     } catch (err) {
       console.log("Auth check failed:", err.name);
@@ -55,61 +56,123 @@ const AuthProvider = ({ children }) => {
     }
   };
 
+  // const dbCurrentCourier = async () => {
+  //   try {
+  //     let dbCouriercurrent = await DataStore.query(Courier, (u) =>
+  //       u.sub.eq(sub),
+  //     );
+
+  //     if (dbCouriercurrent.length === 0) {
+  //       console.log("No local user — forcing sync retry...");
+
+  //       await DataStore.clear();
+  //       await DataStore.start();
+
+  //       // retry AFTER sync
+  //       dbCouriercurrent = await DataStore.query(Courier, (u) => u.sub.eq(sub));
+  //     }
+  //     //   DataStore.delete(Courier, Predicates.ALL)
+  //     // DataStore.clear()
+
+  //     // If statement to check dbCourier in the database
+  //     if (dbCouriercurrent.length > 0) {
+  //       setDbCourier(dbCouriercurrent[0]);
+  //     } else {
+  //       // DO NOTHING — wait for sync
+  //       console.log("Waiting for DataStore sync...");
+  //     }
+
+  //     // I commented this out because it is the same with the else if you look above. It was part of the old code before the if statement, therefore if I remove the if statement, I should uncomment setDbCourier(dbCouriercurrent[0])
+  //     // setDbCourier(dbCouriercurrent[0])
+  //   } catch (error) {
+  //     console.error("Error getting dbCourier: ", error);
+  //   }
+  // };
+
   const dbCurrentCourier = async () => {
     try {
+      setLoadingCourier(true);
+
       let dbCouriercurrent = await DataStore.query(Courier, (u) =>
         u.sub.eq(sub),
       );
 
       if (dbCouriercurrent.length === 0) {
-        console.log("No local user — forcing sync retry...");
+        console.log("No courier found, waiting for sync...");
 
-        await DataStore.clear();
-        await DataStore.start();
+        // small delay instead of clearing everything
+        await new Promise((res) => setTimeout(res, 1000));
 
-        // retry AFTER sync
         dbCouriercurrent = await DataStore.query(Courier, (u) => u.sub.eq(sub));
       }
-      //   DataStore.delete(Courier, Predicates.ALL)
-      // DataStore.clear()
 
-      // If statement to check dbCourier in the database
       if (dbCouriercurrent.length > 0) {
         setDbCourier(dbCouriercurrent[0]);
       } else {
-        // DO NOTHING — wait for sync
-        console.log("Waiting for DataStore sync...");
+        setDbCourier(null);
       }
-
-      // I commented this out because it is the same with the else if you look above. It was part of the old code before the if statement, therefore if I remove the if statement, I should uncomment setDbCourier(dbCouriercurrent[0])
-      // setDbCourier(dbCouriercurrent[0])
     } catch (error) {
       console.error("Error getting dbCourier: ", error);
+    } finally {
+      setLoadingCourier(false);
     }
   };
 
+  // For Refresh
+  const refreshCourier = async () => {
+    console.log("Manual courier refresh triggered");
+
+    if (!sub) return;
+
+    try {
+      setLoadingCourier(true);
+
+      await DataStore.clear();
+      await DataStore.start();
+
+      await dbCurrentCourier();
+    } catch (e) {
+      console.log("Refresh error:", e);
+    } finally {
+      setLoadingCourier(false);
+    }
+  };
+
+  // useEffect(() => {
+  //   currentAuthenticatedUser();
+  // }, [sub]);
   useEffect(() => {
     currentAuthenticatedUser();
-  }, [sub]);
+  }, []);
 
   // useEffect for autosign-in and auto sign-out
   useEffect(() => {
+    const handleSignOutEvent = async () => {
+      try {
+        await DataStore.clear();
+      } catch (e) {
+        console.log("Error clearing DataStore:", e);
+      }
+
+      setAuthUser(null);
+      setDbCourier(null); // 👈 IMPORTANT
+      setSub(null);
+      router.push("/login");
+    };
+
     const listener = (data) => {
       const { event } = data.payload;
+
       if (event === "signedIn") {
         currentAuthenticatedUser();
       } else if (event === "signedOut") {
-        setAuthUser(null); // Clear the authUser state
-        setSub(null); // Clear the sub state
-        router.push("/login"); // Navigate to the sign-in page
+        handleSignOutEvent(); // 👈 clean
       }
     };
 
-    // Start listening for authentication events
     const hubListener = Hub.listen("auth", listener);
 
-    // Cleanup the listener when the component unmounts
-    return () => hubListener(); // Stop listening for the events
+    return () => hubListener();
   }, []);
 
   useEffect(() => {
@@ -159,6 +222,8 @@ const AuthProvider = ({ children }) => {
         setDbCourier,
         sub,
         userMail,
+        loadingCourier,
+        refreshCourier,
       }}
     >
       {children}

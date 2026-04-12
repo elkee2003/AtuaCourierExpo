@@ -56,12 +56,14 @@ const OrderSummary = ({ orderId }) => {
     ? (latestOffer?.amount ?? order?.initialOfferPrice)
     : order?.courierEarnings;
 
-  const numericOffer = Number(offer);
+  const numericOffer = offer ? Number(offer) : null;
+
+  const latestUserOffer = [...offers]
+    .filter((o) => o.senderType === "USER")
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
 
   const latestUserOfferAmount =
-    latestOffer?.senderType === "USER"
-      ? latestOffer.amount
-      : order?.initialOfferPrice;
+    latestUserOffer?.amount ?? order?.initialOfferPrice;
 
   // Disable Accept if:
   // 1. Order already accepted
@@ -78,6 +80,8 @@ const OrderSummary = ({ orderId }) => {
   // Total Courier accepted orders
   const courierTotal =
     (courier?.currentBatchCount || 0) + (courier?.currentExpressCount || 0);
+
+  const isCourierTurn = !latestOffer || latestOffer.senderType === "USER";
 
   const isBlocked =
     courierTotal >= 10 ||
@@ -179,7 +183,9 @@ const OrderSummary = ({ orderId }) => {
 
     const basePrice = latestOffer?.amount ?? order.initialOfferPrice;
 
-    setOffer(basePrice?.toString() || "");
+    if (!isEditing && basePrice) {
+      setOffer(basePrice.toString());
+    }
   }, [order, latestOffer, isEditing]);
 
   // ✅ Send Counter Offer
@@ -200,22 +206,30 @@ const OrderSummary = ({ orderId }) => {
         status: "ACTIVE",
       }),
     );
-    setOffer("");
+    setOffer(price.toString());
   };
 
   // ✅ Accept Offer
   const onAccept = async () => {
-    const courier = await DataStore.query(Courier, dbCourier.id);
+    const freshCourier = await DataStore.query(Courier, dbCourier.id);
 
-    // if express delivery prevent from accepting more orders
-    if ((courier.currentExpressCount || 0) > 0) {
+    // If delivery prevent from accepting more orders
+    // ✅ EXPRESS BLOCK
+    if ((freshCourier.currentExpressCount || 0) > 0) {
       alert("You must finish your express delivery first.");
+      return;
+    }
+
+    // ✅ MAXI BLOCK (PUT IT HERE)
+    if ((freshCourier.currentMaxiCount || 0) > 0) {
+      alert("You must complete your current maxi delivery first.");
       return;
     }
 
     // To check total number of orders accepted
     const total =
-      (courier.currentBatchCount || 0) + (courier.currentExpressCount || 0);
+      (freshCourier.currentBatchCount || 0) +
+      (freshCourier.currentExpressCount || 0);
 
     if (total >= 10) {
       alert("Maximum number of orders reached. Please start delivery.");
@@ -223,7 +237,7 @@ const OrderSummary = ({ orderId }) => {
     }
 
     // ⏱️ FORCE DISPATCH TIMER CHECK
-    const lastBatchTime = new Date(courier.lastBatchAssignedAt || 0);
+    const lastBatchTime = new Date(freshCourier.lastBatchAssignedAt || 0);
     const now = new Date();
 
     const THREE_HOURS = 3 * 60 * 60 * 1000;
@@ -235,31 +249,31 @@ const OrderSummary = ({ orderId }) => {
       return;
     }
 
-    if (order.status === "ACCEPTED") {
-      alert("Order already taken");
-      return;
-    }
-
     try {
+      // ✅ ALWAYS RECHECK ORDER
+      const latestOrder = await DataStore.query(Order, order.id);
+
+      if (latestOrder.status === "ACCEPTED") {
+        alert("Order already taken");
+        return;
+      }
+
       if (isMaxi) {
         // ✅ existing bidding logic
         let priceToAccept;
         let offerToAccept = null;
 
-        if (!latestOffer) {
-          priceToAccept = order.initialOfferPrice;
-        } else {
-          if (latestOffer.senderType !== "USER") {
-            alert("You can only accept user's latest offer");
-            return;
-          }
-
-          priceToAccept = latestOffer.amount;
-          offerToAccept = latestOffer;
+        if (!latestOffer || latestOffer.senderType !== "USER") {
+          alert("You can only accept user's latest offer");
+          return;
         }
 
+        priceToAccept = latestOffer.amount;
+        offerToAccept = latestOffer;
+
+        // ✅ 1. Update Order
         await DataStore.save(
-          Order.copyOf(order, (updated) => {
+          Order.copyOf(latestOrder, (updated) => {
             updated.status = "ACCEPTED";
             updated.totalPrice = priceToAccept;
             updated.acceptedOfferID = offerToAccept?.id;
@@ -267,6 +281,7 @@ const OrderSummary = ({ orderId }) => {
           }),
         );
 
+        // ✅ 2. Update Offer
         if (offerToAccept) {
           await DataStore.save(
             Offer.copyOf(offerToAccept, (updated) => {
@@ -274,17 +289,24 @@ const OrderSummary = ({ orderId }) => {
             }),
           );
         }
+
+        // ✅ 3. Update Courier Maxi Count
+        await DataStore.save(
+          Courier.copyOf(freshCourier, (updated) => {
+            updated.currentMaxiCount = (updated.currentMaxiCount || 0) + 1;
+          }),
+        );
       } else {
         // ✅ MICRO / MOTO simple accept
         await DataStore.save(
-          Order.copyOf(order, (updated) => {
+          Order.copyOf(latestOrder, (updated) => {
             updated.status = "ACCEPTED";
             updated.assignedCourierId = dbCourier.id;
           }),
         );
 
         await DataStore.save(
-          Courier.copyOf(courier, (updated) => {
+          Courier.copyOf(freshCourier, (updated) => {
             if (!updated.lastBatchAssignedAt) {
               updated.lastBatchAssignedAt = new Date().toISOString();
             }
@@ -598,12 +620,16 @@ const OrderSummary = ({ orderId }) => {
 
               <View style={styles.row}>
                 <TouchableOpacity
-                  style={styles.counterBtn}
+                  style={[
+                    styles.counterBtn,
+                    !isCourierTurn && styles.buttonDisabled,
+                  ]}
                   onPress={() => {
                     Keyboard.dismiss();
                     setIsEditing(false);
                     onSendOffer(Number(offer));
                   }}
+                  disabled={!isCourierTurn}
                 >
                   <Text style={styles.btnText}>Counter</Text>
                 </TouchableOpacity>

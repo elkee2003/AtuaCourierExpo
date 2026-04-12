@@ -8,6 +8,7 @@ import React, { useEffect, useState } from "react";
 import {
   Alert,
   Image,
+  RefreshControl,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -17,7 +18,7 @@ import Placeholder from "../../../assets/images/placeholder.png";
 import { useProfileContext } from "../../../providers/ProfileProvider";
 import styles from "./styles";
 
-const MainProfile = () => {
+const MainProfile = ({ onRefresh, refreshing }) => {
   const {
     firstName,
     lastName,
@@ -32,6 +33,7 @@ const MainProfile = () => {
   } = useProfileContext();
 
   const { dbCourier } = useAuthContext();
+  const isApproved = dbCourier?.isApproved;
   const [loading, setLoading] = useState(true);
 
   const onSignout = () => {
@@ -67,7 +69,13 @@ const MainProfile = () => {
   }, [dbCourier?.profilePic]);
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.signOutBtn} onPress={onSignout}>

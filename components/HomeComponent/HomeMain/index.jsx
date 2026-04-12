@@ -47,7 +47,7 @@ const HomeComponent = () => {
   const prevOrderIdsRef = useRef(new Set());
 
   const bottomSheetRef = useRef(null);
-  const snapPoints = useMemo(() => ["25%", "65%", "85%"], []);
+  const snapPoints = useMemo(() => ["27%", "65%", "85%"], []);
 
   // Refferenced functions
   const onGoPress = async () => {
@@ -68,7 +68,7 @@ const HomeComponent = () => {
       const newStatus = !freshUser.isOnline;
 
       await DataStore.save(
-        Courier.copyOf(freshUser, async (updated) => {
+        Courier.copyOf(freshUser, (updated) => {
           updated.isOnline = newStatus;
 
           // If statusKey is not set correctly → courier will NEVER be found → no assignments.
@@ -136,31 +136,25 @@ const HomeComponent = () => {
 
       let availableOrders = [];
 
+      if (isMaxi && !dbCourier?.vehicleClass) {
+        Alert.alert(
+          "Vehicle Not Set",
+          "Please complete your vehicle details to start receiving orders.",
+        );
+        return;
+      }
+
       if (isMaxi && dbCourier?.vehicleClass) {
-        // ✅ First: strict match (vehicleClass)
         availableOrders = await DataStore.query(Order, (o) =>
           o.and((o2) => [
             o2.transportationType.eq("MAXI"),
-            o2.vehicleClass.eq(dbCourier.vehicleClass),
+            o2.vehicleClass.eq(dbCourier.vehicleClass), // ✅ STRICT MATCH
             o2.or((o3) => [
               o3.status.eq("READY_FOR_PICKUP"),
               o3.status.eq("BIDDING"),
             ]),
           ]),
         );
-
-        // ✅ Fallback: if none found, show all MAXI
-        if (availableOrders.length === 0) {
-          availableOrders = await DataStore.query(Order, (o) =>
-            o.and((o2) => [
-              o2.transportationType.eq("MAXI"),
-              o2.or((o3) => [
-                o3.status.eq("READY_FOR_PICKUP"),
-                o3.status.eq("BIDDING"),
-              ]),
-            ]),
-          );
-        }
       } else {
         // NON-MAXI (unchanged)
         availableOrders = await DataStore.query(Order, (o) =>
@@ -294,9 +288,42 @@ const HomeComponent = () => {
     });
   }, []);
 
+  // useEffect to force unapproved offline
+  useEffect(() => {
+    const forceOfflineIfNotApproved = async () => {
+      if (!dbCourier?.id) return;
+
+      // 🚫 If not approved but currently online → force offline
+      if (dbCourier?.isApproved === false && dbCourier?.isOnline) {
+        try {
+          const freshUser = await DataStore.query(Courier, dbCourier.id);
+
+          await DataStore.save(
+            Courier.copyOf(freshUser, (updated) => {
+              updated.isOnline = false;
+
+              updated.statusKey = `OFFLINE#NOT_APPROVED`;
+            }),
+          );
+
+          setIsOnline(false);
+
+          Alert.alert(
+            "Account Not Approved",
+            "You have been taken offline because your account is not approved.",
+          );
+        } catch (e) {
+          console.log("Force offline error:", e);
+        }
+      }
+    };
+
+    forceOfflineIfNotApproved();
+  }, [dbCourier?.isApproved]);
+
   // useEffect to handle subscription
   useEffect(() => {
-    if (!isOnline || !location || !dbCourier) {
+    if (!isOnline || !location || !dbCourier || !dbCourier.isApproved) {
       setOrders([]);
       setLoading(false);
       return;
@@ -357,6 +384,7 @@ const HomeComponent = () => {
         <BottomSheetScrollView>
           <BottomContainer
             isOnline={isOnline}
+            isApproved={dbCourier?.isApproved}
             orders={orders}
             stats={stats}
             onRefresh={fetchOrders}

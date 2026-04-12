@@ -196,10 +196,11 @@ type EagerOrder = {
   readonly estimatedMinPrice?: number | null;
   readonly estimatedMaxPrice?: number | null;
   readonly initialOfferPrice?: number | null;
-  readonly currentOfferPrice?: number | null;
-  readonly lastOfferBy?: string | null;
   readonly loadingFee?: number | null;
   readonly unloadingFee?: number | null;
+  readonly floorSurcharge?: number | null;
+  readonly fragileSurcharge?: number | null;
+  readonly extrasTotal?: number | null;
   readonly totalPrice?: number | null;
   readonly courierEarnings?: number | null;
   readonly commissionAmount?: number | null;
@@ -287,10 +288,11 @@ type LazyOrder = {
   readonly estimatedMinPrice?: number | null;
   readonly estimatedMaxPrice?: number | null;
   readonly initialOfferPrice?: number | null;
-  readonly currentOfferPrice?: number | null;
-  readonly lastOfferBy?: string | null;
   readonly loadingFee?: number | null;
   readonly unloadingFee?: number | null;
+  readonly floorSurcharge?: number | null;
+  readonly fragileSurcharge?: number | null;
+  readonly extrasTotal?: number | null;
   readonly totalPrice?: number | null;
   readonly courierEarnings?: number | null;
   readonly commissionAmount?: number | null;
@@ -401,6 +403,7 @@ type EagerCourier = {
   readonly approvedById?: string | null;
   readonly currentBatchCount?: number | null;
   readonly currentExpressCount?: number | null;
+  readonly currentMaxiCount?: number | null;
   readonly lastBatchAssignedAt?: string | null;
   readonly statusKey?: string | null;
   readonly offers?: (Offer | null)[] | null;
@@ -454,6 +457,7 @@ type LazyCourier = {
   readonly approvedById?: string | null;
   readonly currentBatchCount?: number | null;
   readonly currentExpressCount?: number | null;
+  readonly currentMaxiCount?: number | null;
   readonly lastBatchAssignedAt?: string | null;
   readonly statusKey?: string | null;
   readonly offers: AsyncCollection<Offer>;
@@ -484,6 +488,7 @@ type EagerUser = {
   readonly exactAddress?: string | null;
   readonly lat?: number | null;
   readonly lng?: number | null;
+  readonly isBlocked?: boolean | null;
   readonly push_token?: string | null;
   readonly Orders?: (Order | null)[] | null;
   readonly createdAt?: string | null;
@@ -506,6 +511,7 @@ type LazyUser = {
   readonly exactAddress?: string | null;
   readonly lat?: number | null;
   readonly lng?: number | null;
+  readonly isBlocked?: boolean | null;
   readonly push_token?: string | null;
   readonly Orders: AsyncCollection<Order>;
   readonly createdAt?: string | null;

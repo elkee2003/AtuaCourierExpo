@@ -106,10 +106,12 @@ type Order @model @auth(rules: [{ allow: public }]) {
   estimatedMaxPrice: Float
 
   initialOfferPrice: Float # first price user sends
-  currentOfferPrice: Float # latest active offer
-  lastOfferBy: String # "USER" or "COURIER"
   loadingFee: Float
   unloadingFee: Float
+  floorSurcharge: Float
+  fragileSurcharge: Float
+
+  extrasTotal: Float
 
   # ------- General -------
   totalPrice: Float # final agreed price
@@ -238,6 +240,7 @@ type Courier @model @auth(rules: [{ allow: public }]) {
   approvedById: String
   currentBatchCount: Int
   currentExpressCount: Int
+  currentMaxiCount: Int
   lastBatchAssignedAt: AWSDateTime
 
   statusKey: String @index(name: "byStatus", queryField: "couriersByStatus")
@@ -257,6 +260,7 @@ type User @model @auth(rules: [{ allow: public }]) {
   exactAddress: String
   lat: Float
   lng: Float
+  isBlocked: Boolean
   push_token: String
   Orders: [Order] @hasMany(indexName: "byUser", fields: ["id"])
 }
