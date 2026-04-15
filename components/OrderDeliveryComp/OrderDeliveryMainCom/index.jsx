@@ -39,16 +39,31 @@ const DELIVERY_FLOW = {
 /**
  * 🎯 BUTTON TITLES
  */
-const STATUS_CONFIG = {
-  READY_FOR_PICKUP: { title: "Waiting for acceptance" },
-  ACCEPTED: { title: "Go to Pickup" },
-  ARRIVED_PICKUP: { title: "Confirm Arrival" },
-  LOADING: { title: "Start Loading" },
-  PICKED_UP: { title: "Start Trip" },
-  IN_TRANSIT: { title: "Navigate to Dropoff" },
-  ARRIVED_DROPOFF: { title: "Confirm Arrival" },
-  UNLOADING: { title: "Unload Package" },
-  DELIVERED: { title: "Completed" },
+const getStatusConfig = (isMaxi) => {
+  if (isMaxi) {
+    return {
+      READY_FOR_PICKUP: { title: "Waiting for acceptance" },
+      ACCEPTED: { title: "Arrived at Pickup" },
+      ARRIVED_PICKUP: { title: "Start Loading" },
+      LOADING: { title: "Confirm Loaded" },
+      PICKED_UP: { title: "Start Trip" },
+      IN_TRANSIT: { title: "Arrived at Dropoff" },
+      ARRIVED_DROPOFF: { title: "Start Unloading" },
+      UNLOADING: { title: "Finish Delivery" },
+      DELIVERED: { title: "Completed" },
+    };
+  }
+
+  // ✅ MOTO / MICRO FLOW
+  return {
+    READY_FOR_PICKUP: { title: "Waiting for acceptance" },
+    ACCEPTED: { title: "Arrived at Pickup" },
+    ARRIVED_PICKUP: { title: "Pick Up Package" }, // ✅ FIX
+    PICKED_UP: { title: "Start Trip" },
+    IN_TRANSIT: { title: "Arrived at Dropoff" },
+    ARRIVED_DROPOFF: { title: "Confirm Delivery" }, // ✅ FIX
+    DELIVERED: { title: "Completed" },
+  };
 };
 
 const OrderdeliveryMainCom = ({ order, user }) => {
@@ -162,7 +177,9 @@ const OrderdeliveryMainCom = ({ order, user }) => {
   /**
    * 🎯 BUTTON TEXT
    */
-  const buttonTitle = STATUS_CONFIG[order?.status]?.title || "Continue";
+  const statusConfig = getStatusConfig(isMaxi);
+
+  const buttonTitle = statusConfig[order?.status]?.title || "Continue";
 
   if (!order) {
     return <ActivityIndicator style={{ marginTop: 100 }} size="large" />;
@@ -190,8 +207,14 @@ const OrderdeliveryMainCom = ({ order, user }) => {
         snapPoints={snapPoints}
         index={0}
         handleIndicatorStyle={styles.handle}
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore"
+        enablePanDownToClose={false}
       >
-        <BottomSheetScrollView>
+        <BottomSheetScrollView
+          contentContainerStyle={{ paddingBottom: 250 }}
+          keyboardShouldPersistTaps="handled"
+        >
           <BottomSheetHeader />
 
           <OrderDetails

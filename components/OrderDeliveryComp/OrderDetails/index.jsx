@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import styles from "./styles";
 
-
 /**
  * 📊 GET FLOW (NO DUPLICATION)
  */
@@ -164,6 +163,7 @@ const OrderDetails = ({
             placeholder="Enter code"
             style={styles.input}
             keyboardType="number-pad"
+            maxLength={6}
           />
         </View>
       )}
