@@ -1,151 +1,213 @@
-import { View, Text, Pressable} from 'react-native'
-import React, { useState, useRef, useMemo } from 'react'
-import BottomSheet, { BottomSheetScrollView,} from '@gorhom/bottom-sheet';
-import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import OrderDeliveryMap from '../OrderDeliveryMap';
-import BottomSheetHeader from '../BottomSheetOrderHeader';
-import OrderDetails from  '../OrderDetails';
-import styles from './styles';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
-import {useOrderContext} from '@/providers/OrderProvider';
+import Ionicons from "@expo/vector-icons/Ionicons";
+import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { router } from "expo-router";
+import { useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Pressable } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-// Variable to show button name in OrderDetails Screen
-const STATUS_TO_TITLE = {
-  BIDDING: 'Place Bid',
-  READY_FOR_PICKUP: 'Accept Order',
-  ACCEPTED: 'Go to Pickup',
-  ARRIVED_PICKUP: 'Confirm Pickup',
-  LOADING: 'Confirm Pickup',
-  IN_TRANSIT: 'Navigate to Dropoff',
-  ARRIVED_DROPOFF: 'Confirm Arrival',
-  UNLOADING: 'Complete Delivery',
-  DELIVERED: 'Done'
-}
+import BottomSheetHeader from "../BottomSheetOrderHeader";
+import OrderDeliveryMap from "../OrderDeliveryMap";
+import OrderDetails from "../OrderDetails";
+import styles from "./styles";
 
-const OrderdeliveryMainCom = ({order, user}) => {
+import { useOrderContext } from "@/providers/OrderProvider";
+
+/**
+ * 🚀 DELIVERY FLOW (SINGLE SOURCE)
+ */
+const DELIVERY_FLOW = {
+  DEFAULT: [
+    "ACCEPTED",
+    "ARRIVED_PICKUP",
+    "PICKED_UP",
+    "IN_TRANSIT",
+    "ARRIVED_DROPOFF",
+    "DELIVERED",
+  ],
+  MAXI: [
+    "ACCEPTED",
+    "ARRIVED_PICKUP",
+    "LOADING",
+    "PICKED_UP",
+    "IN_TRANSIT",
+    "ARRIVED_DROPOFF",
+    "UNLOADING",
+    "DELIVERED",
+  ],
+};
+
+/**
+ * 🎯 BUTTON TITLES
+ */
+const STATUS_CONFIG = {
+  READY_FOR_PICKUP: { title: "Waiting for acceptance" },
+  ACCEPTED: { title: "Go to Pickup" },
+  ARRIVED_PICKUP: { title: "Confirm Arrival" },
+  LOADING: { title: "Start Loading" },
+  PICKED_UP: { title: "Start Trip" },
+  IN_TRANSIT: { title: "Navigate to Dropoff" },
+  ARRIVED_DROPOFF: { title: "Confirm Arrival" },
+  UNLOADING: { title: "Unload Package" },
+  DELIVERED: { title: "Completed" },
+};
+
+const OrderdeliveryMainCom = ({ order, user }) => {
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [loadingAction, setLoadingAction] = useState(false);
 
-  const bottomSheetRef = useRef(null)
-  const snapPoints = useMemo(()=>['15%', '75%', '95%'], [])
+  const bottomSheetRef = useRef(null);
+  const snapPoints = useMemo(() => ["30%", "75%", "90%"], []);
 
-  const {mapRef, location,isCourierclose, isPickedUp, setIsPickedUp, acceptOrder, pickUpOrder, completeOrder} = useOrderContext();
+  const {
+    mapRef,
+    location,
+    isCourierclose,
+    updateOrderStatus,
+    completeOrder,
+    totalMins,
+  } = useOrderContext();
 
-  // Function of the Button on OrderDetails Screen when pressed
-  const onButtonPressed = async ()=>{
+  /**
+   * 🧠 FLOW
+   */
+  const isMaxi = order?.transportationType === "MAXI";
 
-    if (!order) {
-      console.warn("Order not available");
-      return;
+  const flow = useMemo(() => {
+    return isMaxi ? DELIVERY_FLOW.MAXI : DELIVERY_FLOW.DEFAULT;
+  }, [isMaxi]);
+
+  /**
+   * 🎯 NEXT STATUS
+   */
+  const nextStatus = useMemo(() => {
+    if (!order?.status) return null;
+
+    const index = flow.indexOf(order.status);
+    if (index === -1) return null;
+
+    return flow[index + 1] || null;
+  }, [order?.status, flow]);
+
+  /**
+   * 🗺 Animate
+   */
+  const animateToUser = () => {
+    if (!location) return;
+
+    mapRef.current?.animateToRegion({
+      latitude: location.latitude,
+      longitude: location.longitude,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    });
+  };
+
+  /**
+   * 🔥 MAIN ACTION
+   */
+  const onButtonPressed = async () => {
+    if (!order || loadingAction || !nextStatus) return;
+
+    setLoadingAction(true);
+
+    try {
+      console.log("CURRENT:", order.status);
+      console.log("NEXT:", nextStatus);
+
+      if (nextStatus === "DELIVERED") {
+        const success = await completeOrder(order.id);
+
+        if (success) {
+          router.replace("/home");
+        }
+      } else {
+        await updateOrderStatus(order.id, nextStatus);
+      }
+
+      bottomSheetRef.current?.collapse();
+      animateToUser();
+    } catch (e) {
+      console.error("Action error:", e);
+    } finally {
+      setLoadingAction(false);
+    }
+  };
+
+  /**
+   * 🔒 DISABLE BUTTON
+   */
+  const isButtonDisabled = useMemo(() => {
+    if (!isMapLoaded || loadingAction) return true;
+
+    if (order?.status === "READY_FOR_PICKUP") return true;
+
+    const proximityRequired = ["ACCEPTED", "ARRIVED_PICKUP", "ARRIVED_DROPOFF"];
+
+    if (proximityRequired.includes(order?.status)) {
+      return !isCourierclose;
     }
 
-    if(order?.status === 'READY_FOR_PICKUP'){
-      const accepted = await acceptOrder(order);
+    return false;
+  }, [order?.status, isCourierclose, isMapLoaded, loadingAction]);
 
-      if (!accepted) return; // If order was not accepted due to restrictions, exit function
+  /**
+   * 📦 PICKED STATE
+   */
+  const deliveryPickedUp = useMemo(() => {
+    return ["PICKED_UP", "IN_TRANSIT", "ARRIVED_DROPOFF", "UNLOADING"].includes(
+      order?.status,
+    );
+  }, [order?.status]);
 
-      bottomSheetRef.current?.collapse()
-      mapRef.current.animateToRegion({
-        latitude: location?.latitude,
-        longitude:location?.longitude,
-        latitudeDelta:0.01,
-        longitudeDelta:0.01
-      })
-      
-    }
+  /**
+   * 🎯 BUTTON TEXT
+   */
+  const buttonTitle = STATUS_CONFIG[order?.status]?.title || "Continue";
 
-    if(order?.status === 'ACCEPTED'){
-      bottomSheetRef.current?.collapse()
-      mapRef.current.animateToRegion({
-        latitude: location?.latitude,
-        longitude:location?.longitude,
-        latitudeDelta:0.01,
-        longitudeDelta:0.01
-      })
-      // setDeliveryStatus(ORDER_STATUSES.PICKEDUP)
-      await pickUpOrder();
-      setIsPickedUp(true);
-    }
-
-    if(order?.status === 'PICKEDUP' && isPickedUp){
-      bottomSheetRef.current?.collapse()
-      mapRef.current.animateToRegion({
-        latitude: location?.latitude,
-        longitude:location?.longitude,
-        latitudeDelta:0.01,
-        longitudeDelta:0.01
-      })
-      await completeOrder(order.id);
-      router.push('/home');
-    }
+  if (!order) {
+    return <ActivityIndicator style={{ marginTop: 100 }} size="large" />;
   }
-
-  // Function for Disabling the Button in OrderDetails Screen
-  const isButtonDisabled =()=>{
-
-    if (!isMapLoaded) {
-      return true; // Disable if map hasn't loaded
-    }
-
-    if (order?.status === 'READY_FOR_PICKUP'){
-      return false;
-    }
-
-    if (order?.status === 'ACCEPTED' && isCourierclose){
-      return false;
-    }
-
-    if (order?.status === 'PICKEDUP' && isCourierclose){
-      return false;
-    }
-
-    return true;
-  }
-
-  // variable to show in Order Details Screen
-  const deliveryPickedUp = useMemo(() => order?.status === 'PICKEDUP', [order?.status]);
 
   return (
     <GestureHandlerRootView style={styles.container}>
-
-      <OrderDeliveryMap 
+      {/* MAP */}
+      <OrderDeliveryMap
         order={order}
         user={user}
-        onMapReady={() => setIsMapLoaded(true)} 
+        onMapReady={() => setIsMapLoaded(true)}
       />
 
-      {/* Back Button */}
-      {
-        order?.status === 'READY_FOR_PICKUP' &&
-        <Pressable onPress={()=>router.back()} style={styles.bckBtn}>
-          <Ionicons name="arrow-back" style={styles.bckBtnIcon} />
+      {/* BACK */}
+      {order?.status === "READY_FOR_PICKUP" && (
+        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" style={styles.backIcon} />
         </Pressable>
-      }
+      )}
 
-      <BottomSheet 
-      ref={bottomSheetRef}
-      snapPoints={snapPoints} 
-      index={0} 
-      topInset={0} // Ensure no inset from the top
-      handleIndicatorStyle={{backgroundColor:'#666768', width:80}}>
+      {/* SHEET */}
+      <BottomSheet
+        ref={bottomSheetRef}
+        snapPoints={snapPoints}
+        index={0}
+        handleIndicatorStyle={styles.handle}
+      >
         <BottomSheetScrollView>
-
-          <BottomSheetHeader/>
+          <BottomSheetHeader />
 
           <OrderDetails
-          order={order}
-          user={user}
-          deliveryPickedUp={deliveryPickedUp}
-          isButtonDisabled={isButtonDisabled}
-          statusTitle = {STATUS_TO_TITLE}
-          // renderButtonTitle={renderButtonTitle}
-          onButtonPressed={onButtonPressed}
+            order={order}
+            user={user}
+            deliveryPickedUp={deliveryPickedUp}
+            isButtonDisabled={isButtonDisabled}
+            buttonTitle={buttonTitle}
+            onButtonPressed={onButtonPressed}
+            loading={loadingAction}
+            totalMins={totalMins}
           />
-
         </BottomSheetScrollView>
       </BottomSheet>
     </GestureHandlerRootView>
-  )
-}
+  );
+};
 
 export default OrderdeliveryMainCom;

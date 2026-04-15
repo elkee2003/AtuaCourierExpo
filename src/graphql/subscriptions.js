@@ -166,6 +166,606 @@ export const onDeleteCourierCompany = /* GraphQL */ `
     }
   }
 `;
+export const onCreatePayout = /* GraphQL */ `
+  subscription OnCreatePayout($filter: ModelSubscriptionPayoutFilterInput) {
+    onCreatePayout(filter: $filter) {
+      id
+      courierID
+      amount
+      status
+      bankName
+      accountNumber
+      reference
+      walletID
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const onUpdatePayout = /* GraphQL */ `
+  subscription OnUpdatePayout($filter: ModelSubscriptionPayoutFilterInput) {
+    onUpdatePayout(filter: $filter) {
+      id
+      courierID
+      amount
+      status
+      bankName
+      accountNumber
+      reference
+      walletID
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const onDeletePayout = /* GraphQL */ `
+  subscription OnDeletePayout($filter: ModelSubscriptionPayoutFilterInput) {
+    onDeletePayout(filter: $filter) {
+      id
+      courierID
+      amount
+      status
+      bankName
+      accountNumber
+      reference
+      walletID
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const onCreateTransaction = /* GraphQL */ `
+  subscription OnCreateTransaction(
+    $filter: ModelSubscriptionTransactionFilterInput
+  ) {
+    onCreateTransaction(filter: $filter) {
+      id
+      walletID
+      type
+      amount
+      description
+      orderID
+      paymentID
+      status
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const onUpdateTransaction = /* GraphQL */ `
+  subscription OnUpdateTransaction(
+    $filter: ModelSubscriptionTransactionFilterInput
+  ) {
+    onUpdateTransaction(filter: $filter) {
+      id
+      walletID
+      type
+      amount
+      description
+      orderID
+      paymentID
+      status
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const onDeleteTransaction = /* GraphQL */ `
+  subscription OnDeleteTransaction(
+    $filter: ModelSubscriptionTransactionFilterInput
+  ) {
+    onDeleteTransaction(filter: $filter) {
+      id
+      walletID
+      type
+      amount
+      description
+      orderID
+      paymentID
+      status
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const onCreateWallet = /* GraphQL */ `
+  subscription OnCreateWallet($filter: ModelSubscriptionWalletFilterInput) {
+    onCreateWallet(filter: $filter) {
+      id
+      ownerID
+      ownerType
+      balance
+      pendingBalance
+      totalEarnings
+      transactions {
+        nextToken
+        startedAt
+        __typename
+      }
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const onUpdateWallet = /* GraphQL */ `
+  subscription OnUpdateWallet($filter: ModelSubscriptionWalletFilterInput) {
+    onUpdateWallet(filter: $filter) {
+      id
+      ownerID
+      ownerType
+      balance
+      pendingBalance
+      totalEarnings
+      transactions {
+        nextToken
+        startedAt
+        __typename
+      }
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const onDeleteWallet = /* GraphQL */ `
+  subscription OnDeleteWallet($filter: ModelSubscriptionWalletFilterInput) {
+    onDeleteWallet(filter: $filter) {
+      id
+      ownerID
+      ownerType
+      balance
+      pendingBalance
+      totalEarnings
+      transactions {
+        nextToken
+        startedAt
+        __typename
+      }
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const onCreatePayment = /* GraphQL */ `
+  subscription OnCreatePayment($filter: ModelSubscriptionPaymentFilterInput) {
+    onCreatePayment(filter: $filter) {
+      id
+      orderID
+      userID
+      amount
+      currency
+      status
+      paymentMethod
+      provider
+      reference
+      order {
+        id
+        recipientName
+        recipientNumber
+        recipientNumber2
+        orderDetails
+        originAddress
+        originState
+        originLat
+        originLng
+        destinationAddress
+        destinationState
+        destinationLat
+        destinationLng
+        tripType
+        distance
+        transportationType
+        vehicleClass
+        status
+        loadCategory
+        isInterState
+        estimatedMinPrice
+        estimatedMaxPrice
+        initialOfferPrice
+        loadingFee
+        unloadingFee
+        floorSurcharge
+        fragileSurcharge
+        extrasTotal
+        totalPrice
+        courierEarnings
+        commissionAmount
+        platformFee
+        platformServiceRevenue
+        vatAmount
+        platformNetRevenue
+        deliveryVerificationCode
+        declaredWeightBracket
+        senderPreTransferPhotos
+        senderPreTransferVideo
+        senderPreTransferRecordedAt
+        senderPreTransferLocalPhotos
+        senderPreTransferLocalVideo
+        mediaUploadStatus
+        courierPreTransferPhotos
+        courierPreTransferVideo
+        courierPreTransferRecordedAt
+        courierPostLoadingPhotos
+        courierPostLoadingVideo
+        dropoffArrivalPhotos
+        dropoffArrivalVideo
+        postDeliveryPhotos
+        postDeliveryVideo
+        pickupLoadingResponsibility
+        pickupFloorLevel
+        pickupFloorLevelPrice
+        pickupHasElevator
+        dropoffUnloadingResponsibility
+        dropoffFloorLevel
+        dropoffFloorLevelPrice
+        dropoffHasElevator
+        acceptedAt
+        arrivedPickupAt
+        loadingStartedAt
+        tripStartedAt
+        arrivedDropoffAt
+        unloadingCompletedAt
+        logisticsCompanyId
+        waybillNumber
+        waybillPhoto
+        logisticsTrackingCode
+        logisticsTrackingStatus
+        handedOverToLogisticsAt
+        logisticsIntakeConfirmedAt
+        acceptedOfferID
+        paymentStatus
+        paymentID
+        payoutStatus
+        fundsStatus
+        assignedCourierId
+        assignmentExpiresAt
+        assignmentAttempts
+        lastAssignedAt
+        rejectedCourierIds
+        assignmentStatus
+        userID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      user {
+        id
+        sub
+        firstName
+        lastName
+        email
+        phoneNumber
+        profilePic
+        address
+        exactAddress
+        lat
+        lng
+        isBlocked
+        push_token
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const onUpdatePayment = /* GraphQL */ `
+  subscription OnUpdatePayment($filter: ModelSubscriptionPaymentFilterInput) {
+    onUpdatePayment(filter: $filter) {
+      id
+      orderID
+      userID
+      amount
+      currency
+      status
+      paymentMethod
+      provider
+      reference
+      order {
+        id
+        recipientName
+        recipientNumber
+        recipientNumber2
+        orderDetails
+        originAddress
+        originState
+        originLat
+        originLng
+        destinationAddress
+        destinationState
+        destinationLat
+        destinationLng
+        tripType
+        distance
+        transportationType
+        vehicleClass
+        status
+        loadCategory
+        isInterState
+        estimatedMinPrice
+        estimatedMaxPrice
+        initialOfferPrice
+        loadingFee
+        unloadingFee
+        floorSurcharge
+        fragileSurcharge
+        extrasTotal
+        totalPrice
+        courierEarnings
+        commissionAmount
+        platformFee
+        platformServiceRevenue
+        vatAmount
+        platformNetRevenue
+        deliveryVerificationCode
+        declaredWeightBracket
+        senderPreTransferPhotos
+        senderPreTransferVideo
+        senderPreTransferRecordedAt
+        senderPreTransferLocalPhotos
+        senderPreTransferLocalVideo
+        mediaUploadStatus
+        courierPreTransferPhotos
+        courierPreTransferVideo
+        courierPreTransferRecordedAt
+        courierPostLoadingPhotos
+        courierPostLoadingVideo
+        dropoffArrivalPhotos
+        dropoffArrivalVideo
+        postDeliveryPhotos
+        postDeliveryVideo
+        pickupLoadingResponsibility
+        pickupFloorLevel
+        pickupFloorLevelPrice
+        pickupHasElevator
+        dropoffUnloadingResponsibility
+        dropoffFloorLevel
+        dropoffFloorLevelPrice
+        dropoffHasElevator
+        acceptedAt
+        arrivedPickupAt
+        loadingStartedAt
+        tripStartedAt
+        arrivedDropoffAt
+        unloadingCompletedAt
+        logisticsCompanyId
+        waybillNumber
+        waybillPhoto
+        logisticsTrackingCode
+        logisticsTrackingStatus
+        handedOverToLogisticsAt
+        logisticsIntakeConfirmedAt
+        acceptedOfferID
+        paymentStatus
+        paymentID
+        payoutStatus
+        fundsStatus
+        assignedCourierId
+        assignmentExpiresAt
+        assignmentAttempts
+        lastAssignedAt
+        rejectedCourierIds
+        assignmentStatus
+        userID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      user {
+        id
+        sub
+        firstName
+        lastName
+        email
+        phoneNumber
+        profilePic
+        address
+        exactAddress
+        lat
+        lng
+        isBlocked
+        push_token
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const onDeletePayment = /* GraphQL */ `
+  subscription OnDeletePayment($filter: ModelSubscriptionPaymentFilterInput) {
+    onDeletePayment(filter: $filter) {
+      id
+      orderID
+      userID
+      amount
+      currency
+      status
+      paymentMethod
+      provider
+      reference
+      order {
+        id
+        recipientName
+        recipientNumber
+        recipientNumber2
+        orderDetails
+        originAddress
+        originState
+        originLat
+        originLng
+        destinationAddress
+        destinationState
+        destinationLat
+        destinationLng
+        tripType
+        distance
+        transportationType
+        vehicleClass
+        status
+        loadCategory
+        isInterState
+        estimatedMinPrice
+        estimatedMaxPrice
+        initialOfferPrice
+        loadingFee
+        unloadingFee
+        floorSurcharge
+        fragileSurcharge
+        extrasTotal
+        totalPrice
+        courierEarnings
+        commissionAmount
+        platformFee
+        platformServiceRevenue
+        vatAmount
+        platformNetRevenue
+        deliveryVerificationCode
+        declaredWeightBracket
+        senderPreTransferPhotos
+        senderPreTransferVideo
+        senderPreTransferRecordedAt
+        senderPreTransferLocalPhotos
+        senderPreTransferLocalVideo
+        mediaUploadStatus
+        courierPreTransferPhotos
+        courierPreTransferVideo
+        courierPreTransferRecordedAt
+        courierPostLoadingPhotos
+        courierPostLoadingVideo
+        dropoffArrivalPhotos
+        dropoffArrivalVideo
+        postDeliveryPhotos
+        postDeliveryVideo
+        pickupLoadingResponsibility
+        pickupFloorLevel
+        pickupFloorLevelPrice
+        pickupHasElevator
+        dropoffUnloadingResponsibility
+        dropoffFloorLevel
+        dropoffFloorLevelPrice
+        dropoffHasElevator
+        acceptedAt
+        arrivedPickupAt
+        loadingStartedAt
+        tripStartedAt
+        arrivedDropoffAt
+        unloadingCompletedAt
+        logisticsCompanyId
+        waybillNumber
+        waybillPhoto
+        logisticsTrackingCode
+        logisticsTrackingStatus
+        handedOverToLogisticsAt
+        logisticsIntakeConfirmedAt
+        acceptedOfferID
+        paymentStatus
+        paymentID
+        payoutStatus
+        fundsStatus
+        assignedCourierId
+        assignmentExpiresAt
+        assignmentAttempts
+        lastAssignedAt
+        rejectedCourierIds
+        assignmentStatus
+        userID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      user {
+        id
+        sub
+        firstName
+        lastName
+        email
+        phoneNumber
+        profilePic
+        address
+        exactAddress
+        lat
+        lng
+        isBlocked
+        push_token
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
 export const onCreateOffer = /* GraphQL */ `
   subscription OnCreateOffer($filter: ModelSubscriptionOfferFilterInput) {
     onCreateOffer(filter: $filter) {
@@ -246,6 +846,10 @@ export const onCreateOffer = /* GraphQL */ `
         handedOverToLogisticsAt
         logisticsIntakeConfirmedAt
         acceptedOfferID
+        paymentStatus
+        paymentID
+        payoutStatus
+        fundsStatus
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -305,6 +909,7 @@ export const onCreateOffer = /* GraphQL */ `
         currentMaxiCount
         lastBatchAssignedAt
         statusKey
+        walletID
         createdAt
         updatedAt
         _version
@@ -404,6 +1009,10 @@ export const onUpdateOffer = /* GraphQL */ `
         handedOverToLogisticsAt
         logisticsIntakeConfirmedAt
         acceptedOfferID
+        paymentStatus
+        paymentID
+        payoutStatus
+        fundsStatus
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -463,6 +1072,7 @@ export const onUpdateOffer = /* GraphQL */ `
         currentMaxiCount
         lastBatchAssignedAt
         statusKey
+        walletID
         createdAt
         updatedAt
         _version
@@ -562,6 +1172,10 @@ export const onDeleteOffer = /* GraphQL */ `
         handedOverToLogisticsAt
         logisticsIntakeConfirmedAt
         acceptedOfferID
+        paymentStatus
+        paymentID
+        payoutStatus
+        fundsStatus
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -621,6 +1235,7 @@ export const onDeleteOffer = /* GraphQL */ `
         currentMaxiCount
         lastBatchAssignedAt
         statusKey
+        walletID
         createdAt
         updatedAt
         _version
@@ -717,6 +1332,10 @@ export const onCreateOrder = /* GraphQL */ `
       handedOverToLogisticsAt
       logisticsIntakeConfirmedAt
       acceptedOfferID
+      paymentStatus
+      paymentID
+      payoutStatus
+      fundsStatus
       assignedCourierId
       assignmentExpiresAt
       assignmentAttempts
@@ -773,11 +1392,17 @@ export const onCreateOrder = /* GraphQL */ `
         currentMaxiCount
         lastBatchAssignedAt
         statusKey
+        walletID
         createdAt
         updatedAt
         _version
         _deleted
         _lastChangedAt
+        __typename
+      }
+      payments {
+        nextToken
+        startedAt
         __typename
       }
       createdAt
@@ -866,6 +1491,10 @@ export const onUpdateOrder = /* GraphQL */ `
       handedOverToLogisticsAt
       logisticsIntakeConfirmedAt
       acceptedOfferID
+      paymentStatus
+      paymentID
+      payoutStatus
+      fundsStatus
       assignedCourierId
       assignmentExpiresAt
       assignmentAttempts
@@ -922,11 +1551,17 @@ export const onUpdateOrder = /* GraphQL */ `
         currentMaxiCount
         lastBatchAssignedAt
         statusKey
+        walletID
         createdAt
         updatedAt
         _version
         _deleted
         _lastChangedAt
+        __typename
+      }
+      payments {
+        nextToken
+        startedAt
         __typename
       }
       createdAt
@@ -1015,6 +1650,10 @@ export const onDeleteOrder = /* GraphQL */ `
       handedOverToLogisticsAt
       logisticsIntakeConfirmedAt
       acceptedOfferID
+      paymentStatus
+      paymentID
+      payoutStatus
+      fundsStatus
       assignedCourierId
       assignmentExpiresAt
       assignmentAttempts
@@ -1071,11 +1710,17 @@ export const onDeleteOrder = /* GraphQL */ `
         currentMaxiCount
         lastBatchAssignedAt
         statusKey
+        walletID
         createdAt
         updatedAt
         _version
         _deleted
         _lastChangedAt
+        __typename
+      }
+      payments {
+        nextToken
+        startedAt
         __typename
       }
       createdAt
@@ -1143,6 +1788,21 @@ export const onCreateCourier = /* GraphQL */ `
         startedAt
         __typename
       }
+      walletID
+      wallet {
+        id
+        ownerID
+        ownerType
+        balance
+        pendingBalance
+        totalEarnings
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
       createdAt
       updatedAt
       _version
@@ -1206,6 +1866,21 @@ export const onUpdateCourier = /* GraphQL */ `
       orders {
         nextToken
         startedAt
+        __typename
+      }
+      walletID
+      wallet {
+        id
+        ownerID
+        ownerType
+        balance
+        pendingBalance
+        totalEarnings
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
         __typename
       }
       createdAt
@@ -1273,6 +1948,21 @@ export const onDeleteCourier = /* GraphQL */ `
         startedAt
         __typename
       }
+      walletID
+      wallet {
+        id
+        ownerID
+        ownerType
+        balance
+        pendingBalance
+        totalEarnings
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
       createdAt
       updatedAt
       _version
@@ -1299,6 +1989,11 @@ export const onCreateUser = /* GraphQL */ `
       isBlocked
       push_token
       Orders {
+        nextToken
+        startedAt
+        __typename
+      }
+      payments {
         nextToken
         startedAt
         __typename
@@ -1333,6 +2028,11 @@ export const onUpdateUser = /* GraphQL */ `
         startedAt
         __typename
       }
+      payments {
+        nextToken
+        startedAt
+        __typename
+      }
       createdAt
       updatedAt
       _version
@@ -1359,6 +2059,11 @@ export const onDeleteUser = /* GraphQL */ `
       isBlocked
       push_token
       Orders {
+        nextToken
+        startedAt
+        __typename
+      }
+      payments {
         nextToken
         startedAt
         __typename

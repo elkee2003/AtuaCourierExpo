@@ -1,4 +1,3 @@
-// BottomContainer.tsx
 import React from "react";
 import { Pressable, Text, View } from "react-native";
 import styles from "./styles";
@@ -6,23 +5,12 @@ import styles from "./styles";
 const BottomContainer = ({
   isOnline,
   isApproved,
-  orders,
   stats,
   onRefresh,
   onToggleOnline,
   transportationType,
 }) => {
-  const batchJobs = orders.filter(
-    (o) =>
-      o.transportationType === "MICRO_BATCH" ||
-      o.transportationType === "MOTO_BATCH",
-  );
-
-  const expressJobs = orders.filter(
-    (o) =>
-      o.transportationType === "MICRO_EXPRESS" ||
-      o.transportationType === "MOTO_EXPRESS",
-  );
+  const isMaxi = transportationType === "MAXI";
 
   return (
     <View style={styles.wrapper}>
@@ -40,16 +28,16 @@ const BottomContainer = ({
             <Text style={styles.statusTitle}>
               {isOnline ? "You're Online" : "You're Offline"}
             </Text>
+
             <Text style={styles.statusSubtitle}>
               {isOnline
                 ? "Receiving delivery requests nearby"
                 : "Go online to start receiving orders"}
             </Text>
 
-            {/* 🚫 NOT APPROVED MESSAGE */}
             {!isApproved && (
               <Text style={styles.warningText}>
-                Your account is under review. You’ll be able to go online once
+                Your account is under review. You'll be able to go online once
                 approved.
               </Text>
             )}
@@ -74,39 +62,39 @@ const BottomContainer = ({
         </Pressable>
       </View>
 
-      {/* LIVE STATS */}
+      {/* 🔥 LIVE STATS */}
       {isOnline && (
         <View style={styles.statsCard}>
           {/* TOTAL */}
           <View style={styles.statBox}>
             <Text style={styles.statNumber}>{stats.total}</Text>
-            <Text style={styles.statLabel}>Available Jobs</Text>
+            <Text style={styles.statLabel}>
+              {isMaxi ? "Maxi Jobs" : "Available Jobs"}
+            </Text>
           </View>
 
           <View style={styles.statDivider} />
 
-          {/* NEARBY (for ALL types including MAXI) */}
+          {/* NEARBY */}
           <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{stats.nearby} </Text>
+            <Text style={styles.statNumber}>{stats.nearby}</Text>
             <Text style={styles.statLabel}>Nearby Jobs</Text>
           </View>
 
-          {/* ✅ ONLY show for NON-MAXI */}
-          {transportationType !== "MAXI" && (
+          {/* 🔹 ONLY FOR MICRO / MOTO */}
+          {!isMaxi && (
             <>
               <View style={styles.statDivider} />
 
-              {/* BATCH */}
               <View style={styles.statBox}>
-                <Text style={styles.statNumber}>{batchJobs.length}</Text>
+                <Text style={styles.statNumber}>{stats.batch}</Text>
                 <Text style={styles.statLabel}>Batch Jobs</Text>
               </View>
 
               <View style={styles.statDivider} />
 
-              {/* EXPRESS */}
               <View style={styles.statBox}>
-                <Text style={styles.statNumber}>{expressJobs.length}</Text>
+                <Text style={styles.statNumber}>{stats.express}</Text>
                 <Text style={styles.statLabel}>Express Jobs</Text>
               </View>
             </>

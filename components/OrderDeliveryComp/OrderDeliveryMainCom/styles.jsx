@@ -1,63 +1,41 @@
+import { StyleSheet } from "react-native";
 
-import {StyleSheet} from 'react-native'
+export default StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F8FAFC", // light background
+  },
 
-const styles = StyleSheet.create({
-    container:{
-        flex:1,
-        backgroundColor:"#666768"
-    },
-    bottomSheet:{
-        flex:1,
-        backgroundColor:"#c2c0c0"
-    },
-    bckBtn:{
-        position:'absolute',
-        top:25,
-        left:10,
-        height:35,
-        width:35,
-        borderRadius:10,
-        backgroundColor:'#d8d3d3',
-        zIndex:2,
-        justifyContent:'center',
-        alignItems:'center'
-    },
-    bckBtnIcon:{
-        fontSize:30,
-        color:'#6e6d6d',
-    },
-    pendingOrderText:{
-        fontSize:18,
-        color:'#c01c10',
-        textAlign:'center',
-        fontWeight:'bold',
-    },
-    isFinished:{
-        flexDirection:'row',
-        alignItems:"center",
-        justifyContent:'center',
-        backgroundColor:'#000000',
-        borderRadius:30,
-        width:200,
-        padding:5,
-        marginVertical: 5,
-    },
-    isFinishedText:{
-        fontSize:20,
-        fontWeight:'bold',
-        color:'white',
-    },
+  /* BACK BUTTON */
+  backBtn: {
+    position: "absolute",
+    top: 40,
+    left: 16,
+    height: 42,
+    width: 42,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
 
-    // userBackgroundDrop:{
-    //     backgroundColor:'#09ff00',
-    //     borderRadius:70,
-    //     width:30,
-    //     height:30,
-    //     alignItems:'center',
-    //     justifyContent:'center',
-    //     marginHorizontal:10,
-    // },
-   
-})
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 4,
+  },
 
-export default styles;
+  backIcon: {
+    fontSize: 22,
+    color: "#1F2937", // dark gray instead of black
+  },
+
+  /* BOTTOM SHEET HANDLE */
+  handle: {
+    backgroundColor: "#D1D5DB", // soft gray instead of bluish tint
+    width: 60,
+    height: 5,
+    borderRadius: 10,
+  },
+});

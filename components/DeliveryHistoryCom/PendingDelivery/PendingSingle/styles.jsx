@@ -3,10 +3,20 @@ import { StyleSheet } from "react-native";
 export default StyleSheet.create({
   card: {
     backgroundColor: "#fff",
-    borderRadius: 16,
+    borderRadius: 18,
     padding: 16,
-    marginBottom: 14,
-    elevation: 3,
+    marginBottom: 16,
+    elevation: 4,
+  },
+
+  expandHint: {
+    marginTop: 8,
+    fontSize: 12,
+    color: "#9CA3AF",
+  },
+
+  expandedContent: {
+    marginTop: 12,
   },
 
   rowBetween: {
@@ -34,7 +44,7 @@ export default StyleSheet.create({
   },
 
   routeContainer: {
-    marginTop: 12,
+    marginTop: 10,
   },
 
   label: {
@@ -54,12 +64,11 @@ export default StyleSheet.create({
     color: "#555",
   },
 
-  /* 🔵 PROGRESS */
+  /* PROGRESS */
   progressContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 14,
-    marginBottom: 6,
   },
 
   progressItem: {
@@ -79,9 +88,9 @@ export default StyleSheet.create({
     color: "#555",
   },
 
-  /* 📞 RECIPIENT */
+  /* RECIPIENT */
   recipientRow: {
-    marginTop: 10,
+    marginTop: 12,
   },
 
   phoneRow: {
@@ -101,20 +110,17 @@ export default StyleSheet.create({
     color: "#111",
   },
 
-  footer: {
-    marginTop: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
+  /* BUTTON */
+  primaryButton: {
+    marginTop: 14,
+    backgroundColor: "#2563EB",
+    paddingVertical: 12,
+    borderRadius: 12,
     alignItems: "center",
   },
 
-  footerHint: {
-    fontSize: 12,
-    color: "#888",
-  },
-
-  time: {
-    fontSize: 11,
-    color: "#aaa",
+  primaryText: {
+    color: "#fff",
+    fontWeight: "600",
   },
 });

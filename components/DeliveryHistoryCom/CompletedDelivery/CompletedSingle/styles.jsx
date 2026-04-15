@@ -5,13 +5,12 @@ export default StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 18,
     padding: 16,
-    marginBottom: 14,
+    marginBottom: 16,
     elevation: 4,
     shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 5 },
-    opacity: 0.95,
   },
 
   rowBetween: {
@@ -39,7 +38,7 @@ export default StyleSheet.create({
   },
 
   routeContainer: {
-    marginTop: 12,
+    marginTop: 10,
   },
 
   label: {
@@ -53,6 +52,7 @@ export default StyleSheet.create({
     color: "#111",
   },
 
+  /* PROGRESS */
   progressContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -76,6 +76,11 @@ export default StyleSheet.create({
     color: "#777",
   },
 
+  completedText: {
+    color: "#10b981",
+    fontWeight: "600",
+  },
+
   expandHint: {
     marginTop: 8,
     fontSize: 12,
@@ -83,7 +88,7 @@ export default StyleSheet.create({
   },
 
   expandedContent: {
-    marginTop: 10,
+    marginTop: 12,
   },
 
   divider: {
@@ -95,6 +100,7 @@ export default StyleSheet.create({
   metaRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    marginTop: 6,
   },
 
   meta: {
@@ -103,7 +109,7 @@ export default StyleSheet.create({
   },
 
   primaryButton: {
-    marginTop: 14,
+    marginTop: 16,
     backgroundColor: "#2563EB",
     paddingVertical: 12,
     borderRadius: 12,

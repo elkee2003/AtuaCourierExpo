@@ -48,15 +48,37 @@ const PendingDeliveryMain = () => {
     }
   };
 
+  // initial load
   useEffect(() => {
     fetchOrders();
+  }, [dbCourier?.id]);
 
-    const subscription = DataStore.observe(Order).subscribe(() => {
-      fetchOrders();
+  useEffect(() => {
+    if (!dbCourier?.id) return;
+
+    const sub = DataStore.observe(Order).subscribe(({ element }) => {
+      if (element.assignedCourierId !== dbCourier.id) return;
+
+      setOrders((prev) => {
+        const exists = prev.find((o) => o.id === element.id);
+
+        // remove if no longer active
+        if (!ACTIVE_STATUSES.includes(element.status)) {
+          return prev.filter((o) => o.id !== element.id);
+        }
+
+        // update existing
+        if (exists) {
+          return prev.map((o) => (o.id === element.id ? element : o));
+        }
+
+        // add new
+        return [element, ...prev];
+      });
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => sub.unsubscribe();
+  }, [dbCourier?.id]);
 
   if (loading) {
     return <ActivityIndicator size="large" style={styles.loader} />;

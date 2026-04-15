@@ -1,214 +1,312 @@
-import { Order, User } from "@/src/models";
+import { useAuthContext } from "@/providers/AuthProvider";
+import { Courier, Order, User } from "@/src/models";
 import { DataStore } from "aws-amplify/datastore";
-import React, {
+import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
-import { Alert } from "react-native";
-import { useAuthContext } from "./AuthProvider";
 
 const OrderContext = createContext({});
 
+/**
+ * 🚀 SINGLE SOURCE OF TRUTH
+ */
+const DELIVERY_FLOW = {
+  DEFAULT: [
+    "ACCEPTED",
+    "ARRIVED_PICKUP",
+    "PICKED_UP",
+    "IN_TRANSIT",
+    "ARRIVED_DROPOFF",
+    "DELIVERED",
+  ],
+  MAXI: [
+    "ACCEPTED",
+    "ARRIVED_PICKUP",
+    "LOADING",
+    "PICKED_UP",
+    "IN_TRANSIT",
+    "ARRIVED_DROPOFF",
+    "UNLOADING",
+    "DELIVERED",
+  ],
+};
+
+/**
+ * ❗ TERMINAL STATES (NEW)
+ */
+const TERMINAL_STATUSES = ["DELIVERED", "CANCELLED", "DISPUTED"];
+
 const OrderProvider = ({ children }) => {
   const { dbCourier } = useAuthContext();
+
   const [order, setOrder] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isPickedUp, setIsPickedUp] = useState(false);
+
   const mapRef = useRef(null);
   const [location, setLocation] = useState(null);
+
   const [totalMins, setTotalMins] = useState(0);
   const [totalKm, setTotalKm] = useState(0);
   const [isCourierclose, setIsCourierClose] = useState(false);
+
   const [activeOrders, setActiveOrders] = useState([]);
 
-  // Fetch Order and User
+  /**
+   * ✅ DERIVED STATE
+   */
+  const isPickedUp = useMemo(() => {
+    return ["PICKED_UP", "IN_TRANSIT", "ARRIVED_DROPOFF", "UNLOADING"].includes(
+      order?.status,
+    );
+  }, [order?.status]);
+
+  /**
+   * ✅ CURRENT FLOW
+   */
+  const currentFlow = useMemo(() => {
+    if (!order) return [];
+    return order.transportationType === "MAXI"
+      ? DELIVERY_FLOW.MAXI
+      : DELIVERY_FLOW.DEFAULT;
+  }, [order]);
+
+  /**
+   * =========================
+   * 🔹 FETCH ORDER
+   * =========================
+   */
   const fetchOrder = async (id) => {
+    if (!id) return;
+
     setLoading(true);
+
     try {
-      if (id) {
-        const foundOrder = await DataStore.query(Order, id);
+      const foundOrder = await DataStore.query(Order, id);
+      if (!foundOrder) return;
 
-        if (foundOrder) {
-          setOrder(foundOrder);
+      setOrder(foundOrder);
 
-          // Fetch the User related to the Order
-          const foundUser = await DataStore.query(User, foundOrder.userID);
-          setUser(foundUser);
-        }
+      if (foundOrder.userID) {
+        const foundUser = await DataStore.query(User, foundOrder.userID);
+        setUser(foundUser);
       }
     } catch (e) {
-      console.error("Error fetching Order", e.message);
+      console.error("Error fetching order:", e);
     } finally {
       setLoading(false);
     }
   };
 
-  // useEffect to observe updates
+  /**
+   * =========================
+   * 🔹 REALTIME
+   * =========================
+   */
   useEffect(() => {
-    if (!order) {
-      return;
-    }
+    if (!order?.id) return;
 
-    const subscription = DataStore.observe(Order, order.id).subscribe(
+    const sub = DataStore.observe(Order, order.id).subscribe(
       ({ opType, element }) => {
         if (opType === "UPDATE") {
-          fetchOrder(element.id);
+          setOrder(element);
         }
       },
     );
 
-    return () => subscription.unsubscribe();
+    return () => sub.unsubscribe();
   }, [order?.id]);
 
-  // Function to accept order
-  // const acceptOrder = async () => {
-  //   try {
-  //     const updatedOrder = await DataStore.save(
-  //       Order.copyOf(order, (updated) => {
-  //         updated.status = 'ACCEPTED';
-  //         updated.Courier = dbCourier;
-  //       })
-  //     );
-  //     setOrder(updatedOrder);
-  //   } catch (error) {
-  //     console.error('Error accepting order:', error.message);
-  //   }
-  // };
-
-  // New accept order
-  const acceptOrder = async (order) => {
-    const { transportationType } = order;
-
-    const isExpress = ["Moto X", "Micro X", "Maxi"].includes(
-      transportationType,
-    );
-
-    const isBatch = ["Micro Batch", "Moto Batch"].includes(transportationType);
-
-    const pickedUpExpressOrders = activeOrders.filter((o) =>
-      ["Moto X", "Micro X", "Maxi"].includes(o.transportationType),
-    );
-
-    const pickedUpBatchOrdersCount = activeOrders.filter((o) =>
-      ["Micro Batch", "Moto Batch"].includes(o.transportationType),
-    ).length;
-
-    // Business Rules
-    if (
-      isExpress &&
-      (pickedUpExpressOrders.length > 0 || pickedUpBatchOrdersCount > 0)
-    ) {
-      Alert.alert(
-        "Error",
-        "You cannot accept any other deliveries while handling X/Maxi delivery or batch deliveries.",
-      );
-      return false;
-    }
-
-    if (
-      isBatch &&
-      (pickedUpExpressOrders.length > 0 || pickedUpBatchOrdersCount >= 7)
-    ) {
-      Alert.alert(
-        "Error",
-        "You cannot accept beyond 7 batch deliveries or X deliveries.",
-      );
-      return false;
-    }
-
+  /**
+   * =========================
+   * 🔥 STRICT FLOW UPDATE + CANCEL/DISPUTE SUPPORT
+   * =========================
+   */
+  const updateOrderStatus = async (orderId, newStatus) => {
     try {
-      // Update the order in the database
-      const updatedOrder = await DataStore.save(
-        Order.copyOf(order, (updated) => {
-          updated.status = "ACCEPTED";
-          updated.Courier = dbCourier; // Assign to the current courier
-        }),
-      );
+      const current = await DataStore.query(Order, orderId);
+      if (!current) return false;
 
-      // Update the local state
-      const newPickedUpOrders = [...activeOrders, updatedOrder];
-      setActiveOrders(newPickedUpOrders);
-      setOrder(updatedOrder);
-      return true;
-    } catch (error) {
-      console.error("Error accepting order:", error.message);
-      return false;
-    }
-  };
-
-  // Pick up order function
-  const pickUpOrder = async () => {
-    try {
-      const updatedOrder = await DataStore.save(
-        Order.copyOf(order, (updated) => {
-          updated.status = "PICKEDUP";
-        }),
-      );
-      const newPickedUpOrders = [...activeOrders, updatedOrder];
-      setActiveOrders(newPickedUpOrders);
-      setOrder(updatedOrder);
-    } catch (error) {
-      console.error("Error picking up order:", error.message);
-    }
-  };
-
-  const completeOrder = async (orderId) => {
-    try {
-      // Fetch the latest order instance from DataStore
-      const orderToComplete = await DataStore.query(Order, orderId);
-
-      if (!orderToComplete) {
-        console.error("Order not found in DataStore:", orderId);
+      // ❗ If already terminal → block everything
+      if (TERMINAL_STATUSES.includes(current.status)) {
+        console.log("❌ Order already finished:", current.status);
         return false;
       }
 
-      // Update the order's status in the database
-      const updatedOrder = await DataStore.save(
-        Order.copyOf(orderToComplete, (updated) => {
-          updated.status = "DELIVERED"; // Update the status to "DELIVERED"
+      const now = new Date().toISOString();
+
+      /**
+       * ✅ ALLOW CANCEL / DISPUTE FROM ANY STATE
+       */
+      if (newStatus === "CANCELLED" || newStatus === "DISPUTED") {
+        const updated = await DataStore.save(
+          Order.copyOf(current, (u) => {
+            u.status = newStatus;
+          }),
+        );
+
+        setOrder(updated);
+        setActiveOrders((prev) => prev.filter((o) => o.id !== orderId));
+
+        return true;
+      }
+
+      /**
+       * 🔒 NORMAL FLOW (STRICT)
+       */
+      const flow =
+        current.transportationType === "MAXI"
+          ? DELIVERY_FLOW.MAXI
+          : DELIVERY_FLOW.DEFAULT;
+
+      const currentIndex = flow.indexOf(current.status);
+
+      if (currentIndex === -1) {
+        console.log("❌ Status not in flow:", current.status);
+        return false;
+      }
+
+      const nextStatus = flow[currentIndex + 1];
+
+      if (newStatus !== nextStatus) {
+        console.log("❌ Invalid transition:", current.status, "→", newStatus);
+        return false;
+      }
+
+      const updated = await DataStore.save(
+        Order.copyOf(current, (u) => {
+          u.status = newStatus;
+
+          if (newStatus === "ACCEPTED") u.acceptedAt = now;
+          if (newStatus === "ARRIVED_PICKUP") u.arrivedPickupAt = now;
+          if (newStatus === "LOADING") u.loadingStartedAt = now;
+          if (newStatus === "PICKED_UP") u.tripStartedAt = now;
+          if (newStatus === "ARRIVED_DROPOFF") u.arrivedDropoffAt = now;
+          if (newStatus === "DELIVERED") u.unloadingCompletedAt = now;
         }),
       );
 
-      // Update the activeOrders state by removing the completed order
-      console.log("Before completing the order:", activeOrders);
-      setActiveOrders((prevOrders) =>
-        prevOrders.filter((o) => o.id !== orderId),
-      );
-      console.log("After completing the order:", activeOrders);
-
-      console.log("Order completed:", updatedOrder);
+      setOrder(updated);
       return true;
-    } catch (error) {
-      console.error("Error completing order:", error);
+    } catch (e) {
+      console.error("Status update error:", e);
       return false;
     }
   };
+
+  /**
+   * =========================
+   * 🔹 COMPLETE (RESPECT FLOW)
+   * =========================
+   */
+  const completeOrder = async (orderId) => {
+    try {
+      const current = await DataStore.query(Order, orderId);
+      if (!current) return false;
+
+      if (TERMINAL_STATUSES.includes(current.status)) {
+        console.log("❌ Already completed/cancelled");
+        return false;
+      }
+
+      const flow =
+        current.transportationType === "MAXI"
+          ? DELIVERY_FLOW.MAXI
+          : DELIVERY_FLOW.DEFAULT;
+
+      const lastStep = flow[flow.length - 1];
+
+      if (current.status !== lastStep) {
+        console.log("❌ Cannot complete before final step");
+        return false;
+      }
+
+      const updated = await DataStore.save(
+        Order.copyOf(current, (u) => {
+          u.status = "DELIVERED";
+          u.unloadingCompletedAt = new Date().toISOString();
+        }),
+      );
+
+      setActiveOrders((prev) => prev.filter((o) => o.id !== orderId));
+      setOrder(updated);
+
+      if (current.transportationType === "MAXI" && dbCourier?.id) {
+        const courier = await DataStore.query(Courier, dbCourier.id);
+
+        if (courier) {
+          await DataStore.save(
+            Courier.copyOf(courier, (c) => {
+              c.currentMaxiCount = 0;
+            }),
+          );
+        }
+      }
+
+      return true;
+    } catch (e) {
+      console.error("Complete error:", e);
+      return false;
+    }
+  };
+
+  /**
+   * =========================
+   * 🔹 ACTIVE ORDERS
+   * =========================
+   */
+  useEffect(() => {
+    if (!dbCourier?.id) return;
+
+    const fetchActiveOrders = async () => {
+      try {
+        const orders = await DataStore.query(Order, (o) =>
+          o.assignedCourierId.eq(dbCourier.id),
+        );
+
+        setActiveOrders(
+          orders.filter((o) => !TERMINAL_STATUSES.includes(o.status)),
+        );
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    fetchActiveOrders();
+  }, [dbCourier?.id]);
 
   return (
     <OrderContext.Provider
       value={{
-        acceptOrder,
-        pickUpOrder,
-        completeOrder,
         order,
         user,
         loading,
+
         fetchOrder,
+        updateOrderStatus,
+        completeOrder,
+
         isPickedUp,
-        setIsPickedUp,
+        currentFlow,
+
         mapRef,
         location,
         setLocation,
+
         totalMins,
         setTotalMins,
         totalKm,
         setTotalKm,
+
         isCourierclose,
         setIsCourierClose,
+
+        activeOrders,
       }}
     >
       {children}
@@ -217,5 +315,4 @@ const OrderProvider = ({ children }) => {
 };
 
 export default OrderProvider;
-
 export const useOrderContext = () => useContext(OrderContext);

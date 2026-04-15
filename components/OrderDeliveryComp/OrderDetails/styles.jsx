@@ -1,78 +1,125 @@
-import { StyleSheet } from "react-native"
+import { StyleSheet } from "react-native";
 
-const styles = StyleSheet.create({
-    container:{
-        marginHorizontal:10,
-        marginTop:40,
-    },
-    details:{
-        flexDirection:'row',
-        alignItems:'center',
-        justifyContent:'space-between',
-        marginBottom:15,
-        gap:10,
-        
-    },
-    icon:{
-        backgroundColor:'#d2d5d8',
-        borderRadius:25,
-        borderWidth:2,
-        borderColor:'#6bff08',
-        justifyContent:'center',
-        alignItems:'center',
-        width:35,
-        height:35,
-    },
-    rIcon:{
-        backgroundColor:'#dae4e2',
-        borderRadius:25,
-        borderWidth:2,
-        borderColor:'#2c1f1f',
-        justifyContent:'center',
-        alignItems:'center',
-        width:50,
-        height:50,
-    },
-    tDetails:{
-        flex:1,
-        fontSize:24,
-        fontWeight:'bold',
-        color:'#1d1b1b',
-    },
-    divider:{
-        borderTopWidth:1,
-        borderColor:'#333333',
-        marginVertical:20,
-    },
-    receipientCard:{
-        padding:5,
-        borderRadius:10,
-        backgroundColor:'#c0bfbf',
-    },
-    recipientHeader:{
-        fontSize:30,
-        fontWeight:'bold',
-        marginRight:'auto',
-        marginTop:20,
-        marginBottom:15,
-        marginLeft:15,
-        color:'#474646',
-    },
-    acceptBtn:{
-        marginVertical:30,
-        justifyContent:'center',
-        alignItems:'center',
-        backgroundColor:'#6bff08',
-        borderRadius:30,
-        padding:5,
-    },
+export default StyleSheet.create({
+  container: {
+    padding: 16,
+    backgroundColor: "#F8FAFC",
+  },
 
-    tBtn:{
-        fontSize:30,
-        fontWeight:'bold',
-        textAlign:'center',
-        color:'#1b1b1b'
-    }
-})
+  /* 📍 DISTANCE BADGE */
+  badge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#2563EB",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 12,
+  },
 
-export default styles;
+  badgeText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 12,
+  },
+
+  /* 📊 PROGRESS */
+  progressContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+
+  progressItem: {
+    alignItems: "center",
+    flex: 1,
+  },
+
+  circle: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#CBD5F5",
+    marginBottom: 4,
+  },
+
+  activeCircle: {
+    backgroundColor: "#2563EB",
+  },
+
+  progressText: {
+    fontSize: 10,
+    color: "#64748B",
+    textAlign: "center",
+  },
+
+  /* CARD */
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 14,
+
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#64748B",
+    marginBottom: 10,
+  },
+
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
+  icon: {
+    marginRight: 10,
+    color: "#2563EB",
+  },
+
+  text: {
+    fontSize: 15,
+    color: "#0F172A",
+    flexShrink: 1,
+  },
+
+  /* INPUT */
+  input: {
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: "#F1F5F9",
+  },
+
+  /* BUTTON */
+  button: {
+    marginTop: 10,
+    backgroundColor: "#22C55E",
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: "center",
+  },
+
+  buttonDisabled: {
+    backgroundColor: "#CBD5F5",
+  },
+
+  buttonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#022C22",
+  },
+
+  buttonTextDisabled: {
+    color: "#64748B",
+  },
+});

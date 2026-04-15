@@ -230,6 +230,719 @@ export const syncCourierCompanies = /* GraphQL */ `
     }
   }
 `;
+export const getPayout = /* GraphQL */ `
+  query GetPayout($id: ID!) {
+    getPayout(id: $id) {
+      id
+      courierID
+      amount
+      status
+      bankName
+      accountNumber
+      reference
+      walletID
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const listPayouts = /* GraphQL */ `
+  query ListPayouts(
+    $filter: ModelPayoutFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    listPayouts(filter: $filter, limit: $limit, nextToken: $nextToken) {
+      items {
+        id
+        courierID
+        amount
+        status
+        bankName
+        accountNumber
+        reference
+        walletID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const syncPayouts = /* GraphQL */ `
+  query SyncPayouts(
+    $filter: ModelPayoutFilterInput
+    $limit: Int
+    $nextToken: String
+    $lastSync: AWSTimestamp
+  ) {
+    syncPayouts(
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+      lastSync: $lastSync
+    ) {
+      items {
+        id
+        courierID
+        amount
+        status
+        bankName
+        accountNumber
+        reference
+        walletID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const payoutsByCourierID = /* GraphQL */ `
+  query PayoutsByCourierID(
+    $courierID: ID!
+    $sortDirection: ModelSortDirection
+    $filter: ModelPayoutFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    payoutsByCourierID(
+      courierID: $courierID
+      sortDirection: $sortDirection
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+    ) {
+      items {
+        id
+        courierID
+        amount
+        status
+        bankName
+        accountNumber
+        reference
+        walletID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const payoutsByWalletID = /* GraphQL */ `
+  query PayoutsByWalletID(
+    $walletID: ID!
+    $sortDirection: ModelSortDirection
+    $filter: ModelPayoutFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    payoutsByWalletID(
+      walletID: $walletID
+      sortDirection: $sortDirection
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+    ) {
+      items {
+        id
+        courierID
+        amount
+        status
+        bankName
+        accountNumber
+        reference
+        walletID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const getTransaction = /* GraphQL */ `
+  query GetTransaction($id: ID!) {
+    getTransaction(id: $id) {
+      id
+      walletID
+      type
+      amount
+      description
+      orderID
+      paymentID
+      status
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const listTransactions = /* GraphQL */ `
+  query ListTransactions(
+    $filter: ModelTransactionFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    listTransactions(filter: $filter, limit: $limit, nextToken: $nextToken) {
+      items {
+        id
+        walletID
+        type
+        amount
+        description
+        orderID
+        paymentID
+        status
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const syncTransactions = /* GraphQL */ `
+  query SyncTransactions(
+    $filter: ModelTransactionFilterInput
+    $limit: Int
+    $nextToken: String
+    $lastSync: AWSTimestamp
+  ) {
+    syncTransactions(
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+      lastSync: $lastSync
+    ) {
+      items {
+        id
+        walletID
+        type
+        amount
+        description
+        orderID
+        paymentID
+        status
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const transactionsByWalletID = /* GraphQL */ `
+  query TransactionsByWalletID(
+    $walletID: ID!
+    $sortDirection: ModelSortDirection
+    $filter: ModelTransactionFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    transactionsByWalletID(
+      walletID: $walletID
+      sortDirection: $sortDirection
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+    ) {
+      items {
+        id
+        walletID
+        type
+        amount
+        description
+        orderID
+        paymentID
+        status
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const transactionsByOrderID = /* GraphQL */ `
+  query TransactionsByOrderID(
+    $orderID: ID!
+    $sortDirection: ModelSortDirection
+    $filter: ModelTransactionFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    transactionsByOrderID(
+      orderID: $orderID
+      sortDirection: $sortDirection
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+    ) {
+      items {
+        id
+        walletID
+        type
+        amount
+        description
+        orderID
+        paymentID
+        status
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const transactionsByPaymentID = /* GraphQL */ `
+  query TransactionsByPaymentID(
+    $paymentID: ID!
+    $sortDirection: ModelSortDirection
+    $filter: ModelTransactionFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    transactionsByPaymentID(
+      paymentID: $paymentID
+      sortDirection: $sortDirection
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+    ) {
+      items {
+        id
+        walletID
+        type
+        amount
+        description
+        orderID
+        paymentID
+        status
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const getWallet = /* GraphQL */ `
+  query GetWallet($id: ID!) {
+    getWallet(id: $id) {
+      id
+      ownerID
+      ownerType
+      balance
+      pendingBalance
+      totalEarnings
+      transactions {
+        nextToken
+        startedAt
+        __typename
+      }
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const listWallets = /* GraphQL */ `
+  query ListWallets(
+    $filter: ModelWalletFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    listWallets(filter: $filter, limit: $limit, nextToken: $nextToken) {
+      items {
+        id
+        ownerID
+        ownerType
+        balance
+        pendingBalance
+        totalEarnings
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const syncWallets = /* GraphQL */ `
+  query SyncWallets(
+    $filter: ModelWalletFilterInput
+    $limit: Int
+    $nextToken: String
+    $lastSync: AWSTimestamp
+  ) {
+    syncWallets(
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+      lastSync: $lastSync
+    ) {
+      items {
+        id
+        ownerID
+        ownerType
+        balance
+        pendingBalance
+        totalEarnings
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const getPayment = /* GraphQL */ `
+  query GetPayment($id: ID!) {
+    getPayment(id: $id) {
+      id
+      orderID
+      userID
+      amount
+      currency
+      status
+      paymentMethod
+      provider
+      reference
+      order {
+        id
+        recipientName
+        recipientNumber
+        recipientNumber2
+        orderDetails
+        originAddress
+        originState
+        originLat
+        originLng
+        destinationAddress
+        destinationState
+        destinationLat
+        destinationLng
+        tripType
+        distance
+        transportationType
+        vehicleClass
+        status
+        loadCategory
+        isInterState
+        estimatedMinPrice
+        estimatedMaxPrice
+        initialOfferPrice
+        loadingFee
+        unloadingFee
+        floorSurcharge
+        fragileSurcharge
+        extrasTotal
+        totalPrice
+        courierEarnings
+        commissionAmount
+        platformFee
+        platformServiceRevenue
+        vatAmount
+        platformNetRevenue
+        deliveryVerificationCode
+        declaredWeightBracket
+        senderPreTransferPhotos
+        senderPreTransferVideo
+        senderPreTransferRecordedAt
+        senderPreTransferLocalPhotos
+        senderPreTransferLocalVideo
+        mediaUploadStatus
+        courierPreTransferPhotos
+        courierPreTransferVideo
+        courierPreTransferRecordedAt
+        courierPostLoadingPhotos
+        courierPostLoadingVideo
+        dropoffArrivalPhotos
+        dropoffArrivalVideo
+        postDeliveryPhotos
+        postDeliveryVideo
+        pickupLoadingResponsibility
+        pickupFloorLevel
+        pickupFloorLevelPrice
+        pickupHasElevator
+        dropoffUnloadingResponsibility
+        dropoffFloorLevel
+        dropoffFloorLevelPrice
+        dropoffHasElevator
+        acceptedAt
+        arrivedPickupAt
+        loadingStartedAt
+        tripStartedAt
+        arrivedDropoffAt
+        unloadingCompletedAt
+        logisticsCompanyId
+        waybillNumber
+        waybillPhoto
+        logisticsTrackingCode
+        logisticsTrackingStatus
+        handedOverToLogisticsAt
+        logisticsIntakeConfirmedAt
+        acceptedOfferID
+        paymentStatus
+        paymentID
+        payoutStatus
+        fundsStatus
+        assignedCourierId
+        assignmentExpiresAt
+        assignmentAttempts
+        lastAssignedAt
+        rejectedCourierIds
+        assignmentStatus
+        userID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      user {
+        id
+        sub
+        firstName
+        lastName
+        email
+        phoneNumber
+        profilePic
+        address
+        exactAddress
+        lat
+        lng
+        isBlocked
+        push_token
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const listPayments = /* GraphQL */ `
+  query ListPayments(
+    $filter: ModelPaymentFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    listPayments(filter: $filter, limit: $limit, nextToken: $nextToken) {
+      items {
+        id
+        orderID
+        userID
+        amount
+        currency
+        status
+        paymentMethod
+        provider
+        reference
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const syncPayments = /* GraphQL */ `
+  query SyncPayments(
+    $filter: ModelPaymentFilterInput
+    $limit: Int
+    $nextToken: String
+    $lastSync: AWSTimestamp
+  ) {
+    syncPayments(
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+      lastSync: $lastSync
+    ) {
+      items {
+        id
+        orderID
+        userID
+        amount
+        currency
+        status
+        paymentMethod
+        provider
+        reference
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const paymentsByOrderID = /* GraphQL */ `
+  query PaymentsByOrderID(
+    $orderID: ID!
+    $sortDirection: ModelSortDirection
+    $filter: ModelPaymentFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    paymentsByOrderID(
+      orderID: $orderID
+      sortDirection: $sortDirection
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+    ) {
+      items {
+        id
+        orderID
+        userID
+        amount
+        currency
+        status
+        paymentMethod
+        provider
+        reference
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const paymentsByUserID = /* GraphQL */ `
+  query PaymentsByUserID(
+    $userID: ID!
+    $sortDirection: ModelSortDirection
+    $filter: ModelPaymentFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    paymentsByUserID(
+      userID: $userID
+      sortDirection: $sortDirection
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+    ) {
+      items {
+        id
+        orderID
+        userID
+        amount
+        currency
+        status
+        paymentMethod
+        provider
+        reference
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
 export const getOffer = /* GraphQL */ `
   query GetOffer($id: ID!) {
     getOffer(id: $id) {
@@ -310,6 +1023,10 @@ export const getOffer = /* GraphQL */ `
         handedOverToLogisticsAt
         logisticsIntakeConfirmedAt
         acceptedOfferID
+        paymentStatus
+        paymentID
+        payoutStatus
+        fundsStatus
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -369,6 +1086,7 @@ export const getOffer = /* GraphQL */ `
         currentMaxiCount
         lastBatchAssignedAt
         statusKey
+        walletID
         createdAt
         updatedAt
         _version
@@ -595,6 +1313,10 @@ export const getOrder = /* GraphQL */ `
       handedOverToLogisticsAt
       logisticsIntakeConfirmedAt
       acceptedOfferID
+      paymentStatus
+      paymentID
+      payoutStatus
+      fundsStatus
       assignedCourierId
       assignmentExpiresAt
       assignmentAttempts
@@ -651,11 +1373,17 @@ export const getOrder = /* GraphQL */ `
         currentMaxiCount
         lastBatchAssignedAt
         statusKey
+        walletID
         createdAt
         updatedAt
         _version
         _deleted
         _lastChangedAt
+        __typename
+      }
+      payments {
+        nextToken
+        startedAt
         __typename
       }
       createdAt
@@ -749,6 +1477,10 @@ export const listOrders = /* GraphQL */ `
         handedOverToLogisticsAt
         logisticsIntakeConfirmedAt
         acceptedOfferID
+        paymentStatus
+        paymentID
+        payoutStatus
+        fundsStatus
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -857,6 +1589,10 @@ export const syncOrders = /* GraphQL */ `
         handedOverToLogisticsAt
         logisticsIntakeConfirmedAt
         acceptedOfferID
+        paymentStatus
+        paymentID
+        payoutStatus
+        fundsStatus
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -967,6 +1703,10 @@ export const ordersByAssignedCourierId = /* GraphQL */ `
         handedOverToLogisticsAt
         logisticsIntakeConfirmedAt
         acceptedOfferID
+        paymentStatus
+        paymentID
+        payoutStatus
+        fundsStatus
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -1079,6 +1819,10 @@ export const ordersByAssignmentStatusAndAssignmentExpiresAt = /* GraphQL */ `
         handedOverToLogisticsAt
         logisticsIntakeConfirmedAt
         acceptedOfferID
+        paymentStatus
+        paymentID
+        payoutStatus
+        fundsStatus
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -1189,6 +1933,10 @@ export const ordersByUserID = /* GraphQL */ `
         handedOverToLogisticsAt
         logisticsIntakeConfirmedAt
         acceptedOfferID
+        paymentStatus
+        paymentID
+        payoutStatus
+        fundsStatus
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -1265,6 +2013,21 @@ export const getCourier = /* GraphQL */ `
         startedAt
         __typename
       }
+      walletID
+      wallet {
+        id
+        ownerID
+        ownerType
+        balance
+        pendingBalance
+        totalEarnings
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
       createdAt
       updatedAt
       _version
@@ -1325,6 +2088,7 @@ export const listCouriers = /* GraphQL */ `
         currentMaxiCount
         lastBatchAssignedAt
         statusKey
+        walletID
         createdAt
         updatedAt
         _version
@@ -1395,6 +2159,7 @@ export const syncCouriers = /* GraphQL */ `
         currentMaxiCount
         lastBatchAssignedAt
         statusKey
+        walletID
         createdAt
         updatedAt
         _version
@@ -1467,6 +2232,7 @@ export const couriersByStatus = /* GraphQL */ `
         currentMaxiCount
         lastBatchAssignedAt
         statusKey
+        walletID
         createdAt
         updatedAt
         _version
@@ -1497,6 +2263,11 @@ export const getUser = /* GraphQL */ `
       isBlocked
       push_token
       Orders {
+        nextToken
+        startedAt
+        __typename
+      }
+      payments {
         nextToken
         startedAt
         __typename

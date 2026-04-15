@@ -2,6 +2,7 @@ import { useAuthContext } from "@/providers/AuthProvider";
 import { Courier, Offer, Order, User } from "@/src/models";
 import { DataStore } from "aws-amplify/datastore";
 import { getUrl } from "aws-amplify/storage";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -81,12 +82,14 @@ const OrderSummary = ({ orderId }) => {
   const courierTotal =
     (courier?.currentBatchCount || 0) + (courier?.currentExpressCount || 0);
 
-  const isCourierTurn = !latestOffer || latestOffer.senderType === "USER";
-
   const isBlocked =
     courierTotal >= 10 ||
     (courier?.lastBatchAssignedAt &&
       new Date() - new Date(courier.lastBatchAssignedAt) > 3 * 60 * 60 * 1000);
+
+  const isCourierTurn = !latestOffer || latestOffer.senderType === "USER";
+
+  const isCounterDisabled = !isCourierTurn || isBlocked;
 
   // conversion for 'Handle Myself'
   const formatResponsibility = (value) => {
@@ -275,6 +278,7 @@ const OrderSummary = ({ orderId }) => {
         await DataStore.save(
           Order.copyOf(latestOrder, (updated) => {
             updated.status = "ACCEPTED";
+            updated.acceptedAt = new Date().toISOString();
             updated.totalPrice = priceToAccept;
             updated.acceptedOfferID = offerToAccept?.id;
             updated.assignedCourierId = dbCourier.id;
@@ -301,6 +305,7 @@ const OrderSummary = ({ orderId }) => {
         await DataStore.save(
           Order.copyOf(latestOrder, (updated) => {
             updated.status = "ACCEPTED";
+            updated.acceptedAt = new Date().toISOString();
             updated.assignedCourierId = dbCourier.id;
           }),
         );
@@ -320,6 +325,7 @@ const OrderSummary = ({ orderId }) => {
           }),
         );
       }
+      router.replace("/deliveryhistory");
     } catch (e) {
       alert("Error accepting order");
     }
@@ -622,14 +628,14 @@ const OrderSummary = ({ orderId }) => {
                 <TouchableOpacity
                   style={[
                     styles.counterBtn,
-                    !isCourierTurn && styles.buttonDisabled,
+                    isCounterDisabled && styles.buttonDisabled,
                   ]}
                   onPress={() => {
                     Keyboard.dismiss();
                     setIsEditing(false);
                     onSendOffer(Number(offer));
                   }}
-                  disabled={!isCourierTurn}
+                  disabled={isCounterDisabled}
                 >
                   <Text style={styles.btnText}>Counter</Text>
                 </TouchableOpacity>

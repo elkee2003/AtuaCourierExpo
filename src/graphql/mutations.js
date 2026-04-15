@@ -172,6 +172,636 @@ export const deleteCourierCompany = /* GraphQL */ `
     }
   }
 `;
+export const createPayout = /* GraphQL */ `
+  mutation CreatePayout(
+    $input: CreatePayoutInput!
+    $condition: ModelPayoutConditionInput
+  ) {
+    createPayout(input: $input, condition: $condition) {
+      id
+      courierID
+      amount
+      status
+      bankName
+      accountNumber
+      reference
+      walletID
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const updatePayout = /* GraphQL */ `
+  mutation UpdatePayout(
+    $input: UpdatePayoutInput!
+    $condition: ModelPayoutConditionInput
+  ) {
+    updatePayout(input: $input, condition: $condition) {
+      id
+      courierID
+      amount
+      status
+      bankName
+      accountNumber
+      reference
+      walletID
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const deletePayout = /* GraphQL */ `
+  mutation DeletePayout(
+    $input: DeletePayoutInput!
+    $condition: ModelPayoutConditionInput
+  ) {
+    deletePayout(input: $input, condition: $condition) {
+      id
+      courierID
+      amount
+      status
+      bankName
+      accountNumber
+      reference
+      walletID
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const createTransaction = /* GraphQL */ `
+  mutation CreateTransaction(
+    $input: CreateTransactionInput!
+    $condition: ModelTransactionConditionInput
+  ) {
+    createTransaction(input: $input, condition: $condition) {
+      id
+      walletID
+      type
+      amount
+      description
+      orderID
+      paymentID
+      status
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const updateTransaction = /* GraphQL */ `
+  mutation UpdateTransaction(
+    $input: UpdateTransactionInput!
+    $condition: ModelTransactionConditionInput
+  ) {
+    updateTransaction(input: $input, condition: $condition) {
+      id
+      walletID
+      type
+      amount
+      description
+      orderID
+      paymentID
+      status
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const deleteTransaction = /* GraphQL */ `
+  mutation DeleteTransaction(
+    $input: DeleteTransactionInput!
+    $condition: ModelTransactionConditionInput
+  ) {
+    deleteTransaction(input: $input, condition: $condition) {
+      id
+      walletID
+      type
+      amount
+      description
+      orderID
+      paymentID
+      status
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const createWallet = /* GraphQL */ `
+  mutation CreateWallet(
+    $input: CreateWalletInput!
+    $condition: ModelWalletConditionInput
+  ) {
+    createWallet(input: $input, condition: $condition) {
+      id
+      ownerID
+      ownerType
+      balance
+      pendingBalance
+      totalEarnings
+      transactions {
+        nextToken
+        startedAt
+        __typename
+      }
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const updateWallet = /* GraphQL */ `
+  mutation UpdateWallet(
+    $input: UpdateWalletInput!
+    $condition: ModelWalletConditionInput
+  ) {
+    updateWallet(input: $input, condition: $condition) {
+      id
+      ownerID
+      ownerType
+      balance
+      pendingBalance
+      totalEarnings
+      transactions {
+        nextToken
+        startedAt
+        __typename
+      }
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const deleteWallet = /* GraphQL */ `
+  mutation DeleteWallet(
+    $input: DeleteWalletInput!
+    $condition: ModelWalletConditionInput
+  ) {
+    deleteWallet(input: $input, condition: $condition) {
+      id
+      ownerID
+      ownerType
+      balance
+      pendingBalance
+      totalEarnings
+      transactions {
+        nextToken
+        startedAt
+        __typename
+      }
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const createPayment = /* GraphQL */ `
+  mutation CreatePayment(
+    $input: CreatePaymentInput!
+    $condition: ModelPaymentConditionInput
+  ) {
+    createPayment(input: $input, condition: $condition) {
+      id
+      orderID
+      userID
+      amount
+      currency
+      status
+      paymentMethod
+      provider
+      reference
+      order {
+        id
+        recipientName
+        recipientNumber
+        recipientNumber2
+        orderDetails
+        originAddress
+        originState
+        originLat
+        originLng
+        destinationAddress
+        destinationState
+        destinationLat
+        destinationLng
+        tripType
+        distance
+        transportationType
+        vehicleClass
+        status
+        loadCategory
+        isInterState
+        estimatedMinPrice
+        estimatedMaxPrice
+        initialOfferPrice
+        loadingFee
+        unloadingFee
+        floorSurcharge
+        fragileSurcharge
+        extrasTotal
+        totalPrice
+        courierEarnings
+        commissionAmount
+        platformFee
+        platformServiceRevenue
+        vatAmount
+        platformNetRevenue
+        deliveryVerificationCode
+        declaredWeightBracket
+        senderPreTransferPhotos
+        senderPreTransferVideo
+        senderPreTransferRecordedAt
+        senderPreTransferLocalPhotos
+        senderPreTransferLocalVideo
+        mediaUploadStatus
+        courierPreTransferPhotos
+        courierPreTransferVideo
+        courierPreTransferRecordedAt
+        courierPostLoadingPhotos
+        courierPostLoadingVideo
+        dropoffArrivalPhotos
+        dropoffArrivalVideo
+        postDeliveryPhotos
+        postDeliveryVideo
+        pickupLoadingResponsibility
+        pickupFloorLevel
+        pickupFloorLevelPrice
+        pickupHasElevator
+        dropoffUnloadingResponsibility
+        dropoffFloorLevel
+        dropoffFloorLevelPrice
+        dropoffHasElevator
+        acceptedAt
+        arrivedPickupAt
+        loadingStartedAt
+        tripStartedAt
+        arrivedDropoffAt
+        unloadingCompletedAt
+        logisticsCompanyId
+        waybillNumber
+        waybillPhoto
+        logisticsTrackingCode
+        logisticsTrackingStatus
+        handedOverToLogisticsAt
+        logisticsIntakeConfirmedAt
+        acceptedOfferID
+        paymentStatus
+        paymentID
+        payoutStatus
+        fundsStatus
+        assignedCourierId
+        assignmentExpiresAt
+        assignmentAttempts
+        lastAssignedAt
+        rejectedCourierIds
+        assignmentStatus
+        userID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      user {
+        id
+        sub
+        firstName
+        lastName
+        email
+        phoneNumber
+        profilePic
+        address
+        exactAddress
+        lat
+        lng
+        isBlocked
+        push_token
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const updatePayment = /* GraphQL */ `
+  mutation UpdatePayment(
+    $input: UpdatePaymentInput!
+    $condition: ModelPaymentConditionInput
+  ) {
+    updatePayment(input: $input, condition: $condition) {
+      id
+      orderID
+      userID
+      amount
+      currency
+      status
+      paymentMethod
+      provider
+      reference
+      order {
+        id
+        recipientName
+        recipientNumber
+        recipientNumber2
+        orderDetails
+        originAddress
+        originState
+        originLat
+        originLng
+        destinationAddress
+        destinationState
+        destinationLat
+        destinationLng
+        tripType
+        distance
+        transportationType
+        vehicleClass
+        status
+        loadCategory
+        isInterState
+        estimatedMinPrice
+        estimatedMaxPrice
+        initialOfferPrice
+        loadingFee
+        unloadingFee
+        floorSurcharge
+        fragileSurcharge
+        extrasTotal
+        totalPrice
+        courierEarnings
+        commissionAmount
+        platformFee
+        platformServiceRevenue
+        vatAmount
+        platformNetRevenue
+        deliveryVerificationCode
+        declaredWeightBracket
+        senderPreTransferPhotos
+        senderPreTransferVideo
+        senderPreTransferRecordedAt
+        senderPreTransferLocalPhotos
+        senderPreTransferLocalVideo
+        mediaUploadStatus
+        courierPreTransferPhotos
+        courierPreTransferVideo
+        courierPreTransferRecordedAt
+        courierPostLoadingPhotos
+        courierPostLoadingVideo
+        dropoffArrivalPhotos
+        dropoffArrivalVideo
+        postDeliveryPhotos
+        postDeliveryVideo
+        pickupLoadingResponsibility
+        pickupFloorLevel
+        pickupFloorLevelPrice
+        pickupHasElevator
+        dropoffUnloadingResponsibility
+        dropoffFloorLevel
+        dropoffFloorLevelPrice
+        dropoffHasElevator
+        acceptedAt
+        arrivedPickupAt
+        loadingStartedAt
+        tripStartedAt
+        arrivedDropoffAt
+        unloadingCompletedAt
+        logisticsCompanyId
+        waybillNumber
+        waybillPhoto
+        logisticsTrackingCode
+        logisticsTrackingStatus
+        handedOverToLogisticsAt
+        logisticsIntakeConfirmedAt
+        acceptedOfferID
+        paymentStatus
+        paymentID
+        payoutStatus
+        fundsStatus
+        assignedCourierId
+        assignmentExpiresAt
+        assignmentAttempts
+        lastAssignedAt
+        rejectedCourierIds
+        assignmentStatus
+        userID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      user {
+        id
+        sub
+        firstName
+        lastName
+        email
+        phoneNumber
+        profilePic
+        address
+        exactAddress
+        lat
+        lng
+        isBlocked
+        push_token
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const deletePayment = /* GraphQL */ `
+  mutation DeletePayment(
+    $input: DeletePaymentInput!
+    $condition: ModelPaymentConditionInput
+  ) {
+    deletePayment(input: $input, condition: $condition) {
+      id
+      orderID
+      userID
+      amount
+      currency
+      status
+      paymentMethod
+      provider
+      reference
+      order {
+        id
+        recipientName
+        recipientNumber
+        recipientNumber2
+        orderDetails
+        originAddress
+        originState
+        originLat
+        originLng
+        destinationAddress
+        destinationState
+        destinationLat
+        destinationLng
+        tripType
+        distance
+        transportationType
+        vehicleClass
+        status
+        loadCategory
+        isInterState
+        estimatedMinPrice
+        estimatedMaxPrice
+        initialOfferPrice
+        loadingFee
+        unloadingFee
+        floorSurcharge
+        fragileSurcharge
+        extrasTotal
+        totalPrice
+        courierEarnings
+        commissionAmount
+        platformFee
+        platformServiceRevenue
+        vatAmount
+        platformNetRevenue
+        deliveryVerificationCode
+        declaredWeightBracket
+        senderPreTransferPhotos
+        senderPreTransferVideo
+        senderPreTransferRecordedAt
+        senderPreTransferLocalPhotos
+        senderPreTransferLocalVideo
+        mediaUploadStatus
+        courierPreTransferPhotos
+        courierPreTransferVideo
+        courierPreTransferRecordedAt
+        courierPostLoadingPhotos
+        courierPostLoadingVideo
+        dropoffArrivalPhotos
+        dropoffArrivalVideo
+        postDeliveryPhotos
+        postDeliveryVideo
+        pickupLoadingResponsibility
+        pickupFloorLevel
+        pickupFloorLevelPrice
+        pickupHasElevator
+        dropoffUnloadingResponsibility
+        dropoffFloorLevel
+        dropoffFloorLevelPrice
+        dropoffHasElevator
+        acceptedAt
+        arrivedPickupAt
+        loadingStartedAt
+        tripStartedAt
+        arrivedDropoffAt
+        unloadingCompletedAt
+        logisticsCompanyId
+        waybillNumber
+        waybillPhoto
+        logisticsTrackingCode
+        logisticsTrackingStatus
+        handedOverToLogisticsAt
+        logisticsIntakeConfirmedAt
+        acceptedOfferID
+        paymentStatus
+        paymentID
+        payoutStatus
+        fundsStatus
+        assignedCourierId
+        assignmentExpiresAt
+        assignmentAttempts
+        lastAssignedAt
+        rejectedCourierIds
+        assignmentStatus
+        userID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      user {
+        id
+        sub
+        firstName
+        lastName
+        email
+        phoneNumber
+        profilePic
+        address
+        exactAddress
+        lat
+        lng
+        isBlocked
+        push_token
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
 export const createOffer = /* GraphQL */ `
   mutation CreateOffer(
     $input: CreateOfferInput!
@@ -255,6 +885,10 @@ export const createOffer = /* GraphQL */ `
         handedOverToLogisticsAt
         logisticsIntakeConfirmedAt
         acceptedOfferID
+        paymentStatus
+        paymentID
+        payoutStatus
+        fundsStatus
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -314,6 +948,7 @@ export const createOffer = /* GraphQL */ `
         currentMaxiCount
         lastBatchAssignedAt
         statusKey
+        walletID
         createdAt
         updatedAt
         _version
@@ -416,6 +1051,10 @@ export const updateOffer = /* GraphQL */ `
         handedOverToLogisticsAt
         logisticsIntakeConfirmedAt
         acceptedOfferID
+        paymentStatus
+        paymentID
+        payoutStatus
+        fundsStatus
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -475,6 +1114,7 @@ export const updateOffer = /* GraphQL */ `
         currentMaxiCount
         lastBatchAssignedAt
         statusKey
+        walletID
         createdAt
         updatedAt
         _version
@@ -577,6 +1217,10 @@ export const deleteOffer = /* GraphQL */ `
         handedOverToLogisticsAt
         logisticsIntakeConfirmedAt
         acceptedOfferID
+        paymentStatus
+        paymentID
+        payoutStatus
+        fundsStatus
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -636,6 +1280,7 @@ export const deleteOffer = /* GraphQL */ `
         currentMaxiCount
         lastBatchAssignedAt
         statusKey
+        walletID
         createdAt
         updatedAt
         _version
@@ -735,6 +1380,10 @@ export const createOrder = /* GraphQL */ `
       handedOverToLogisticsAt
       logisticsIntakeConfirmedAt
       acceptedOfferID
+      paymentStatus
+      paymentID
+      payoutStatus
+      fundsStatus
       assignedCourierId
       assignmentExpiresAt
       assignmentAttempts
@@ -791,11 +1440,17 @@ export const createOrder = /* GraphQL */ `
         currentMaxiCount
         lastBatchAssignedAt
         statusKey
+        walletID
         createdAt
         updatedAt
         _version
         _deleted
         _lastChangedAt
+        __typename
+      }
+      payments {
+        nextToken
+        startedAt
         __typename
       }
       createdAt
@@ -887,6 +1542,10 @@ export const updateOrder = /* GraphQL */ `
       handedOverToLogisticsAt
       logisticsIntakeConfirmedAt
       acceptedOfferID
+      paymentStatus
+      paymentID
+      payoutStatus
+      fundsStatus
       assignedCourierId
       assignmentExpiresAt
       assignmentAttempts
@@ -943,11 +1602,17 @@ export const updateOrder = /* GraphQL */ `
         currentMaxiCount
         lastBatchAssignedAt
         statusKey
+        walletID
         createdAt
         updatedAt
         _version
         _deleted
         _lastChangedAt
+        __typename
+      }
+      payments {
+        nextToken
+        startedAt
         __typename
       }
       createdAt
@@ -1039,6 +1704,10 @@ export const deleteOrder = /* GraphQL */ `
       handedOverToLogisticsAt
       logisticsIntakeConfirmedAt
       acceptedOfferID
+      paymentStatus
+      paymentID
+      payoutStatus
+      fundsStatus
       assignedCourierId
       assignmentExpiresAt
       assignmentAttempts
@@ -1095,11 +1764,17 @@ export const deleteOrder = /* GraphQL */ `
         currentMaxiCount
         lastBatchAssignedAt
         statusKey
+        walletID
         createdAt
         updatedAt
         _version
         _deleted
         _lastChangedAt
+        __typename
+      }
+      payments {
+        nextToken
+        startedAt
         __typename
       }
       createdAt
@@ -1170,6 +1845,21 @@ export const createCourier = /* GraphQL */ `
         startedAt
         __typename
       }
+      walletID
+      wallet {
+        id
+        ownerID
+        ownerType
+        balance
+        pendingBalance
+        totalEarnings
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
       createdAt
       updatedAt
       _version
@@ -1236,6 +1926,21 @@ export const updateCourier = /* GraphQL */ `
       orders {
         nextToken
         startedAt
+        __typename
+      }
+      walletID
+      wallet {
+        id
+        ownerID
+        ownerType
+        balance
+        pendingBalance
+        totalEarnings
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
         __typename
       }
       createdAt
@@ -1306,6 +2011,21 @@ export const deleteCourier = /* GraphQL */ `
         startedAt
         __typename
       }
+      walletID
+      wallet {
+        id
+        ownerID
+        ownerType
+        balance
+        pendingBalance
+        totalEarnings
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
       createdAt
       updatedAt
       _version
@@ -1335,6 +2055,11 @@ export const createUser = /* GraphQL */ `
       isBlocked
       push_token
       Orders {
+        nextToken
+        startedAt
+        __typename
+      }
+      payments {
         nextToken
         startedAt
         __typename
@@ -1372,6 +2097,11 @@ export const updateUser = /* GraphQL */ `
         startedAt
         __typename
       }
+      payments {
+        nextToken
+        startedAt
+        __typename
+      }
       createdAt
       updatedAt
       _version
@@ -1401,6 +2131,11 @@ export const deleteUser = /* GraphQL */ `
       isBlocked
       push_token
       Orders {
+        nextToken
+        startedAt
+        __typename
+      }
+      payments {
         nextToken
         startedAt
         __typename

@@ -4,6 +4,9 @@ import { Text, TouchableOpacity, View } from "react-native";
 import Collapsible from "react-native-collapsible";
 import styles from "./styles";
 
+/**
+ * 🎨 STATUS COLORS
+ */
 const STATUS_COLORS = {
   DELIVERED: "#10b981",
   HANDOVER_TO_LOGISTICS: "#6366f1",
@@ -11,50 +14,83 @@ const STATUS_COLORS = {
   DISPUTED: "#f59e0b",
 };
 
-const STATUS_STEPS = [
+/**
+ * 🚚 STATUS FLOWS
+ */
+const MAXI_STEPS = [
+  "ACCEPTED",
+  "ARRIVED_PICKUP",
+  "LOADING",
+  "PICKED_UP",
+  "IN_TRANSIT",
+  "ARRIVED_DROPOFF",
+  "UNLOADING",
+  "DELIVERED",
+];
+
+const NORMAL_STEPS = [
   "ACCEPTED",
   "ARRIVED_PICKUP",
   "PICKED_UP",
   "IN_TRANSIT",
   "ARRIVED_DROPOFF",
+  "DELIVERED",
 ];
 
+/**
+ * 🧠 HELPERS
+ */
 const getStepLabel = (status) => {
   switch (status) {
     case "IN_TRANSIT":
-      return "IN";
+      return "TRANSIT";
     case "ARRIVED_PICKUP":
+      return "AT PICKUP";
     case "ARRIVED_DROPOFF":
       return "ARRIVED";
+    case "PICKED_UP":
+      return "PICKED";
     default:
       return status.split("_")[0];
   }
 };
 
-const formatStatus = (status) => {
-  return status?.replace(/_/g, " ");
-};
+const formatStatus = (status) => status?.replace(/_/g, " ");
 
 const CompletedDeliverySingle = ({ item }) => {
   const [expanded, setExpanded] = useState(false);
 
-  const toggleExpand = () => {
-    setExpanded((prev) => !prev);
-  };
+  const toggleExpand = () => setExpanded((prev) => !prev);
 
   const goToOrder = () => {
     router.push(`/orders/${item.id}`);
   };
 
+  /**
+   * 🚚 DELIVERY TYPE
+   */
   const isMaxi = item?.transportationType === "MAXI";
+  const STATUS_STEPS = isMaxi ? MAXI_STEPS : NORMAL_STEPS;
 
+  /**
+   * 💰 PRICE
+   */
   const displayPrice = isMaxi
     ? (item?.currentOfferPrice ?? item?.initialOfferPrice)
     : item?.courierEarnings;
 
   const price = Number(displayPrice || 0).toLocaleString();
 
-  const currentStep = STATUS_STEPS.indexOf(item.status);
+  /**
+   * ✅ COMPLETION LOGIC
+   */
+  const isCompleted = item.status === "DELIVERED";
+
+  let currentStep = STATUS_STEPS.indexOf(item.status);
+
+  // Fix -1 issue + completed override
+  if (currentStep === -1) currentStep = 0;
+  if (isCompleted) currentStep = STATUS_STEPS.length - 1;
 
   return (
     <TouchableOpacity
@@ -69,27 +105,26 @@ const CompletedDeliverySingle = ({ item }) => {
         <View
           style={[
             styles.statusBadge,
-            { backgroundColor: STATUS_COLORS[item.status] || "#999" },
+            {
+              backgroundColor: STATUS_COLORS[item.status] || "#9CA3AF",
+            },
           ]}
         >
           <Text style={styles.statusText}>{formatStatus(item.status)}</Text>
         </View>
       </View>
 
-      {/* ROUTE */}
+      {/* ROUTE SUMMARY */}
       <View style={styles.routeContainer}>
-        <Text style={styles.label}>FROM</Text>
         <Text numberOfLines={1} style={styles.address}>
           {item.originAddress}
         </Text>
-
-        <Text style={[styles.label, { marginTop: 6 }]}>TO</Text>
         <Text numberOfLines={1} style={styles.address}>
-          {item.destinationAddress}
+          → {item.destinationAddress}
         </Text>
       </View>
 
-      {/* PROGRESS */}
+      {/* 📊 PROGRESS */}
       <View style={styles.progressContainer}>
         {STATUS_STEPS.map((step, index) => (
           <View key={index} style={styles.progressItem}>
@@ -97,24 +132,41 @@ const CompletedDeliverySingle = ({ item }) => {
               style={[
                 styles.circle,
                 {
-                  backgroundColor: index <= currentStep ? "#9ca3af" : "#e5e7eb",
+                  backgroundColor: isCompleted
+                    ? "#10b981" // ✅ ALL GREEN
+                    : index <= currentStep
+                      ? "#9ca3af"
+                      : "#e5e7eb",
                 },
               ]}
             />
-            <Text style={styles.progressText}>{getStepLabel(step)}</Text>
+            <Text
+              style={[styles.progressText, isCompleted && styles.completedText]}
+            >
+              {getStepLabel(step)}
+            </Text>
           </View>
         ))}
       </View>
 
-      {/* HINT */}
+      {/* EXPAND HINT */}
       <Text style={styles.expandHint}>
         {expanded ? "Tap to collapse ▲" : "Tap to expand ▼"}
       </Text>
 
-      {/* EXPANDED */}
+      {/* 🔽 EXPANDED */}
       <Collapsible collapsed={!expanded}>
         <View style={styles.expandedContent}>
           <View style={styles.divider} />
+
+          {/* FULL ROUTE */}
+          <View style={styles.routeContainer}>
+            <Text style={styles.label}>FROM</Text>
+            <Text style={styles.address}>{item.originAddress}</Text>
+
+            <Text style={[styles.label, { marginTop: 6 }]}>TO</Text>
+            <Text style={styles.address}>{item.destinationAddress}</Text>
+          </View>
 
           {/* META */}
           <View style={styles.metaRow}>

@@ -37,9 +37,12 @@ const HomeComponent = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [location, setLocation] = useState(null);
   const [orders, setOrders] = useState([]);
+  const [statsOrders, setStatsOrders] = useState([]);
   const [stats, setStats] = useState({
     total: 0,
     nearby: 0,
+    batch: 0,
+    express: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -70,32 +73,6 @@ const HomeComponent = () => {
       await DataStore.save(
         Courier.copyOf(freshUser, (updated) => {
           updated.isOnline = newStatus;
-
-          // If statusKey is not set correctly → courier will NEVER be found → no assignments.
-          // Remember to update in admin also:
-          // Wherever you do:
-          // isApproved = true
-          // 👉 ALSO set:
-          // statusKey = `ONLINE#APPROVED`
-          // Or Safer:
-          // statusKey = `${courier.isOnline ? "ONLINE" : "OFFLINE"}#APPROVED`
-          // An example for approval:
-          //  await DataStore.save(
-          //   Courier.copyOf(courier, (updated) => {
-          //     updated.isApproved = true;
-
-          //     updated.statusKey = `${courier.isOnline ? "ONLINE" : "OFFLINE"}#APPROVED`;
-          //   }),
-          // );
-
-          // An example for unapproval
-          //   await DataStore.save(
-          //   Courier.copyOf(courier, (updated) => {
-          //     updated.isApproved = false;
-
-          //     updated.statusKey = `${courier.isOnline ? "ONLINE" : "OFFLINE"}#NOT_APPROVED`;
-          //   }),
-          // );
 
           updated.statusKey = `${newStatus ? "ONLINE" : "OFFLINE"}#${
             freshUser.isApproved ? "APPROVED" : "NOT_APPROVED"
@@ -190,7 +167,7 @@ const HomeComponent = () => {
           order.originLng,
         );
 
-        // Maxi radius should be 100km. Micro & Moto should be 10
+        // Maxi radius should be 80km. Micro & Moto should be 10
         const radius = isMaxi ? 80 : 10;
 
         if (distance <= radius) {
@@ -212,11 +189,6 @@ const HomeComponent = () => {
 
       // ✅ MUST be inside try
       setOrders(processedOrders);
-
-      setStats({
-        total: availableOrders.length,
-        nearby: nearbyCount,
-      });
     } catch (e) {
       Alert.alert("Error", e.message);
     } finally {
@@ -280,6 +252,58 @@ const HomeComponent = () => {
     prevOrderIdsRef.current = newIds;
   }, [orders]);
 
+  // STATS CALCULATION USEEFFECT
+  useEffect(() => {
+    if (!location) return;
+
+    const isMaxi = dbCourier?.transportationType === "MAXI";
+
+    let total = 0;
+    let nearby = 0;
+    let batch = 0;
+    let express = 0;
+
+    statsOrders.forEach((order) => {
+      total++;
+
+      const distance = getDistance(
+        location.latitude,
+        location.longitude,
+        order.originLat,
+        order.originLng,
+      );
+
+      const radius = isMaxi ? 80 : 10;
+
+      if (distance <= radius) {
+        nearby++;
+      }
+
+      if (!isMaxi) {
+        if (
+          order.transportationType === "MICRO_BATCH" ||
+          order.transportationType === "MOTO_BATCH"
+        ) {
+          batch++;
+        }
+
+        if (
+          order.transportationType === "MICRO_EXPRESS" ||
+          order.transportationType === "MOTO_EXPRESS"
+        ) {
+          express++;
+        }
+      }
+    });
+
+    setStats({
+      total,
+      nearby,
+      batch,
+      express,
+    });
+  }, [statsOrders, location, dbCourier?.transportationType]);
+
   // to play sound even when phone is silent
   useEffect(() => {
     Audio.setAudioModeAsync({
@@ -329,20 +353,136 @@ const HomeComponent = () => {
       return;
     }
 
+    const loadInitialStats = async () => {
+      const isMaxi = dbCourier.transportationType === "MAXI";
+
+      let initialStatsOrders = [];
+
+      if (isMaxi) {
+        initialStatsOrders = await DataStore.query(Order, (o) =>
+          o.and((o2) => [
+            o2.transportationType.eq("MAXI"),
+            o2.vehicleClass.eq(dbCourier.vehicleClass),
+            o2.or((o3) => [
+              o3.status.eq("READY_FOR_PICKUP"),
+              o3.status.eq("BIDDING"),
+            ]),
+          ]),
+        );
+      } else {
+        initialStatsOrders = await DataStore.query(Order, (o) =>
+          o.and((o2) => [
+            o2.status.eq("READY_FOR_PICKUP"),
+            o2.or((o3) => [
+              o3.transportationType.eq("MICRO_EXPRESS"),
+              o3.transportationType.eq("MOTO_EXPRESS"),
+              o3.transportationType.eq("MICRO_BATCH"),
+              o3.transportationType.eq("MOTO_BATCH"),
+            ]),
+          ]),
+        );
+      }
+
+      setStatsOrders(initialStatsOrders);
+    };
+
     fetchOrders();
+    loadInitialStats();
+  }, [
+    isOnline,
+    location,
+    dbCourier?.transportationType,
+    dbCourier?.isApproved,
+  ]);
 
-    const subscription = DataStore.observe(Order).subscribe(({ opType }) => {
-      if (opType === "INSERT") {
-        fetchOrders();
-      }
+  // REAL-TIME STATS SUBSCRIPTION
+  useEffect(() => {
+    if (!isOnline || !location || !dbCourier || !dbCourier.isApproved) return;
 
-      if (opType === "UPDATE") {
-        fetchOrders();
-      }
-    });
+    const isMaxi = dbCourier.transportationType === "MAXI";
+
+    const subscription = DataStore.observe(Order).subscribe(
+      ({ opType, element }) => {
+        const isRelevant = isMaxi
+          ? element.transportationType === "MAXI" &&
+            element.vehicleClass === dbCourier.vehicleClass &&
+            (element.status === "READY_FOR_PICKUP" ||
+              element.status === "BIDDING")
+          : element.status === "READY_FOR_PICKUP" &&
+            [
+              "MICRO_EXPRESS",
+              "MOTO_EXPRESS",
+              "MICRO_BATCH",
+              "MOTO_BATCH",
+            ].includes(element.transportationType);
+
+        if (!isRelevant) return;
+
+        // ✅ UPDATE STATS (real-time, no refetch)
+        setStatsOrders((prev) => {
+          let updated = [...prev];
+
+          if (opType === "INSERT") {
+            // ❌ Prevent duplicates
+            if (!updated.find((o) => o.id === element.id)) {
+              updated.push(element);
+            }
+          }
+
+          if (opType === "UPDATE") {
+            updated = updated.map((o) => (o.id === element.id ? element : o));
+          }
+
+          if (opType === "DELETE") {
+            updated = updated.filter((o) => o.id !== element.id);
+          }
+
+          updated.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+          return updated;
+        });
+
+        // ✅ UPDATE UI ORDERS (real-time)
+        setOrders((prev) => {
+          let updated = [...prev];
+
+          const distance = getDistance(
+            location.latitude,
+            location.longitude,
+            element.originLat,
+            element.originLng,
+          );
+
+          const radius = isMaxi ? 80 : 10;
+
+          if (opType === "INSERT") {
+            // ❌ Ignore far orders
+            if (distance > radius) return prev;
+
+            // ❌ Prevent duplicates
+            if (!updated.find((o) => o.id === element.id)) {
+              updated.unshift(element);
+            }
+          }
+
+          if (opType === "UPDATE") {
+            updated = updated.map((o) => (o.id === element.id ? element : o));
+          }
+
+          if (opType === "DELETE") {
+            updated = updated.filter((o) => o.id !== element.id);
+          }
+
+          // ✅ Always keep sorted
+          updated.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+          return updated;
+        });
+      },
+    );
 
     return () => subscription.unsubscribe();
-  }, [isOnline, dbCourier]);
+  }, [isOnline, location, dbCourier]);
 
   if (loading && isOnline) {
     return <ActivityIndicator size={"large"} style={styles.loading} />;
