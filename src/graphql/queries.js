@@ -697,6 +697,9 @@ export const getPayment = /* GraphQL */ `
         transportationType
         vehicleClass
         status
+        hasNewOffer
+        lastOfferAt
+        lastOfferSenderType
         loadCategory
         isInterState
         estimatedMinPrice
@@ -708,6 +711,7 @@ export const getPayment = /* GraphQL */ `
         fragileSurcharge
         extrasTotal
         totalPrice
+        operationalFare
         courierEarnings
         commissionAmount
         platformFee
@@ -722,13 +726,22 @@ export const getPayment = /* GraphQL */ `
         senderPreTransferLocalPhotos
         senderPreTransferLocalVideo
         mediaUploadStatus
+        courierPreTransferUploadStatus
+        courierPostLoadingUploadStatus
+        dropoffUploadStatus
         courierPreTransferPhotos
         courierPreTransferVideo
         courierPreTransferRecordedAt
+        courierPreTransferLocalPhotos
+        courierPreTransferLocalVideo
         courierPostLoadingPhotos
         courierPostLoadingVideo
+        courierPostLoadingLocalPhotos
+        courierPostLoadingLocalVideo
         dropoffArrivalPhotos
         dropoffArrivalVideo
+        dropoffArrivalLocalPhotos
+        dropoffArrivalLocalVideo
         postDeliveryPhotos
         postDeliveryVideo
         pickupLoadingResponsibility
@@ -967,6 +980,9 @@ export const getOffer = /* GraphQL */ `
         transportationType
         vehicleClass
         status
+        hasNewOffer
+        lastOfferAt
+        lastOfferSenderType
         loadCategory
         isInterState
         estimatedMinPrice
@@ -978,6 +994,7 @@ export const getOffer = /* GraphQL */ `
         fragileSurcharge
         extrasTotal
         totalPrice
+        operationalFare
         courierEarnings
         commissionAmount
         platformFee
@@ -992,13 +1009,22 @@ export const getOffer = /* GraphQL */ `
         senderPreTransferLocalPhotos
         senderPreTransferLocalVideo
         mediaUploadStatus
+        courierPreTransferUploadStatus
+        courierPostLoadingUploadStatus
+        dropoffUploadStatus
         courierPreTransferPhotos
         courierPreTransferVideo
         courierPreTransferRecordedAt
+        courierPreTransferLocalPhotos
+        courierPreTransferLocalVideo
         courierPostLoadingPhotos
         courierPostLoadingVideo
+        courierPostLoadingLocalPhotos
+        courierPostLoadingLocalVideo
         dropoffArrivalPhotos
         dropoffArrivalVideo
+        dropoffArrivalLocalPhotos
+        dropoffArrivalLocalVideo
         postDeliveryPhotos
         postDeliveryVideo
         pickupLoadingResponsibility
@@ -1257,6 +1283,9 @@ export const getOrder = /* GraphQL */ `
       transportationType
       vehicleClass
       status
+      hasNewOffer
+      lastOfferAt
+      lastOfferSenderType
       loadCategory
       isInterState
       estimatedMinPrice
@@ -1268,6 +1297,7 @@ export const getOrder = /* GraphQL */ `
       fragileSurcharge
       extrasTotal
       totalPrice
+      operationalFare
       courierEarnings
       commissionAmount
       platformFee
@@ -1282,13 +1312,22 @@ export const getOrder = /* GraphQL */ `
       senderPreTransferLocalPhotos
       senderPreTransferLocalVideo
       mediaUploadStatus
+      courierPreTransferUploadStatus
+      courierPostLoadingUploadStatus
+      dropoffUploadStatus
       courierPreTransferPhotos
       courierPreTransferVideo
       courierPreTransferRecordedAt
+      courierPreTransferLocalPhotos
+      courierPreTransferLocalVideo
       courierPostLoadingPhotos
       courierPostLoadingVideo
+      courierPostLoadingLocalPhotos
+      courierPostLoadingLocalVideo
       dropoffArrivalPhotos
       dropoffArrivalVideo
+      dropoffArrivalLocalPhotos
+      dropoffArrivalLocalVideo
       postDeliveryPhotos
       postDeliveryVideo
       pickupLoadingResponsibility
@@ -1421,6 +1460,9 @@ export const listOrders = /* GraphQL */ `
         transportationType
         vehicleClass
         status
+        hasNewOffer
+        lastOfferAt
+        lastOfferSenderType
         loadCategory
         isInterState
         estimatedMinPrice
@@ -1432,6 +1474,7 @@ export const listOrders = /* GraphQL */ `
         fragileSurcharge
         extrasTotal
         totalPrice
+        operationalFare
         courierEarnings
         commissionAmount
         platformFee
@@ -1446,13 +1489,22 @@ export const listOrders = /* GraphQL */ `
         senderPreTransferLocalPhotos
         senderPreTransferLocalVideo
         mediaUploadStatus
+        courierPreTransferUploadStatus
+        courierPostLoadingUploadStatus
+        dropoffUploadStatus
         courierPreTransferPhotos
         courierPreTransferVideo
         courierPreTransferRecordedAt
+        courierPreTransferLocalPhotos
+        courierPreTransferLocalVideo
         courierPostLoadingPhotos
         courierPostLoadingVideo
+        courierPostLoadingLocalPhotos
+        courierPostLoadingLocalVideo
         dropoffArrivalPhotos
         dropoffArrivalVideo
+        dropoffArrivalLocalPhotos
+        dropoffArrivalLocalVideo
         postDeliveryPhotos
         postDeliveryVideo
         pickupLoadingResponsibility
@@ -1533,6 +1585,9 @@ export const syncOrders = /* GraphQL */ `
         transportationType
         vehicleClass
         status
+        hasNewOffer
+        lastOfferAt
+        lastOfferSenderType
         loadCategory
         isInterState
         estimatedMinPrice
@@ -1544,6 +1599,7 @@ export const syncOrders = /* GraphQL */ `
         fragileSurcharge
         extrasTotal
         totalPrice
+        operationalFare
         courierEarnings
         commissionAmount
         platformFee
@@ -1558,13 +1614,22 @@ export const syncOrders = /* GraphQL */ `
         senderPreTransferLocalPhotos
         senderPreTransferLocalVideo
         mediaUploadStatus
+        courierPreTransferUploadStatus
+        courierPostLoadingUploadStatus
+        dropoffUploadStatus
         courierPreTransferPhotos
         courierPreTransferVideo
         courierPreTransferRecordedAt
+        courierPreTransferLocalPhotos
+        courierPreTransferLocalVideo
         courierPostLoadingPhotos
         courierPostLoadingVideo
+        courierPostLoadingLocalPhotos
+        courierPostLoadingLocalVideo
         dropoffArrivalPhotos
         dropoffArrivalVideo
+        dropoffArrivalLocalPhotos
+        dropoffArrivalLocalVideo
         postDeliveryPhotos
         postDeliveryVideo
         pickupLoadingResponsibility
@@ -1647,6 +1712,9 @@ export const ordersByAssignedCourierId = /* GraphQL */ `
         transportationType
         vehicleClass
         status
+        hasNewOffer
+        lastOfferAt
+        lastOfferSenderType
         loadCategory
         isInterState
         estimatedMinPrice
@@ -1658,6 +1726,7 @@ export const ordersByAssignedCourierId = /* GraphQL */ `
         fragileSurcharge
         extrasTotal
         totalPrice
+        operationalFare
         courierEarnings
         commissionAmount
         platformFee
@@ -1672,13 +1741,22 @@ export const ordersByAssignedCourierId = /* GraphQL */ `
         senderPreTransferLocalPhotos
         senderPreTransferLocalVideo
         mediaUploadStatus
+        courierPreTransferUploadStatus
+        courierPostLoadingUploadStatus
+        dropoffUploadStatus
         courierPreTransferPhotos
         courierPreTransferVideo
         courierPreTransferRecordedAt
+        courierPreTransferLocalPhotos
+        courierPreTransferLocalVideo
         courierPostLoadingPhotos
         courierPostLoadingVideo
+        courierPostLoadingLocalPhotos
+        courierPostLoadingLocalVideo
         dropoffArrivalPhotos
         dropoffArrivalVideo
+        dropoffArrivalLocalPhotos
+        dropoffArrivalLocalVideo
         postDeliveryPhotos
         postDeliveryVideo
         pickupLoadingResponsibility
@@ -1763,6 +1841,9 @@ export const ordersByAssignmentStatusAndAssignmentExpiresAt = /* GraphQL */ `
         transportationType
         vehicleClass
         status
+        hasNewOffer
+        lastOfferAt
+        lastOfferSenderType
         loadCategory
         isInterState
         estimatedMinPrice
@@ -1774,6 +1855,7 @@ export const ordersByAssignmentStatusAndAssignmentExpiresAt = /* GraphQL */ `
         fragileSurcharge
         extrasTotal
         totalPrice
+        operationalFare
         courierEarnings
         commissionAmount
         platformFee
@@ -1788,13 +1870,22 @@ export const ordersByAssignmentStatusAndAssignmentExpiresAt = /* GraphQL */ `
         senderPreTransferLocalPhotos
         senderPreTransferLocalVideo
         mediaUploadStatus
+        courierPreTransferUploadStatus
+        courierPostLoadingUploadStatus
+        dropoffUploadStatus
         courierPreTransferPhotos
         courierPreTransferVideo
         courierPreTransferRecordedAt
+        courierPreTransferLocalPhotos
+        courierPreTransferLocalVideo
         courierPostLoadingPhotos
         courierPostLoadingVideo
+        courierPostLoadingLocalPhotos
+        courierPostLoadingLocalVideo
         dropoffArrivalPhotos
         dropoffArrivalVideo
+        dropoffArrivalLocalPhotos
+        dropoffArrivalLocalVideo
         postDeliveryPhotos
         postDeliveryVideo
         pickupLoadingResponsibility
@@ -1877,6 +1968,9 @@ export const ordersByUserID = /* GraphQL */ `
         transportationType
         vehicleClass
         status
+        hasNewOffer
+        lastOfferAt
+        lastOfferSenderType
         loadCategory
         isInterState
         estimatedMinPrice
@@ -1888,6 +1982,7 @@ export const ordersByUserID = /* GraphQL */ `
         fragileSurcharge
         extrasTotal
         totalPrice
+        operationalFare
         courierEarnings
         commissionAmount
         platformFee
@@ -1902,13 +1997,22 @@ export const ordersByUserID = /* GraphQL */ `
         senderPreTransferLocalPhotos
         senderPreTransferLocalVideo
         mediaUploadStatus
+        courierPreTransferUploadStatus
+        courierPostLoadingUploadStatus
+        dropoffUploadStatus
         courierPreTransferPhotos
         courierPreTransferVideo
         courierPreTransferRecordedAt
+        courierPreTransferLocalPhotos
+        courierPreTransferLocalVideo
         courierPostLoadingPhotos
         courierPostLoadingVideo
+        courierPostLoadingLocalPhotos
+        courierPostLoadingLocalVideo
         dropoffArrivalPhotos
         dropoffArrivalVideo
+        dropoffArrivalLocalPhotos
+        dropoffArrivalLocalVideo
         postDeliveryPhotos
         postDeliveryVideo
         pickupLoadingResponsibility

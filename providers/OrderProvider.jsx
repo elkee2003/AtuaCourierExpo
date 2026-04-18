@@ -44,6 +44,22 @@ const TERMINAL_STATUSES = ["DELIVERED", "CANCELLED", "DISPUTED"];
 const OrderProvider = ({ children }) => {
   const { dbCourier } = useAuthContext();
 
+  // EVIDENCE STATE
+  const [courierPreTransferPhotos, setCourierPreTransferPhotos] = useState([]);
+  const [courierPreTransferVideo, setCourierPreTransferVideo] = useState("");
+
+  const [courierPostLoadingPhotos, setCourierPostLoadingPhotos] = useState([]);
+  const [courierPostLoadingVideo, setCourierPostLoadingVideo] = useState("");
+
+  const [dropoffArrivalPhotos, setDropoffArrivalPhotos] = useState([]);
+  const [dropoffArrivalVideo, setDropoffArrivalVideo] = useState("");
+
+  const [uploadProgress, setUploadProgress] = useState({
+    PRE_TRANSFER: 0,
+    POST_LOADING: 0,
+    DROPOFF: 0,
+  });
+
   const [order, setOrder] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -58,12 +74,16 @@ const OrderProvider = ({ children }) => {
   const [activeOrders, setActiveOrders] = useState([]);
 
   /**
-   * ✅ DERIVED STATE
+   * ✅ DERIVED STATE FOR MAP
    */
   const isPickedUp = useMemo(() => {
-    return ["PICKED_UP", "IN_TRANSIT", "ARRIVED_DROPOFF", "UNLOADING"].includes(
-      order?.status,
-    );
+    return [
+      "ACCEPTED",
+      "PICKED_UP",
+      "IN_TRANSIT",
+      "ARRIVED_DROPOFF",
+      "UNLOADING",
+    ].includes(order?.status);
   }, [order?.status]);
 
   /**
@@ -219,16 +239,20 @@ const OrderProvider = ({ children }) => {
           ? DELIVERY_FLOW.MAXI
           : DELIVERY_FLOW.DEFAULT;
 
-      const lastStep = flow[flow.length - 1];
+      const beforeLastStep = flow[flow.length - 2]; // ARRIVED_DROPOFF (DEFAULT)
+      const lastStep = flow[flow.length - 1]; // DELIVERED
 
-      if (current.status !== lastStep) {
-        console.log("❌ Cannot complete before final step");
+      // ✅ Only allow from step BEFORE final
+      if (current.status !== beforeLastStep) {
+        console.log("❌ Must be at final step before completing");
+        console.log("CURRENT:", current.status);
+        console.log("EXPECTED:", beforeLastStep);
         return false;
       }
 
       const updated = await DataStore.save(
         Order.copyOf(current, (u) => {
-          u.status = "DELIVERED";
+          u.status = lastStep; // 👈 use flow (cleaner)
           u.unloadingCompletedAt = new Date().toISOString();
         }),
       );
@@ -283,6 +307,22 @@ const OrderProvider = ({ children }) => {
   return (
     <OrderContext.Provider
       value={{
+        courierPreTransferPhotos,
+        setCourierPreTransferPhotos,
+        courierPreTransferVideo,
+        setCourierPreTransferVideo,
+        courierPostLoadingPhotos,
+        setCourierPostLoadingPhotos,
+        courierPostLoadingVideo,
+        setCourierPostLoadingVideo,
+        dropoffArrivalPhotos,
+        setDropoffArrivalPhotos,
+        dropoffArrivalVideo,
+        setDropoffArrivalVideo,
+
+        uploadProgress,
+        setUploadProgress,
+
         order,
         user,
         loading,

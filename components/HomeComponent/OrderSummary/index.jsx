@@ -33,11 +33,14 @@ const OrderSummary = ({ orderId }) => {
   const [courier, setCourier] = useState(null);
   const [offer, setOffer] = useState("");
   const [offers, setOffers] = useState([]);
+  const [sending, setSending] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [resolvedMedia, setResolvedMedia] = useState([]);
+
+  const isBidding = order?.status === "BIDDING";
 
   const hasActiveExpressOrder = (courier?.currentExpressCount || 0) > 0;
 
@@ -89,7 +92,7 @@ const OrderSummary = ({ orderId }) => {
 
   const isCourierTurn = !latestOffer || latestOffer.senderType === "USER";
 
-  const isCounterDisabled = !isCourierTurn || isBlocked;
+  const isCounterDisabled = !isCourierTurn || isBlocked || !isBidding;
 
   // conversion for 'Handle Myself'
   const formatResponsibility = (value) => {
@@ -193,24 +196,69 @@ const OrderSummary = ({ orderId }) => {
 
   // ✅ Send Counter Offer
   const onSendOffer = async (price) => {
-    if (!price || price <= 0) return;
+    if (sending) return;
+    setSending(true);
 
-    if (price < minPrice || price > maxPrice) {
-      alert("Offer must be within allowed range");
+    if (!price || price <= 0) {
+      setSending(false);
       return;
     }
 
-    await DataStore.save(
-      new Offer({
-        orderID: order.id,
-        courierID: dbCourier.id,
-        senderType: "COURIER",
-        amount: price,
-        status: "ACTIVE",
-      }),
-    );
-    setOffer(price.toString());
+    if (price < minPrice || price > maxPrice) {
+      alert("Offer must be within allowed range");
+      setSending(false);
+      return;
+    }
+
+    try {
+      await DataStore.save(
+        new Offer({
+          orderID: order.id,
+          courierID: dbCourier.id,
+          senderType: "COURIER",
+          amount: price,
+          status: "ACTIVE",
+        }),
+      );
+
+      const latestOrder = await DataStore.query(Order, order.id);
+
+      if (latestOrder.status === "BIDDING") {
+        await DataStore.save(
+          Order.copyOf(latestOrder, (updated) => {
+            updated.hasNewOffer = true;
+            updated.lastOfferAt = new Date().toISOString();
+            updated.lastOfferSenderType = "COURIER";
+          }),
+        );
+      }
+
+      setOffer(price.toString());
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setSending(false); // ✅ correct place
+    }
   };
+
+  // USEEFFECT TO CLEAR LIVE ORDER BADGE WHEN COURIER SEE THE NOTIFICATION OF NEW OFFER
+  useEffect(() => {
+    if (!order) return;
+
+    if (order.hasNewOffer && order.lastOfferSenderType === "USER") {
+      const timer = setTimeout(async () => {
+        const latestOrder = await DataStore.query(Order, order.id);
+
+        await DataStore.save(
+          Order.copyOf(latestOrder, (updated) => {
+            updated.hasNewOffer = false;
+          }),
+        );
+      }, 1500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [order?.id, order?.hasNewOffer]);
 
   // ✅ Accept Offer
   const onAccept = async () => {
@@ -266,13 +314,21 @@ const OrderSummary = ({ orderId }) => {
         let priceToAccept;
         let offerToAccept = null;
 
-        if (!latestOffer || latestOffer.senderType !== "USER") {
+        const freshOffers = await DataStore.query(Offer, (o) =>
+          o.orderID.eq(order.id),
+        );
+
+        const latest = freshOffers.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+        )[0];
+
+        if (!latest || latest.senderType !== "USER") {
           alert("You can only accept user's latest offer");
           return;
         }
 
-        priceToAccept = latestOffer.amount;
-        offerToAccept = latestOffer;
+        priceToAccept = latest.amount;
+        offerToAccept = latest;
 
         // ✅ 1. Update Order
         await DataStore.save(
@@ -282,6 +338,7 @@ const OrderSummary = ({ orderId }) => {
             updated.totalPrice = priceToAccept;
             updated.acceptedOfferID = offerToAccept?.id;
             updated.assignedCourierId = dbCourier.id;
+            updated.hasNewOffer = false;
           }),
         );
 

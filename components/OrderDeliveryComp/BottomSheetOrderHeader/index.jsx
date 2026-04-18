@@ -1,25 +1,101 @@
-import { View, Text } from 'react-native';
-import React from 'react';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import styles from './styles';
-import {useOrderContext} from '@/providers/OrderProvider';
+import { useOrderContext } from "@/providers/OrderProvider";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { LinearGradient } from "expo-linear-gradient";
+import { Text, View } from "react-native";
+import styles from "./styles";
 
-const BottomSheetDetails = () => {
+const formatName = (name) => {
+  if (!name) return "customer";
+  return name.length > 12 ? name.substring(0, 12) + "..." : name;
+};
 
-    const {totalMins, totalKm, isPickedUp, user} = useOrderContext()
+const getStatusText = (status, senderName, recipientName) => {
+  const sender = formatName(senderName);
+  const recipient = formatName(recipientName);
+
+  switch (status) {
+    case "ACCEPTED":
+    case "ARRIVED_PICKUP":
+      return `Heading to ${sender}`;
+    case "LOADING":
+      return `Loading items from ${sender}`;
+    case "PICKED_UP":
+    case "IN_TRANSIT":
+      return `Delivering to ${recipient}`;
+    case "ARRIVED_DROPOFF":
+      return `Arrived for ${recipient}`;
+    case "UNLOADING":
+      return `Unloading for ${recipient}`;
+    case "DELIVERED":
+      return `Delivered to ${recipient}`;
+    case "CANCELLED":
+      return "Delivery Cancelled";
+    case "DISPUTED":
+      return "Delivery Under Review";
+    default:
+      return "Processing Delivery";
+  }
+};
+
+const BottomSheetHeader = () => {
+  const { totalMins, totalKm, user, order } = useOrderContext();
+
+  const senderName = user?.firstName;
+  const recipientName = order?.recipientName;
+
+  const displayName =
+    order?.status === "DELIVERED"
+      ? recipientName || "Recipient"
+      : senderName || "Sender";
+
+  const transportType = order?.transportationType || "STANDARD";
 
   return (
-    <View style={{alignItems:'center'}}>
-        <View style={styles.pickUpInfo}>
-            <Text style={styles.bottomText}>{totalMins.toFixed(0)} {""}min</Text>
-            <View style={styles.userBackground}>
-            <FontAwesome name={'user'} color={'white'} size={20}/>
-            </View>
-            <Text style={styles.bottomText}>{totalKm.toFixed(1)} km</Text>
-        </View>
-        <Text style={styles.bottomTextStat}>{ isPickedUp ? 'Dropping Parcel' : 'Picking Up Parcel of'} {user?.firstName.length > 10 ? `${user?.firstName.substring(0, 10)}...` : user?.firstName}</Text>
-    </View>
-  )
-}
+    <View style={styles.container}>
+      <LinearGradient
+        colors={["#0f2027", "#203a43", "#2c5364"]}
+        style={styles.card}
+      >
+        {/* 🔝 TOP ROW */}
+        <View style={styles.topRow}>
+          {/* TIME */}
+          <View style={styles.metricBox}>
+            <Text style={styles.metricValue}>{totalMins?.toFixed(0) || 0}</Text>
+            <Text style={styles.metricLabel}>mins</Text>
+          </View>
 
-export default BottomSheetDetails;
+          {/* CENTER PROFILE */}
+          <View style={styles.centerBlock}>
+            <View style={styles.avatarWrapper}>
+              <FontAwesome name="user" size={18} color="#fff" />
+            </View>
+
+            {/* 🚚 TRANSPORT BADGE */}
+            <View style={styles.transportBadge}>
+              <Text style={styles.transportText}>{transportType}</Text>
+            </View>
+          </View>
+
+          {/* DISTANCE */}
+          <View style={styles.metricBox}>
+            <Text style={styles.metricValue}>{totalKm?.toFixed(1) || 0}</Text>
+            <Text style={styles.metricLabel}>km</Text>
+          </View>
+        </View>
+
+        {/* 📦 STATUS */}
+        <View style={styles.statusContainer}>
+          <Text style={styles.statusText}>
+            {getStatusText(order?.status, senderName, recipientName)}
+          </Text>
+
+          <Text style={styles.userName} numberOfLines={1}>
+            {formatName(displayName)}
+          </Text>
+        </View>
+      </LinearGradient>
+    </View>
+  );
+};
+
+export default BottomSheetHeader;

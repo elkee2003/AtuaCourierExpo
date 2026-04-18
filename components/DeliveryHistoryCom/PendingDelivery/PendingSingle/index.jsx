@@ -140,8 +140,17 @@ const PendingDeliverySingle = ({ item }) => {
     >
       {/* HEADER */}
       <View style={styles.rowBetween}>
-        <Text style={styles.price}>₦{price}</Text>
+        {/* LEFT SIDE */}
+        <View style={styles.headerLeft}>
+          <Text style={styles.price}>₦{price}</Text>
 
+          {/* 🚚 TRANSPORT TYPE BADGE */}
+          <View style={styles.transportBadge}>
+            <Text style={styles.transportText}>{item?.transportationType}</Text>
+          </View>
+        </View>
+
+        {/* STATUS */}
         <View
           style={[
             styles.statusBadge,

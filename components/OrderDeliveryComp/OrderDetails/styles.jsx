@@ -55,22 +55,40 @@ export default StyleSheet.create({
   /* CARD */
   card: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 14,
+    borderRadius: 18,
     padding: 16,
-    marginBottom: 14,
+    marginBottom: 16,
+
+    borderWidth: 1,
+    borderColor: "#F1F5F9",
 
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.05,
+    shadowRadius: 14,
     elevation: 3,
   },
 
   sectionTitle: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "600",
-    color: "#64748B",
-    marginBottom: 10,
+    color: "#94A3B8",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: 12,
+  },
+
+  text: {
+    fontSize: 15,
+    color: "#0F172A",
+    marginBottom: 6,
+  },
+
+  linkText: {
+    fontSize: 15,
+    color: "#2563EB",
+    fontWeight: "600",
+    marginBottom: 6,
   },
 
   row: {
@@ -90,6 +108,23 @@ export default StyleSheet.create({
     flexShrink: 1,
   },
 
+  successRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+
+  successDot: {
+    color: "#22C55E",
+    marginRight: 6,
+  },
+
+  successText: {
+    color: "#166534",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+
   /* INPUT */
   input: {
     borderWidth: 1,
@@ -98,28 +133,36 @@ export default StyleSheet.create({
     padding: 12,
     fontSize: 16,
     backgroundColor: "#F1F5F9",
+
+    fontWeight: "600",
+    letterSpacing: 2,
+    textAlign: "center",
   },
 
   /* BUTTON */
   button: {
-    marginTop: 10,
-    backgroundColor: "#22C55E",
-    paddingVertical: 16,
-    borderRadius: 14,
+    marginTop: 14,
+    backgroundColor: "#16A34A",
+    paddingVertical: 18,
+    borderRadius: 16,
     alignItems: "center",
+
+    shadowColor: "#16A34A",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
   },
 
   buttonDisabled: {
     backgroundColor: "#CBD5F5",
+    shadowOpacity: 0,
   },
 
   buttonText: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#022C22",
-  },
-
-  buttonTextDisabled: {
-    color: "#64748B",
+    color: "#FFFFFF",
+    letterSpacing: 0.5,
   },
 });

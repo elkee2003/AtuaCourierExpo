@@ -9,6 +9,26 @@ export default StyleSheet.create({
     elevation: 4,
   },
 
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
+  transportBadge: {
+    backgroundColor: "#EEF2FF", // soft indigo background
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+
+  transportText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#4338CA", // premium indigo text
+    letterSpacing: 0.5,
+  },
+
   expandHint: {
     marginTop: 8,
     fontSize: 12,

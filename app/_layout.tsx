@@ -1,42 +1,41 @@
-// import { useEffect, useState } from 'react';
-// import { DataStore } from 'aws-amplify/datastore';
-import AuthProvider from "@/providers/AuthProvider";
+import AuthProvider, { useAuthContext } from "@/providers/AuthProvider";
 import OrderProvider from "@/providers/OrderProvider";
 import ProfileProvider from "@/providers/ProfileProvider";
+import { resumeCourierPendingUploads } from "@/utils/resumeCourierPendingUploads";
 import { Amplify } from "aws-amplify";
 import { Stack } from "expo-router";
+import React, { useEffect } from "react";
 import { AutocompleteDropdownContextProvider } from "react-native-autocomplete-dropdown";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import amplifyconfig from "../src/amplifyconfiguration.json";
 
 Amplify.configure(amplifyconfig);
 
+/**
+ * ✅ INNER COMPONENT (has access to AuthContext)
+ */
+const AppInitializer = () => {
+  const { dbCourier } = useAuthContext();
+
+  useEffect(() => {
+    if (!dbCourier?.id) return;
+
+    resumeCourierPendingUploads(dbCourier.id);
+  }, [dbCourier?.id]);
+
+  return null;
+};
+
 const RootLayout = () => {
-  // const [ready, setReady] = useState(false);
-
-  // useEffect(() => {
-  //   const resetDataStore = async () => {
-  //     try {
-  //       console.log('🧹 Clearing DataStore (one-time reset)');
-  //       await DataStore.clear();
-  //     } catch (err) {
-  //       console.log('DataStore clear error:', err);
-  //     } finally {
-  //       setReady(true);
-  //     }
-  //   };
-
-  //   resetDataStore();
-  // }, []);
-
-  // if (!ready) return null;
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
         <AutocompleteDropdownContextProvider>
           <ProfileProvider>
             <OrderProvider>
+              {/* ✅ THIS IS WHERE IT SHOULD BE */}
+              <AppInitializer />
+
               <Stack
                 screenOptions={{
                   headerShown: false,

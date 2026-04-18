@@ -142,7 +142,7 @@ const OrderDeliveryMap = ({ order, user, onMapReady }) => {
           strokeWidth={3}
           strokeColor="red"
           onReady={(result) => {
-            setIsCourierClose(result.distance <= 0.15); //set to 150metres
+            setIsCourierClose(result.distance <= 3.8); //set to 150metres
             setTotalMins(result.duration);
             setTotalKm(result.distance);
           }}
