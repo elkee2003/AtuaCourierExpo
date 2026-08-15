@@ -1,23 +1,26 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { confirmSignUp, resendSignUpCode } from "aws-amplify/auth";
 import { router, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import styles from "./styles";
 
 const ConfirmEmailCom = () => {
-  const { username } = useLocalSearchParams();
+  const params = useLocalSearchParams();
+
+  const [username, setUsername] = useState(params.username || null);
   const {
     control,
     handleSubmit,
@@ -25,6 +28,37 @@ const ConfirmEmailCom = () => {
   } = useForm();
   const [loading, setLoading] = useState(false);
   const [loadingCode, setLoadingCode] = useState(false);
+
+  // useEffect to load saved email when screen opens
+  useEffect(() => {
+    const loadEmail = async () => {
+      try {
+        // Save route param if available
+        if (params.username) {
+          await AsyncStorage.setItem(
+            "pendingVerificationEmail",
+            params.username,
+          );
+
+          setUsername(params.username);
+          return;
+        }
+
+        // Otherwise load from storage
+        const savedEmail = await AsyncStorage.getItem(
+          "pendingVerificationEmail",
+        );
+
+        if (savedEmail) {
+          setUsername(savedEmail);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    loadEmail();
+  }, []);
 
   const onSubmit = async ({ confirmationCode }) => {
     if (!username) {
@@ -40,6 +74,8 @@ const ConfirmEmailCom = () => {
         username,
         confirmationCode: confirmationCode.trim(),
       });
+
+      await AsyncStorage.removeItem("pendingVerificationEmail");
 
       Alert.alert("Success", "Your email has been verified.");
       router.replace("/login");
@@ -87,6 +123,17 @@ const ConfirmEmailCom = () => {
               <Text style={styles.subtitle}>
                 Enter the 6-digit code sent to{" "}
                 <Text style={styles.bold}>{username}</Text>
+              </Text>
+
+              <Text style={styles.emailTip}>
+                If you don't see the email within a few minutes, check your Spam
+                or Junk folder.
+              </Text>
+
+              <Text style={styles.verificationHelpText}>
+                If you switched to your email app and this screen disappeared,
+                simply sign in again with the same email and password. We'll
+                bring you back here.
               </Text>
             </View>
 
@@ -157,3 +204,10 @@ const ConfirmEmailCom = () => {
 };
 
 export default ConfirmEmailCom;
+
+// Thanks to the async storage:
+// User signs up → email saved.
+// User leaves app → email still saved.
+// Android kills app → email still saved.
+// User comes back → verification screen still knows the email.
+// User tries signing in before verifying → app sends them straight back to the verification screen without losing the email.

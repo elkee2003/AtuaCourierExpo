@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { fetchAuthSession, signIn, signOut } from "aws-amplify/auth";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -29,10 +30,40 @@ const SignInCourier = () => {
     setLoading(true);
 
     try {
-      const { isSignedIn } = await signIn({
+      const result = await signIn({
         username: data.email,
         password: data.password,
       });
+
+      const { isSignedIn, nextStep } = result;
+
+      if (!isSignedIn) {
+        if (nextStep?.signInStep === "CONFIRM_SIGN_UP") {
+          await AsyncStorage.setItem(
+            "pendingVerificationEmail",
+            data.email.toLowerCase(),
+          );
+
+          Alert.alert(
+            "Email Not Verified",
+            "Please verify your email before signing in.",
+            [
+              {
+                text: "OK",
+                onPress: () =>
+                  router.push({
+                    pathname: "/login/confirmemail",
+                    params: {
+                      username: data.email,
+                    },
+                  }),
+              },
+            ],
+          );
+
+          return;
+        }
+      }
 
       if (isSignedIn) {
         const session = await fetchAuthSession();
@@ -58,9 +89,9 @@ const SignInCourier = () => {
       }
     } catch (error) {
       Alert.alert("Sign In Failed", error.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -140,3 +171,10 @@ const SignInCourier = () => {
 };
 
 export default SignInCourier;
+
+// Thanks to the async storage:
+// User signs up → email saved.
+// User leaves app → email still saved.
+// Android kills app → email still saved.
+// User comes back → verification screen still knows the email.
+// User tries signing in before verifying → app sends them straight back to the verification screen without losing the email.

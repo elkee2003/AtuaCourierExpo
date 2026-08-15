@@ -14,45 +14,97 @@ const BottomContainer = ({
 
   return (
     <View style={styles.wrapper}>
-      {/* STATUS CARD */}
+      {/* =====================================================
+          STATUS CARD
+      ===================================================== */}
       <View style={styles.statusCard}>
-        <View style={styles.statusRow}>
+        {/* STATUS INFORMATION */}
+        <View style={styles.statusIdentity}>
+          {/* Status indicator */}
           <View
             style={[
-              styles.statusDot,
-              isOnline ? styles.dotOnline : styles.dotOffline,
+              styles.statusIndicator,
+              isOnline
+                ? styles.statusIndicatorOnline
+                : styles.statusIndicatorOffline,
             ]}
           />
 
-          <View>
-            <Text style={styles.statusTitle}>
-              {isOnline ? "You're Online" : "You're Offline"}
-            </Text>
+          {/* Status text */}
+          <View style={styles.statusContent}>
+            <View style={styles.statusTitleRow}>
+              <Text style={styles.statusTitle}>
+                {isOnline ? "You're Online" : "You're Offline"}
+              </Text>
+
+              <View
+                style={[
+                  styles.statusBadge,
+                  isOnline
+                    ? styles.statusBadgeOnline
+                    : styles.statusBadgeOffline,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.statusBadgeText,
+                    isOnline
+                      ? styles.statusBadgeTextOnline
+                      : styles.statusBadgeTextOffline,
+                  ]}
+                >
+                  {isOnline ? "ACTIVE" : "OFFLINE"}
+                </Text>
+              </View>
+            </View>
 
             <Text style={styles.statusSubtitle}>
               {isOnline
                 ? "Receiving delivery requests nearby"
                 : "Go online to start receiving orders"}
             </Text>
-
-            {!isApproved && (
-              <Text style={styles.warningText}>
-                Your account is under review. You'll be able to go online once
-                approved.
-              </Text>
-            )}
           </View>
         </View>
 
+        {/* =================================================
+            APPROVAL WARNING
+        ================================================= */}
+        {!isApproved && (
+          <View style={styles.warningContainer}>
+            <View style={styles.warningIconContainer}>
+              <Text style={styles.warningIcon}>!</Text>
+            </View>
+
+            <Text style={styles.warningText}>
+              Your account is under review. You'll be able to go online once
+              your account has been approved.
+            </Text>
+          </View>
+        )}
+
+        {/* =================================================
+            ONLINE / OFFLINE BUTTON
+            Still INSIDE the black status card
+        ================================================= */}
         <Pressable
           style={[
-            isOnline ? styles.endBtn : styles.goBtn,
-            !isApproved && styles.disabledBtn,
+            styles.onlineButton,
+            isOnline ? styles.onlineButtonOffline : styles.onlineButtonOnline,
+            !isApproved && styles.disabledButton,
           ]}
           onPress={onToggleOnline}
           disabled={!isApproved}
         >
-          <Text style={styles.btnText}>
+          <View
+            style={[
+              styles.onlineButtonIndicator,
+              isOnline
+                ? styles.onlineButtonIndicatorOffline
+                : styles.onlineButtonIndicatorOnline,
+            ]}
+          />
+
+          <Text style={styles.onlineButtonText}>
             {!isApproved
               ? "Approval Required"
               : isOnline
@@ -62,53 +114,61 @@ const BottomContainer = ({
         </Pressable>
       </View>
 
-      {/* 🔥 LIVE STATS */}
+      {/* =====================================================
+          LIVE JOB STATS
+      ===================================================== */}
       {isOnline && (
         <View style={styles.statsCard}>
-          {/* TOTAL */}
-          <View style={styles.statBox}>
+          {/* AVAILABLE / MAXI */}
+          <View style={styles.statItem}>
             <Text style={styles.statNumber}>{stats.total}</Text>
+
             <Text style={styles.statLabel}>
-              {isMaxi ? "Maxi Jobs" : "Available Jobs"}
+              {isMaxi ? "Maxi Jobs" : "Available"}
             </Text>
           </View>
 
           <View style={styles.statDivider} />
 
           {/* NEARBY */}
-          <View style={styles.statBox}>
+          <View style={styles.statItem}>
             <Text style={styles.statNumber}>{stats.nearby}</Text>
-            <Text style={styles.statLabel}>Nearby Jobs</Text>
+
+            <Text style={styles.statLabel}>Nearby</Text>
           </View>
 
-          {/* 🔹 ONLY FOR MICRO / MOTO */}
+          {/* MICRO / MOTO ONLY */}
           {!isMaxi && (
             <>
               <View style={styles.statDivider} />
 
-              <View style={styles.statBox}>
+              <View style={styles.statItem}>
                 <Text style={styles.statNumber}>{stats.batch}</Text>
-                <Text style={styles.statLabel}>Batch Jobs</Text>
+
+                <Text style={styles.statLabel}>Batch</Text>
               </View>
 
               <View style={styles.statDivider} />
 
-              <View style={styles.statBox}>
+              <View style={styles.statItem}>
                 <Text style={styles.statNumber}>{stats.express}</Text>
-                <Text style={styles.statLabel}>Express Jobs</Text>
+
+                <Text style={styles.statLabel}>Express</Text>
               </View>
             </>
           )}
         </View>
       )}
 
-      {/* ACTIONS */}
+      {/* =====================================================
+          REFRESH JOBS
+      ===================================================== */}
       {isOnline && (
-        <View style={styles.actionsRow}>
-          <Pressable style={styles.refreshBtn} onPress={onRefresh}>
-            <Text style={styles.refreshText}>Refresh Jobs</Text>
-          </Pressable>
-        </View>
+        <Pressable style={styles.refreshButton} onPress={onRefresh}>
+          <Text style={styles.refreshIcon}>↻</Text>
+
+          <Text style={styles.refreshText}>Refresh Jobs</Text>
+        </Pressable>
       )}
     </View>
   );

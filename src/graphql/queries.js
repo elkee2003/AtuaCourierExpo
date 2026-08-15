@@ -235,12 +235,19 @@ export const getPayout = /* GraphQL */ `
     getPayout(id: $id) {
       id
       courierID
+      walletID
       amount
       status
       bankName
       accountNumber
       reference
-      walletID
+      transferCode
+      transferID
+      failureReason
+      payoutMethod
+      processedAt
+      paidAt
+      failedAt
       createdAt
       updatedAt
       _version
@@ -260,12 +267,19 @@ export const listPayouts = /* GraphQL */ `
       items {
         id
         courierID
+        walletID
         amount
         status
         bankName
         accountNumber
         reference
-        walletID
+        transferCode
+        transferID
+        failureReason
+        payoutMethod
+        processedAt
+        paidAt
+        failedAt
         createdAt
         updatedAt
         _version
@@ -295,12 +309,19 @@ export const syncPayouts = /* GraphQL */ `
       items {
         id
         courierID
+        walletID
         amount
         status
         bankName
         accountNumber
         reference
-        walletID
+        transferCode
+        transferID
+        failureReason
+        payoutMethod
+        processedAt
+        paidAt
+        failedAt
         createdAt
         updatedAt
         _version
@@ -332,12 +353,19 @@ export const payoutsByCourierID = /* GraphQL */ `
       items {
         id
         courierID
+        walletID
         amount
         status
         bankName
         accountNumber
         reference
-        walletID
+        transferCode
+        transferID
+        failureReason
+        payoutMethod
+        processedAt
+        paidAt
+        failedAt
         createdAt
         updatedAt
         _version
@@ -369,12 +397,63 @@ export const payoutsByWalletID = /* GraphQL */ `
       items {
         id
         courierID
+        walletID
         amount
         status
         bankName
         accountNumber
         reference
+        transferCode
+        transferID
+        failureReason
+        payoutMethod
+        processedAt
+        paidAt
+        failedAt
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const payoutsByReference = /* GraphQL */ `
+  query PayoutsByReference(
+    $reference: String!
+    $sortDirection: ModelSortDirection
+    $filter: ModelPayoutFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    payoutsByReference(
+      reference: $reference
+      sortDirection: $sortDirection
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+    ) {
+      items {
+        id
+        courierID
         walletID
+        amount
+        status
+        bankName
+        accountNumber
+        reference
+        transferCode
+        transferID
+        failureReason
+        payoutMethod
+        processedAt
+        paidAt
+        failedAt
         createdAt
         updatedAt
         _version
@@ -398,6 +477,7 @@ export const getTransaction = /* GraphQL */ `
       description
       orderID
       paymentID
+      reference
       status
       createdAt
       updatedAt
@@ -423,6 +503,7 @@ export const listTransactions = /* GraphQL */ `
         description
         orderID
         paymentID
+        reference
         status
         createdAt
         updatedAt
@@ -458,6 +539,7 @@ export const syncTransactions = /* GraphQL */ `
         description
         orderID
         paymentID
+        reference
         status
         createdAt
         updatedAt
@@ -495,6 +577,7 @@ export const transactionsByWalletID = /* GraphQL */ `
         description
         orderID
         paymentID
+        reference
         status
         createdAt
         updatedAt
@@ -532,6 +615,7 @@ export const transactionsByOrderID = /* GraphQL */ `
         description
         orderID
         paymentID
+        reference
         status
         createdAt
         updatedAt
@@ -569,6 +653,45 @@ export const transactionsByPaymentID = /* GraphQL */ `
         description
         orderID
         paymentID
+        reference
+        status
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const transactionsByReference = /* GraphQL */ `
+  query TransactionsByReference(
+    $reference: String!
+    $sortDirection: ModelSortDirection
+    $filter: ModelTransactionFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    transactionsByReference(
+      reference: $reference
+      sortDirection: $sortDirection
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+    ) {
+      items {
+        id
+        walletID
+        type
+        amount
+        description
+        orderID
+        paymentID
+        reference
         status
         createdAt
         updatedAt
@@ -589,9 +712,9 @@ export const getWallet = /* GraphQL */ `
       id
       ownerID
       ownerType
-      balance
+      availableBalance
       pendingBalance
-      totalEarnings
+      lifetimeEarnings
       transactions {
         nextToken
         startedAt
@@ -617,9 +740,9 @@ export const listWallets = /* GraphQL */ `
         id
         ownerID
         ownerType
-        balance
+        availableBalance
         pendingBalance
-        totalEarnings
+        lifetimeEarnings
         createdAt
         updatedAt
         _version
@@ -650,9 +773,9 @@ export const syncWallets = /* GraphQL */ `
         id
         ownerID
         ownerType
-        balance
+        availableBalance
         pendingBalance
-        totalEarnings
+        lifetimeEarnings
         createdAt
         updatedAt
         _version
@@ -768,8 +891,19 @@ export const getPayment = /* GraphQL */ `
         acceptedOfferID
         paymentStatus
         paymentID
+        paymentReference
         payoutStatus
         fundsStatus
+        earningsAllocationStatus
+        earningsAllocatedAt
+        fundsReleaseBlocked
+        fundsHoldReason
+        fundsHeldBy
+        fundsHeldAt
+        fundsReleasedAmount
+        pickupFundsReleasedAt
+        fundsReleasedAt
+        fundsReleaseType
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -956,6 +1090,44 @@ export const paymentsByUserID = /* GraphQL */ `
     }
   }
 `;
+export const paymentsByReference = /* GraphQL */ `
+  query PaymentsByReference(
+    $reference: String!
+    $sortDirection: ModelSortDirection
+    $filter: ModelPaymentFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    paymentsByReference(
+      reference: $reference
+      sortDirection: $sortDirection
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+    ) {
+      items {
+        id
+        orderID
+        userID
+        amount
+        currency
+        status
+        paymentMethod
+        provider
+        reference
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
 export const getOffer = /* GraphQL */ `
   query GetOffer($id: ID!) {
     getOffer(id: $id) {
@@ -1051,8 +1223,19 @@ export const getOffer = /* GraphQL */ `
         acceptedOfferID
         paymentStatus
         paymentID
+        paymentReference
         payoutStatus
         fundsStatus
+        earningsAllocationStatus
+        earningsAllocatedAt
+        fundsReleaseBlocked
+        fundsHoldReason
+        fundsHeldBy
+        fundsHeldAt
+        fundsReleasedAmount
+        pickupFundsReleasedAt
+        fundsReleasedAt
+        fundsReleaseType
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -1111,6 +1294,9 @@ export const getOffer = /* GraphQL */ `
         currentExpressCount
         currentMaxiCount
         lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
         statusKey
         walletID
         createdAt
@@ -1354,8 +1540,19 @@ export const getOrder = /* GraphQL */ `
       acceptedOfferID
       paymentStatus
       paymentID
+      paymentReference
       payoutStatus
       fundsStatus
+      earningsAllocationStatus
+      earningsAllocatedAt
+      fundsReleaseBlocked
+      fundsHoldReason
+      fundsHeldBy
+      fundsHeldAt
+      fundsReleasedAmount
+      pickupFundsReleasedAt
+      fundsReleasedAt
+      fundsReleaseType
       assignedCourierId
       assignmentExpiresAt
       assignmentAttempts
@@ -1363,6 +1560,16 @@ export const getOrder = /* GraphQL */ `
       rejectedCourierIds
       assignmentStatus
       userID
+      reviews {
+        nextToken
+        startedAt
+        __typename
+      }
+      reports {
+        nextToken
+        startedAt
+        __typename
+      }
       offers {
         nextToken
         startedAt
@@ -1411,6 +1618,9 @@ export const getOrder = /* GraphQL */ `
         currentExpressCount
         currentMaxiCount
         lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
         statusKey
         walletID
         createdAt
@@ -1531,8 +1741,19 @@ export const listOrders = /* GraphQL */ `
         acceptedOfferID
         paymentStatus
         paymentID
+        paymentReference
         payoutStatus
         fundsStatus
+        earningsAllocationStatus
+        earningsAllocatedAt
+        fundsReleaseBlocked
+        fundsHoldReason
+        fundsHeldBy
+        fundsHeldAt
+        fundsReleasedAmount
+        pickupFundsReleasedAt
+        fundsReleasedAt
+        fundsReleaseType
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -1656,8 +1877,19 @@ export const syncOrders = /* GraphQL */ `
         acceptedOfferID
         paymentStatus
         paymentID
+        paymentReference
         payoutStatus
         fundsStatus
+        earningsAllocationStatus
+        earningsAllocatedAt
+        fundsReleaseBlocked
+        fundsHoldReason
+        fundsHeldBy
+        fundsHeldAt
+        fundsReleasedAmount
+        pickupFundsReleasedAt
+        fundsReleasedAt
+        fundsReleaseType
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -1783,8 +2015,19 @@ export const ordersByAssignedCourierId = /* GraphQL */ `
         acceptedOfferID
         paymentStatus
         paymentID
+        paymentReference
         payoutStatus
         fundsStatus
+        earningsAllocationStatus
+        earningsAllocatedAt
+        fundsReleaseBlocked
+        fundsHoldReason
+        fundsHeldBy
+        fundsHeldAt
+        fundsReleasedAmount
+        pickupFundsReleasedAt
+        fundsReleasedAt
+        fundsReleaseType
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -1912,8 +2155,19 @@ export const ordersByAssignmentStatusAndAssignmentExpiresAt = /* GraphQL */ `
         acceptedOfferID
         paymentStatus
         paymentID
+        paymentReference
         payoutStatus
         fundsStatus
+        earningsAllocationStatus
+        earningsAllocatedAt
+        fundsReleaseBlocked
+        fundsHoldReason
+        fundsHeldBy
+        fundsHeldAt
+        fundsReleasedAmount
+        pickupFundsReleasedAt
+        fundsReleasedAt
+        fundsReleaseType
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -2039,8 +2293,19 @@ export const ordersByUserID = /* GraphQL */ `
         acceptedOfferID
         paymentStatus
         paymentID
+        paymentReference
         payoutStatus
         fundsStatus
+        earningsAllocationStatus
+        earningsAllocatedAt
+        fundsReleaseBlocked
+        fundsHoldReason
+        fundsHeldBy
+        fundsHeldAt
+        fundsReleasedAmount
+        pickupFundsReleasedAt
+        fundsReleasedAt
+        fundsReleaseType
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -2048,6 +2313,782 @@ export const ordersByUserID = /* GraphQL */ `
         rejectedCourierIds
         assignmentStatus
         userID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const getCourierReport = /* GraphQL */ `
+  query GetCourierReport($id: ID!) {
+    getCourierReport(id: $id) {
+      id
+      courierID
+      courier {
+        id
+        sub
+        isOnline
+        firstName
+        lastName
+        profilePic
+        address
+        landMark
+        phoneNumber
+        email
+        courierNIN
+        courierNINImage
+        bankCode
+        bankName
+        accountName
+        accountNumber
+        transportationType
+        vehicleClass
+        model
+        vehicleColour
+        plateNumber
+        maxiImages
+        maxiDescription
+        guarantorName
+        guarantorLastName
+        guarantorProfession
+        guarantorNumber
+        guarantorRelationship
+        guarantorAddress
+        guarantorEmail
+        guarantorNIN
+        guarantorNINImage
+        lat
+        lng
+        heading
+        push_token
+        isApproved
+        approvedById
+        currentBatchCount
+        currentExpressCount
+        currentMaxiCount
+        lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
+        statusKey
+        walletID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      userID
+      user {
+        id
+        sub
+        firstName
+        lastName
+        email
+        phoneNumber
+        profilePic
+        address
+        exactAddress
+        lat
+        lng
+        isBlocked
+        push_token
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      orderID
+      order {
+        id
+        recipientName
+        recipientNumber
+        recipientNumber2
+        orderDetails
+        originAddress
+        originState
+        originLat
+        originLng
+        destinationAddress
+        destinationState
+        destinationLat
+        destinationLng
+        tripType
+        distance
+        transportationType
+        vehicleClass
+        status
+        hasNewOffer
+        lastOfferAt
+        lastOfferSenderType
+        loadCategory
+        isInterState
+        estimatedMinPrice
+        estimatedMaxPrice
+        initialOfferPrice
+        loadingFee
+        unloadingFee
+        floorSurcharge
+        fragileSurcharge
+        extrasTotal
+        totalPrice
+        operationalFare
+        courierEarnings
+        commissionAmount
+        platformFee
+        platformServiceRevenue
+        vatAmount
+        platformNetRevenue
+        deliveryVerificationCode
+        declaredWeightBracket
+        senderPreTransferPhotos
+        senderPreTransferVideo
+        senderPreTransferRecordedAt
+        senderPreTransferLocalPhotos
+        senderPreTransferLocalVideo
+        mediaUploadStatus
+        courierPreTransferUploadStatus
+        courierPostLoadingUploadStatus
+        dropoffUploadStatus
+        courierPreTransferPhotos
+        courierPreTransferVideo
+        courierPreTransferRecordedAt
+        courierPreTransferLocalPhotos
+        courierPreTransferLocalVideo
+        courierPostLoadingPhotos
+        courierPostLoadingVideo
+        courierPostLoadingLocalPhotos
+        courierPostLoadingLocalVideo
+        dropoffArrivalPhotos
+        dropoffArrivalVideo
+        dropoffArrivalLocalPhotos
+        dropoffArrivalLocalVideo
+        postDeliveryPhotos
+        postDeliveryVideo
+        pickupLoadingResponsibility
+        pickupFloorLevel
+        pickupFloorLevelPrice
+        pickupHasElevator
+        dropoffUnloadingResponsibility
+        dropoffFloorLevel
+        dropoffFloorLevelPrice
+        dropoffHasElevator
+        acceptedAt
+        arrivedPickupAt
+        loadingStartedAt
+        tripStartedAt
+        arrivedDropoffAt
+        unloadingCompletedAt
+        logisticsCompanyId
+        waybillNumber
+        waybillPhoto
+        logisticsTrackingCode
+        logisticsTrackingStatus
+        handedOverToLogisticsAt
+        logisticsIntakeConfirmedAt
+        acceptedOfferID
+        paymentStatus
+        paymentID
+        paymentReference
+        payoutStatus
+        fundsStatus
+        earningsAllocationStatus
+        earningsAllocatedAt
+        fundsReleaseBlocked
+        fundsHoldReason
+        fundsHeldBy
+        fundsHeldAt
+        fundsReleasedAmount
+        pickupFundsReleasedAt
+        fundsReleasedAt
+        fundsReleaseType
+        assignedCourierId
+        assignmentExpiresAt
+        assignmentAttempts
+        lastAssignedAt
+        rejectedCourierIds
+        assignmentStatus
+        userID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      reason
+      description
+      evidencePhotos
+      evidenceVideo
+      status
+      adminComment
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const listCourierReports = /* GraphQL */ `
+  query ListCourierReports(
+    $filter: ModelCourierReportFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    listCourierReports(filter: $filter, limit: $limit, nextToken: $nextToken) {
+      items {
+        id
+        courierID
+        userID
+        orderID
+        reason
+        description
+        evidencePhotos
+        evidenceVideo
+        status
+        adminComment
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const syncCourierReports = /* GraphQL */ `
+  query SyncCourierReports(
+    $filter: ModelCourierReportFilterInput
+    $limit: Int
+    $nextToken: String
+    $lastSync: AWSTimestamp
+  ) {
+    syncCourierReports(
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+      lastSync: $lastSync
+    ) {
+      items {
+        id
+        courierID
+        userID
+        orderID
+        reason
+        description
+        evidencePhotos
+        evidenceVideo
+        status
+        adminComment
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const courierReportsByCourierID = /* GraphQL */ `
+  query CourierReportsByCourierID(
+    $courierID: ID!
+    $sortDirection: ModelSortDirection
+    $filter: ModelCourierReportFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    courierReportsByCourierID(
+      courierID: $courierID
+      sortDirection: $sortDirection
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+    ) {
+      items {
+        id
+        courierID
+        userID
+        orderID
+        reason
+        description
+        evidencePhotos
+        evidenceVideo
+        status
+        adminComment
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const courierReportsByUserID = /* GraphQL */ `
+  query CourierReportsByUserID(
+    $userID: ID!
+    $sortDirection: ModelSortDirection
+    $filter: ModelCourierReportFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    courierReportsByUserID(
+      userID: $userID
+      sortDirection: $sortDirection
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+    ) {
+      items {
+        id
+        courierID
+        userID
+        orderID
+        reason
+        description
+        evidencePhotos
+        evidenceVideo
+        status
+        adminComment
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const courierReportsByOrderID = /* GraphQL */ `
+  query CourierReportsByOrderID(
+    $orderID: ID!
+    $sortDirection: ModelSortDirection
+    $filter: ModelCourierReportFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    courierReportsByOrderID(
+      orderID: $orderID
+      sortDirection: $sortDirection
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+    ) {
+      items {
+        id
+        courierID
+        userID
+        orderID
+        reason
+        description
+        evidencePhotos
+        evidenceVideo
+        status
+        adminComment
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const getCourierReview = /* GraphQL */ `
+  query GetCourierReview($id: ID!) {
+    getCourierReview(id: $id) {
+      id
+      courierID
+      courier {
+        id
+        sub
+        isOnline
+        firstName
+        lastName
+        profilePic
+        address
+        landMark
+        phoneNumber
+        email
+        courierNIN
+        courierNINImage
+        bankCode
+        bankName
+        accountName
+        accountNumber
+        transportationType
+        vehicleClass
+        model
+        vehicleColour
+        plateNumber
+        maxiImages
+        maxiDescription
+        guarantorName
+        guarantorLastName
+        guarantorProfession
+        guarantorNumber
+        guarantorRelationship
+        guarantorAddress
+        guarantorEmail
+        guarantorNIN
+        guarantorNINImage
+        lat
+        lng
+        heading
+        push_token
+        isApproved
+        approvedById
+        currentBatchCount
+        currentExpressCount
+        currentMaxiCount
+        lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
+        statusKey
+        walletID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      userID
+      user {
+        id
+        sub
+        firstName
+        lastName
+        email
+        phoneNumber
+        profilePic
+        address
+        exactAddress
+        lat
+        lng
+        isBlocked
+        push_token
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      orderID
+      order {
+        id
+        recipientName
+        recipientNumber
+        recipientNumber2
+        orderDetails
+        originAddress
+        originState
+        originLat
+        originLng
+        destinationAddress
+        destinationState
+        destinationLat
+        destinationLng
+        tripType
+        distance
+        transportationType
+        vehicleClass
+        status
+        hasNewOffer
+        lastOfferAt
+        lastOfferSenderType
+        loadCategory
+        isInterState
+        estimatedMinPrice
+        estimatedMaxPrice
+        initialOfferPrice
+        loadingFee
+        unloadingFee
+        floorSurcharge
+        fragileSurcharge
+        extrasTotal
+        totalPrice
+        operationalFare
+        courierEarnings
+        commissionAmount
+        platformFee
+        platformServiceRevenue
+        vatAmount
+        platformNetRevenue
+        deliveryVerificationCode
+        declaredWeightBracket
+        senderPreTransferPhotos
+        senderPreTransferVideo
+        senderPreTransferRecordedAt
+        senderPreTransferLocalPhotos
+        senderPreTransferLocalVideo
+        mediaUploadStatus
+        courierPreTransferUploadStatus
+        courierPostLoadingUploadStatus
+        dropoffUploadStatus
+        courierPreTransferPhotos
+        courierPreTransferVideo
+        courierPreTransferRecordedAt
+        courierPreTransferLocalPhotos
+        courierPreTransferLocalVideo
+        courierPostLoadingPhotos
+        courierPostLoadingVideo
+        courierPostLoadingLocalPhotos
+        courierPostLoadingLocalVideo
+        dropoffArrivalPhotos
+        dropoffArrivalVideo
+        dropoffArrivalLocalPhotos
+        dropoffArrivalLocalVideo
+        postDeliveryPhotos
+        postDeliveryVideo
+        pickupLoadingResponsibility
+        pickupFloorLevel
+        pickupFloorLevelPrice
+        pickupHasElevator
+        dropoffUnloadingResponsibility
+        dropoffFloorLevel
+        dropoffFloorLevelPrice
+        dropoffHasElevator
+        acceptedAt
+        arrivedPickupAt
+        loadingStartedAt
+        tripStartedAt
+        arrivedDropoffAt
+        unloadingCompletedAt
+        logisticsCompanyId
+        waybillNumber
+        waybillPhoto
+        logisticsTrackingCode
+        logisticsTrackingStatus
+        handedOverToLogisticsAt
+        logisticsIntakeConfirmedAt
+        acceptedOfferID
+        paymentStatus
+        paymentID
+        paymentReference
+        payoutStatus
+        fundsStatus
+        earningsAllocationStatus
+        earningsAllocatedAt
+        fundsReleaseBlocked
+        fundsHoldReason
+        fundsHeldBy
+        fundsHeldAt
+        fundsReleasedAmount
+        pickupFundsReleasedAt
+        fundsReleasedAt
+        fundsReleaseType
+        assignedCourierId
+        assignmentExpiresAt
+        assignmentAttempts
+        lastAssignedAt
+        rejectedCourierIds
+        assignmentStatus
+        userID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      rating
+      comment
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const listCourierReviews = /* GraphQL */ `
+  query ListCourierReviews(
+    $filter: ModelCourierReviewFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    listCourierReviews(filter: $filter, limit: $limit, nextToken: $nextToken) {
+      items {
+        id
+        courierID
+        userID
+        orderID
+        rating
+        comment
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const syncCourierReviews = /* GraphQL */ `
+  query SyncCourierReviews(
+    $filter: ModelCourierReviewFilterInput
+    $limit: Int
+    $nextToken: String
+    $lastSync: AWSTimestamp
+  ) {
+    syncCourierReviews(
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+      lastSync: $lastSync
+    ) {
+      items {
+        id
+        courierID
+        userID
+        orderID
+        rating
+        comment
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const courierReviewsByCourierID = /* GraphQL */ `
+  query CourierReviewsByCourierID(
+    $courierID: ID!
+    $sortDirection: ModelSortDirection
+    $filter: ModelCourierReviewFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    courierReviewsByCourierID(
+      courierID: $courierID
+      sortDirection: $sortDirection
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+    ) {
+      items {
+        id
+        courierID
+        userID
+        orderID
+        rating
+        comment
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const courierReviewsByUserID = /* GraphQL */ `
+  query CourierReviewsByUserID(
+    $userID: ID!
+    $sortDirection: ModelSortDirection
+    $filter: ModelCourierReviewFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    courierReviewsByUserID(
+      userID: $userID
+      sortDirection: $sortDirection
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+    ) {
+      items {
+        id
+        courierID
+        userID
+        orderID
+        rating
+        comment
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      nextToken
+      startedAt
+      __typename
+    }
+  }
+`;
+export const courierReviewsByOrderID = /* GraphQL */ `
+  query CourierReviewsByOrderID(
+    $orderID: ID!
+    $sortDirection: ModelSortDirection
+    $filter: ModelCourierReviewFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    courierReviewsByOrderID(
+      orderID: $orderID
+      sortDirection: $sortDirection
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+    ) {
+      items {
+        id
+        courierID
+        userID
+        orderID
+        rating
+        comment
         createdAt
         updatedAt
         _version
@@ -2106,6 +3147,19 @@ export const getCourier = /* GraphQL */ `
       currentExpressCount
       currentMaxiCount
       lastBatchAssignedAt
+      averageRating
+      reviewCount
+      totalReports
+      reviews {
+        nextToken
+        startedAt
+        __typename
+      }
+      reports {
+        nextToken
+        startedAt
+        __typename
+      }
       statusKey
       offers {
         nextToken
@@ -2122,9 +3176,9 @@ export const getCourier = /* GraphQL */ `
         id
         ownerID
         ownerType
-        balance
+        availableBalance
         pendingBalance
-        totalEarnings
+        lifetimeEarnings
         createdAt
         updatedAt
         _version
@@ -2191,6 +3245,9 @@ export const listCouriers = /* GraphQL */ `
         currentExpressCount
         currentMaxiCount
         lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
         statusKey
         walletID
         createdAt
@@ -2262,6 +3319,9 @@ export const syncCouriers = /* GraphQL */ `
         currentExpressCount
         currentMaxiCount
         lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
         statusKey
         walletID
         createdAt
@@ -2335,6 +3395,9 @@ export const couriersByStatus = /* GraphQL */ `
         currentExpressCount
         currentMaxiCount
         lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
         statusKey
         walletID
         createdAt
@@ -2366,6 +3429,16 @@ export const getUser = /* GraphQL */ `
       lng
       isBlocked
       push_token
+      courierReviews {
+        nextToken
+        startedAt
+        __typename
+      }
+      courierReports {
+        nextToken
+        startedAt
+        __typename
+      }
       Orders {
         nextToken
         startedAt

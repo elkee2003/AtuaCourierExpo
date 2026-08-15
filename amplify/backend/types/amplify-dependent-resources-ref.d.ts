@@ -4,6 +4,11 @@ export type AmplifyDependentResourcesAttributes = {
       "GraphQLAPIEndpointOutput": "string",
       "GraphQLAPIIdOutput": "string",
       "GraphQLAPIKeyOutput": "string"
+    },
+    "atuaPaystackWebhookApi": {
+      "ApiId": "string",
+      "ApiName": "string",
+      "RootUrl": "string"
     }
   },
   "auth": {
@@ -18,6 +23,13 @@ export type AmplifyDependentResourcesAttributes = {
     }
   },
   "function": {
+    "allocateCourierEarnings": {
+      "Arn": "string",
+      "LambdaExecutionRole": "string",
+      "LambdaExecutionRoleArn": "string",
+      "Name": "string",
+      "Region": "string"
+    },
     "assignOrder": {
       "Arn": "string",
       "LambdaExecutionRole": "string",
@@ -47,7 +59,7 @@ export type AmplifyDependentResourcesAttributes = {
       "Name": "string",
       "Region": "string"
     },
-    "processPaymentAndWallet": {
+    "paystackWebhook": {
       "Arn": "string",
       "LambdaExecutionRole": "string",
       "LambdaExecutionRoleArn": "string",
@@ -70,6 +82,13 @@ export type AmplifyDependentResourcesAttributes = {
       "Name": "string",
       "Region": "string"
     },
+    "releaseCourierMilestoneFunds": {
+      "Arn": "string",
+      "LambdaExecutionRole": "string",
+      "LambdaExecutionRoleArn": "string",
+      "Name": "string",
+      "Region": "string"
+    },
     "releaseFunds": {
       "Arn": "string",
       "LambdaExecutionRole": "string",
@@ -80,6 +99,13 @@ export type AmplifyDependentResourcesAttributes = {
     "resetCourierIfIdle": {
       "Arn": "string",
       "CloudWatchEventRule": "string",
+      "LambdaExecutionRole": "string",
+      "LambdaExecutionRoleArn": "string",
+      "Name": "string",
+      "Region": "string"
+    },
+    "verifyAtuaPayment": {
+      "Arn": "string",
       "LambdaExecutionRole": "string",
       "LambdaExecutionRoleArn": "string",
       "Name": "string",

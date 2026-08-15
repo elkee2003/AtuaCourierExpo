@@ -1,23 +1,41 @@
 import { useAuthContext } from "@/providers/AuthProvider";
 import { useProfileContext } from "@/providers/ProfileProvider";
-import { Courier, Order } from "@/src/models";
+import { Courier, Order, Transaction } from "@/src/models";
+
 import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
+
 import { DataStore } from "aws-amplify/datastore";
+
 import { Audio } from "expo-av";
+
 import * as Haptics from "expo-haptics";
+
 import { router } from "expo-router";
+
 import React, { useEffect, useMemo, useRef, useState } from "react";
+
 import { ActivityIndicator, Alert, Text } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import BottomContainer from "../BottomContainer";
 import HomeMap from "../HomeMap";
 import OrderItem from "../OrderItem";
+import TodayEarnings from "../TodayEarnings";
+
 import styles from "./styles";
 
-// To get distance:
+/*
+============================================================
+DISTANCE
+============================================================
+*/
+
 const getDistance = (lat1, lng1, lat2, lng2) => {
   const R = 6371;
+
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
+
   const dLng = ((lng2 - lng1) * Math.PI) / 180;
 
   const a =
@@ -30,38 +48,268 @@ const getDistance = (lat1, lng1, lat2, lng2) => {
   return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 };
 
+/*
+============================================================
+HOME MAIN
+============================================================
+*/
+
 const HomeComponent = () => {
+  /*
+  ==========================================================
+  AUTH / PROFILE
+  ==========================================================
+  */
+
   const { dbCourier } = useAuthContext();
+
   const { isOnline, setIsOnline } = useProfileContext();
-  // useState Hooks
-  const [selectedOrder, setSelectedOrder] = useState(null);
+
+  /*
+  ==========================================================
+  ORDER STATE
+  ==========================================================
+  */
+
   const [location, setLocation] = useState(null);
+
   const [orders, setOrders] = useState([]);
+
   const [statsOrders, setStatsOrders] = useState([]);
+
   const [stats, setStats] = useState({
     total: 0,
     nearby: 0,
     batch: 0,
     express: 0,
   });
+
+  /*
+  ==========================================================
+  GENERAL LOADING
+  ==========================================================
+  */
+
   const [loading, setLoading] = useState(true);
 
+  /*
+  ==========================================================
+  TODAY'S EARNINGS
+  ==========================================================
+  */
+
+  const [todayEarnings, setTodayEarnings] = useState(0);
+
+  const [todayDeliveryCount, setTodayDeliveryCount] = useState(0);
+
+  const [earningsLoading, setEarningsLoading] = useState(true);
+
+  /*
+  ==========================================================
+  REFS
+  ==========================================================
+  */
+
   const soundRef = useRef(null);
+
   const prevOrderIdsRef = useRef(new Set());
 
   const bottomSheetRef = useRef(null);
+
+  /*
+  ==========================================================
+  BOTTOM SHEET
+  ==========================================================
+  */
+
   const snapPoints = useMemo(() => ["27%", "65%", "85%"], []);
 
-  // Refferenced functions
-  const onGoPress = async () => {
-    if (!location || !dbCourier?.id) return;
+  /*
+  ==========================================================
+  GET TODAY'S DATE RANGE
+  ==========================================================
+  */
 
-    // 🚫 BLOCK if not approved
+  const getTodayRange = () => {
+    const now = new Date();
+
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      0,
+      0,
+      0,
+      0,
+    );
+
+    const startOfTomorrow = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1,
+      0,
+      0,
+      0,
+      0,
+    );
+
+    return {
+      startOfToday,
+      startOfTomorrow,
+    };
+  };
+
+  /*
+  ==========================================================
+  FETCH TODAY'S EARNINGS
+  ==========================================================
+  
+  We do NOT store today's earnings on Courier.
+
+  The amount is calculated from the courier's Wallet
+  transactions.
+
+  Only:
+    - CREDIT
+    - COMPLETED
+    - today's createdAt
+
+  are counted.
+
+  We also use transaction.orderID to count the number
+  of unique deliveries that generated today's earnings.
+  ==========================================================
+  */
+
+  const fetchTodayEarnings = async () => {
+    if (!dbCourier?.walletID) {
+      setTodayEarnings(0);
+      setTodayDeliveryCount(0);
+      setEarningsLoading(false);
+
+      return;
+    }
+
+    setEarningsLoading(true);
+
+    try {
+      const { startOfToday, startOfTomorrow } = getTodayRange();
+
+      /*
+        ======================================================
+        GET COURIER WALLET TRANSACTIONS
+        ======================================================
+        */
+
+      const transactions = await DataStore.query(Transaction, (transaction) =>
+        transaction.walletID.eq(dbCourier.walletID),
+      );
+
+      /*
+        ======================================================
+        FILTER TODAY'S COMPLETED CREDITS
+        ======================================================
+        */
+
+      const todayTransactions = transactions.filter((transaction) => {
+        if (!transaction) {
+          return false;
+        }
+
+        if (transaction.type !== "CREDIT") {
+          return false;
+        }
+
+        if (transaction.status !== "COMPLETED") {
+          return false;
+        }
+
+        if (!transaction.createdAt) {
+          return false;
+        }
+
+        const createdAt = new Date(transaction.createdAt);
+
+        return createdAt >= startOfToday && createdAt < startOfTomorrow;
+      });
+
+      /*
+        ======================================================
+        CALCULATE TODAY'S EARNINGS
+        ======================================================
+        */
+
+      const earnings = todayTransactions.reduce((total, transaction) => {
+        return total + Number(transaction.amount || 0);
+      }, 0);
+
+      /*
+        ======================================================
+        COUNT TODAY'S DELIVERIES
+        ======================================================
+
+        We count unique order IDs instead of simply counting
+        transactions.
+
+        This prevents multiple transactions belonging to the
+        same order from being counted as multiple deliveries.
+        ======================================================
+        */
+
+      const orderIds = new Set();
+
+      todayTransactions.forEach((transaction) => {
+        if (transaction.orderID) {
+          orderIds.add(transaction.orderID);
+        }
+      });
+
+      setTodayEarnings(earnings);
+
+      setTodayDeliveryCount(orderIds.size);
+    } catch (error) {
+      console.log("Today's earnings error:", error);
+
+      setTodayEarnings(0);
+      setTodayDeliveryCount(0);
+    } finally {
+      setEarningsLoading(false);
+    }
+  };
+
+  /*
+  ==========================================================
+  LOAD TODAY'S EARNINGS
+  ==========================================================
+  */
+
+  useEffect(() => {
+    fetchTodayEarnings();
+  }, [dbCourier?.id, dbCourier?.walletID]);
+
+  /*
+  ==========================================================
+  GO ONLINE / OFFLINE
+  ==========================================================
+  */
+
+  const onGoPress = async () => {
+    if (!location || !dbCourier?.id) {
+      return;
+    }
+
+    /*
+      ======================================================
+      BLOCK UNAPPROVED COURIERS
+      ======================================================
+      */
+
     if (!dbCourier?.isApproved) {
       Alert.alert(
         "Account Not Approved",
         "Your account is still under review. You cannot go online yet.",
       );
+
       return;
     }
 
@@ -86,20 +334,38 @@ const HomeComponent = () => {
     }
   };
 
-  // Accept Order:
+  /*
+  ==========================================================
+  SELECT ORDER
+  ==========================================================
+  */
+
   const onSelectOrder = (order) => {
     router.push(`/home/${order.id}`);
   };
 
-  // Remove Order
+  /*
+  ==========================================================
+  REMOVE ORDER
+  ==========================================================
+  */
+
   const onRemoveOrder = (id) => {
-    const filteredOrder = orders.filter((order) => order.id !== id);
-    setOrders(filteredOrder);
+    const filteredOrders = orders.filter((order) => order.id !== id);
+
+    setOrders(filteredOrders);
   };
+
+  /*
+  ==========================================================
+  FETCH AVAILABLE ORDERS
+  ==========================================================
+  */
 
   const fetchOrders = async () => {
     if (!location || !dbCourier) {
       setLoading(false);
+
       return;
     }
 
@@ -109,54 +375,76 @@ const HomeComponent = () => {
       const isMaxi = dbCourier.transportationType === "MAXI";
 
       let processedOrders = [];
-      let nearbyCount = 0;
 
       let availableOrders = [];
+
+      /*
+        ======================================================
+        MAXI VEHICLE VALIDATION
+        ======================================================
+        */
 
       if (isMaxi && !dbCourier?.vehicleClass) {
         Alert.alert(
           "Vehicle Not Set",
           "Please complete your vehicle details to start receiving orders.",
         );
+
         return;
       }
+
+      /*
+        ======================================================
+        MAXI
+        ======================================================
+        */
 
       if (isMaxi && dbCourier?.vehicleClass) {
         availableOrders = await DataStore.query(Order, (o) =>
           o.and((o2) => [
             o2.transportationType.eq("MAXI"),
-            o2.vehicleClass.eq(dbCourier.vehicleClass), // ✅ STRICT MATCH
+
+            o2.vehicleClass.eq(dbCourier.vehicleClass),
+
             o2.or((o3) => [
               o3.status.eq("READY_FOR_PICKUP"),
+
               o3.status.eq("BIDDING"),
             ]),
           ]),
         );
       } else {
-        // NON-MAXI (unchanged)
+        /*
+          ====================================================
+          MICRO / MOTO
+          ====================================================
+          */
+
         availableOrders = await DataStore.query(Order, (o) =>
           o.and((o2) => [
             o2.status.eq("READY_FOR_PICKUP"),
+
             o2.or((o3) => [
               o3.transportationType.eq("MICRO_EXPRESS"),
+
               o3.transportationType.eq("MOTO_EXPRESS"),
+
               o3.transportationType.eq("MICRO_BATCH"),
+
               o3.transportationType.eq("MOTO_BATCH"),
             ]),
           ]),
         );
       }
 
-      // This else statement below is what will work with my backend lambda function. it is meant to asssign and be visible to one courier, as opposed to before, when it was visible to all couriers. However, I think it will not show the different order counts like available orders, nearby orders, batch orders, express orders, like I would want it to show. Later I will see how I can make it possible, together with the lambda function
-
-      // else {
-      //   // ✅ ONLY assigned orders
-      //   availableOrders = await DataStore.query(Order, (o) =>
-      //     o.assignedCourierId.eq(dbCourier.id)
-      //   );
-      // }
+      /*
+        ======================================================
+        DISTANCE GROUPING
+        ======================================================
+        */
 
       const nearbyOrders = [];
+
       const farOrders = [];
 
       availableOrders.forEach((order) => {
@@ -167,27 +455,46 @@ const HomeComponent = () => {
           order.originLng,
         );
 
-        // Maxi radius should be 80km. Micro & Moto should be 10
+        /*
+            Maxi = 80km
+            Micro / Moto = 10km
+            */
+
         const radius = isMaxi ? 80 : 10;
 
         if (distance <= radius) {
           nearbyOrders.push(order);
-          nearbyCount++;
         } else {
           farOrders.push(order);
         }
       });
 
-      // sort
+      /*
+        ======================================================
+        SORT NEARBY ORDERS
+        ======================================================
+        */
+
       nearbyOrders.sort(
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
       );
 
+      /*
+        ======================================================
+        SORT FAR ORDERS
+        ======================================================
+        */
+
       farOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      /*
+        ======================================================
+        COMBINE ORDERS
+        ======================================================
+        */
 
       processedOrders = [...nearbyOrders, ...farOrders];
 
-      // ✅ MUST be inside try
       setOrders(processedOrders);
     } catch (e) {
       Alert.alert("Error", e.message);
@@ -196,11 +503,17 @@ const HomeComponent = () => {
     }
   };
 
+  /*
+  ==========================================================
+  PLAY NEW ORDER SOUND
+  ==========================================================
+  */
+
   const playNewOrderSound = async () => {
     try {
       if (soundRef.current) {
         await soundRef.current.replayAsync();
-        // for vibration
+
         await Haptics.notificationAsync(
           Haptics.NotificationFeedbackType.Success,
         );
@@ -210,13 +523,19 @@ const HomeComponent = () => {
     }
   };
 
-  // useEffect for Alert Sound
+  /*
+  ==========================================================
+  LOAD NEW ORDER SOUND
+  ==========================================================
+  */
+
   useEffect(() => {
     const loadSound = async () => {
       try {
         const { sound } = await Audio.Sound.createAsync(
           require("@/assets/sounds/new-order.mp3"),
         );
+
         soundRef.current = sound;
       } catch (e) {
         console.log("Load sound error:", e);
@@ -232,13 +551,18 @@ const HomeComponent = () => {
     };
   }, []);
 
-  // useEffect for previous Alert Orders
+  /*
+  ==========================================================
+  DETECT NEW ORDERS
+  ==========================================================
+  */
+
   useEffect(() => {
-    const newIds = new Set(orders.map((o) => o.id));
+    const newIds = new Set(orders.map((order) => order.id));
 
     let hasNew = false;
 
-    for (let id of newIds) {
+    for (const id of newIds) {
       if (!prevOrderIdsRef.current.has(id)) {
         hasNew = true;
         break;
@@ -252,9 +576,16 @@ const HomeComponent = () => {
     prevOrderIdsRef.current = newIds;
   }, [orders]);
 
-  // STATS CALCULATION USEEFFECT
+  /*
+  ==========================================================
+  STATS CALCULATION
+  ==========================================================
+  */
+
   useEffect(() => {
-    if (!location) return;
+    if (!location) {
+      return;
+    }
 
     const isMaxi = dbCourier?.transportationType === "MAXI";
 
@@ -304,7 +635,12 @@ const HomeComponent = () => {
     });
   }, [statsOrders, location, dbCourier?.transportationType]);
 
-  // to play sound even when phone is silent
+  /*
+  ==========================================================
+  AUDIO MODE
+  ==========================================================
+  */
+
   useEffect(() => {
     Audio.setAudioModeAsync({
       playsInSilentModeIOS: true,
@@ -312,12 +648,18 @@ const HomeComponent = () => {
     });
   }, []);
 
-  // useEffect to force unapproved offline
+  /*
+  ==========================================================
+  FORCE UNAPPROVED COURIER OFFLINE
+  ==========================================================
+  */
+
   useEffect(() => {
     const forceOfflineIfNotApproved = async () => {
-      if (!dbCourier?.id) return;
+      if (!dbCourier?.id) {
+        return;
+      }
 
-      // 🚫 If not approved but currently online → force offline
       if (dbCourier?.isApproved === false && dbCourier?.isOnline) {
         try {
           const freshUser = await DataStore.query(Courier, dbCourier.id);
@@ -326,7 +668,7 @@ const HomeComponent = () => {
             Courier.copyOf(freshUser, (updated) => {
               updated.isOnline = false;
 
-              updated.statusKey = `OFFLINE#NOT_APPROVED`;
+              updated.statusKey = "OFFLINE#NOT_APPROVED";
             }),
           );
 
@@ -345,11 +687,17 @@ const HomeComponent = () => {
     forceOfflineIfNotApproved();
   }, [dbCourier?.isApproved]);
 
-  // useEffect to handle subscription
+  /*
+  ==========================================================
+  INITIAL ORDERS / STATS
+  ==========================================================
+  */
+
   useEffect(() => {
     if (!isOnline || !location || !dbCourier || !dbCourier.isApproved) {
       setOrders([]);
       setLoading(false);
+
       return;
     }
 
@@ -362,9 +710,12 @@ const HomeComponent = () => {
         initialStatsOrders = await DataStore.query(Order, (o) =>
           o.and((o2) => [
             o2.transportationType.eq("MAXI"),
+
             o2.vehicleClass.eq(dbCourier.vehicleClass),
+
             o2.or((o3) => [
               o3.status.eq("READY_FOR_PICKUP"),
+
               o3.status.eq("BIDDING"),
             ]),
           ]),
@@ -373,10 +724,14 @@ const HomeComponent = () => {
         initialStatsOrders = await DataStore.query(Order, (o) =>
           o.and((o2) => [
             o2.status.eq("READY_FOR_PICKUP"),
+
             o2.or((o3) => [
               o3.transportationType.eq("MICRO_EXPRESS"),
+
               o3.transportationType.eq("MOTO_EXPRESS"),
+
               o3.transportationType.eq("MICRO_BATCH"),
+
               o3.transportationType.eq("MOTO_BATCH"),
             ]),
           ]),
@@ -395,9 +750,16 @@ const HomeComponent = () => {
     dbCourier?.isApproved,
   ]);
 
-  // REAL-TIME STATS SUBSCRIPTION
+  /*
+  ==========================================================
+  REAL-TIME ORDER SUBSCRIPTION
+  ==========================================================
+  */
+
   useEffect(() => {
-    if (!isOnline || !location || !dbCourier || !dbCourier.isApproved) return;
+    if (!isOnline || !location || !dbCourier || !dbCourier.isApproved) {
+      return;
+    }
 
     const isMaxi = dbCourier.transportationType === "MAXI";
 
@@ -416,25 +778,33 @@ const HomeComponent = () => {
               "MOTO_BATCH",
             ].includes(element.transportationType);
 
-        if (!isRelevant) return;
+        if (!isRelevant) {
+          return;
+        }
 
-        // ✅ UPDATE STATS (real-time, no refetch)
+        /*
+          ==================================================
+          UPDATE STATS
+          ==================================================
+          */
+
         setStatsOrders((prev) => {
           let updated = [...prev];
 
           if (opType === "INSERT") {
-            // ❌ Prevent duplicates
-            if (!updated.find((o) => o.id === element.id)) {
+            if (!updated.find((order) => order.id === element.id)) {
               updated.push(element);
             }
           }
 
           if (opType === "UPDATE") {
-            updated = updated.map((o) => (o.id === element.id ? element : o));
+            updated = updated.map((order) =>
+              order.id === element.id ? element : order,
+            );
           }
 
           if (opType === "DELETE") {
-            updated = updated.filter((o) => o.id !== element.id);
+            updated = updated.filter((order) => order.id !== element.id);
           }
 
           updated.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -442,7 +812,12 @@ const HomeComponent = () => {
           return updated;
         });
 
-        // ✅ UPDATE UI ORDERS (real-time)
+        /*
+          ==================================================
+          UPDATE VISIBLE ORDERS
+          ==================================================
+          */
+
         setOrders((prev) => {
           let updated = [...prev];
 
@@ -456,24 +831,25 @@ const HomeComponent = () => {
           const radius = isMaxi ? 80 : 10;
 
           if (opType === "INSERT") {
-            // ❌ Ignore far orders
-            if (distance > radius) return prev;
+            if (distance > radius) {
+              return prev;
+            }
 
-            // ❌ Prevent duplicates
-            if (!updated.find((o) => o.id === element.id)) {
+            if (!updated.find((order) => order.id === element.id)) {
               updated.unshift(element);
             }
           }
 
           if (opType === "UPDATE") {
-            updated = updated.map((o) => (o.id === element.id ? element : o));
+            updated = updated.map((order) =>
+              order.id === element.id ? element : order,
+            );
           }
 
           if (opType === "DELETE") {
-            updated = updated.filter((o) => o.id !== element.id);
+            updated = updated.filter((order) => order.id !== element.id);
           }
 
-          // ✅ Always keep sorted
           updated.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
           return updated;
@@ -484,42 +860,53 @@ const HomeComponent = () => {
     return () => subscription.unsubscribe();
   }, [isOnline, location, dbCourier]);
 
+  /*
+  ==========================================================
+  LOADING
+  ==========================================================
+  */
+
   if (loading && isOnline) {
-    return <ActivityIndicator size={"large"} style={styles.loading} />;
+    return <ActivityIndicator size="large" style={styles.loading} />;
   }
+
+  /*
+  ==========================================================
+  RENDER
+  ==========================================================
+  */
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* ==================================================
+          MAP
+      ================================================== */}
+
       <HomeMap orders={orders} location={location} setLocation={setLocation} />
 
-      {/* Money Balance */}
-      {/* Will show when I find out how to display the price of courier */}
+      {/* ==================================================
+          TODAY'S EARNINGS
+      ================================================== */}
 
-      {/* <View style={styles.balance}>
-        <Text style={styles.balanceText}>
-          <Text style={{color:'green'}}>₦</Text>
-          {" "}
-          0.00
-        </Text>
-      </View> */}
+      <TodayEarnings
+        earnings={todayEarnings}
+        deliveryCount={todayDeliveryCount}
+        loading={earningsLoading}
+      />
 
-      {/* Go/End Floating button */}
-      {/* {isOnline ? (
-        <Pressable onPress={onGoPress} style={styles.endButton}>
-          <Text style={styles.endButtonText}>END</Text>
-        </Pressable>
-      ) : (
-        <Pressable onPress={onGoPress} style={styles.goButton}>
-          <Text style={styles.goButtonText}>GO</Text>
-        </Pressable>
-      )} */}
+      {/* ==================================================
+          BOTTOM SHEET
+      ================================================== */}
 
       <BottomSheet
         ref={bottomSheetRef}
         snapPoints={snapPoints}
         index={0}
-        topInset={1} // Ensure no inset from the top
-        handleIndicatorStyle={{ backgroundColor: "#666768", width: 80 }}
+        topInset={1}
+        handleIndicatorStyle={{
+          backgroundColor: "#666768",
+          width: 80,
+        }}
       >
         <BottomSheetScrollView>
           <BottomContainer
@@ -532,12 +919,19 @@ const HomeComponent = () => {
             transportationType={dbCourier?.transportationType}
           />
 
-          {/* ✅ EMPTY STATE */}
+          {/* ==================================================
+              EMPTY STATE
+          ================================================== */}
+
           {isOnline && orders.length === 0 && (
             <Text style={styles.emptyStateText}>
               No jobs nearby right now. Stay online
             </Text>
           )}
+
+          {/* ==================================================
+              AVAILABLE ORDERS
+          ================================================== */}
 
           {isOnline &&
             [...orders].map((item) => (

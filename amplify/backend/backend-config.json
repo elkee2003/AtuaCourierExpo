@@ -11,8 +11,9 @@
           ],
           "defaultAuthentication": {
             "apiKeyConfig": {
-              "apiKeyExpirationDays": 30,
-              "description": "api key description"
+              "apiKeyExpirationDate": "2027-06-11T07:16:26.610Z",
+              "apiKeyExpirationDays": 365,
+              "description": "2026/2027 API Key"
             },
             "authenticationType": "API_KEY"
           }
@@ -20,6 +21,20 @@
       },
       "providerPlugin": "awscloudformation",
       "service": "AppSync"
+    },
+    "atuaPaystackWebhookApi": {
+      "dependsOn": [
+        {
+          "attributes": [
+            "Name",
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "paystackWebhook"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "API Gateway"
     }
   },
   "auth": {
@@ -59,6 +74,22 @@
     }
   },
   "function": {
+    "allocateCourierEarnings": {
+      "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "GraphQLAPIIdOutput",
+            "GraphQLAPIEndpointOutput",
+            "GraphQLAPIKeyOutput"
+          ],
+          "category": "api",
+          "resourceName": "Atua"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
     "assignOrder": {
       "build": true,
       "dependsOn": [
@@ -110,7 +141,7 @@
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
     },
-    "processPaymentAndWallet": {
+    "paystackWebhook": {
       "build": true,
       "dependsOn": [
         {
@@ -158,6 +189,22 @@
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
     },
+    "releaseCourierMilestoneFunds": {
+      "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "GraphQLAPIIdOutput",
+            "GraphQLAPIEndpointOutput",
+            "GraphQLAPIKeyOutput"
+          ],
+          "category": "api",
+          "resourceName": "Atua"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
     "releaseFunds": {
       "build": true,
       "dependsOn": [
@@ -189,9 +236,41 @@
       ],
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
+    },
+    "verifyAtuaPayment": {
+      "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "GraphQLAPIIdOutput",
+            "GraphQLAPIEndpointOutput",
+            "GraphQLAPIKeyOutput"
+          ],
+          "category": "api",
+          "resourceName": "Atua"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
     }
   },
   "parameters": {
+    "AMPLIFY_function_allocateCourierEarnings_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "allocateCourierEarnings"
+        }
+      ]
+    },
+    "AMPLIFY_function_allocateCourierEarnings_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "allocateCourierEarnings"
+        }
+      ]
+    },
     "AMPLIFY_function_assignOrder_deploymentBucketName": {
       "usedBy": [
         {
@@ -253,6 +332,30 @@
         {
           "category": "function",
           "resourceName": "forceDispatch"
+        }
+      ]
+    },
+    "AMPLIFY_function_paystackWebhook_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "paystackWebhook"
+        }
+      ]
+    },
+    "AMPLIFY_function_paystackWebhook_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "paystackWebhook"
+        }
+      ]
+    },
+    "AMPLIFY_function_paystackWebhook_secretsPathAmplifyAppId": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "paystackWebhook"
         }
       ]
     },
@@ -320,6 +423,22 @@
         }
       ]
     },
+    "AMPLIFY_function_releaseCourierMilestoneFunds_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "releaseCourierMilestoneFunds"
+        }
+      ]
+    },
+    "AMPLIFY_function_releaseCourierMilestoneFunds_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "releaseCourierMilestoneFunds"
+        }
+      ]
+    },
     "AMPLIFY_function_releaseFunds_deploymentBucketName": {
       "usedBy": [
         {
@@ -349,6 +468,30 @@
         {
           "category": "function",
           "resourceName": "resetCourierIfIdle"
+        }
+      ]
+    },
+    "AMPLIFY_function_verifyAtuaPayment_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "verifyAtuaPayment"
+        }
+      ]
+    },
+    "AMPLIFY_function_verifyAtuaPayment_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "verifyAtuaPayment"
+        }
+      ]
+    },
+    "AMPLIFY_function_verifyAtuaPayment_secretsPathAmplifyAppId": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "verifyAtuaPayment"
         }
       ]
     }

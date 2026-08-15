@@ -1,6 +1,28 @@
 /* eslint-disable */
 // this is an auto generated file. This will be overwritten
 
+export const verifyAtuaPayment = /* GraphQL */ `
+  mutation VerifyAtuaPayment($orderId: ID!, $reference: String!) {
+    verifyAtuaPayment(orderId: $orderId, reference: $reference) {
+      success
+      verified
+      alreadyPaid
+      message
+      orderId
+      deliveryVerificationCode
+      payment {
+        reference
+        amount
+        currency
+        status
+        channel
+        paidAt
+        __typename
+      }
+      __typename
+    }
+  }
+`;
 export const createCompanyVehicle = /* GraphQL */ `
   mutation CreateCompanyVehicle(
     $input: CreateCompanyVehicleInput!
@@ -180,12 +202,19 @@ export const createPayout = /* GraphQL */ `
     createPayout(input: $input, condition: $condition) {
       id
       courierID
+      walletID
       amount
       status
       bankName
       accountNumber
       reference
-      walletID
+      transferCode
+      transferID
+      failureReason
+      payoutMethod
+      processedAt
+      paidAt
+      failedAt
       createdAt
       updatedAt
       _version
@@ -203,12 +232,19 @@ export const updatePayout = /* GraphQL */ `
     updatePayout(input: $input, condition: $condition) {
       id
       courierID
+      walletID
       amount
       status
       bankName
       accountNumber
       reference
-      walletID
+      transferCode
+      transferID
+      failureReason
+      payoutMethod
+      processedAt
+      paidAt
+      failedAt
       createdAt
       updatedAt
       _version
@@ -226,12 +262,19 @@ export const deletePayout = /* GraphQL */ `
     deletePayout(input: $input, condition: $condition) {
       id
       courierID
+      walletID
       amount
       status
       bankName
       accountNumber
       reference
-      walletID
+      transferCode
+      transferID
+      failureReason
+      payoutMethod
+      processedAt
+      paidAt
+      failedAt
       createdAt
       updatedAt
       _version
@@ -254,6 +297,7 @@ export const createTransaction = /* GraphQL */ `
       description
       orderID
       paymentID
+      reference
       status
       createdAt
       updatedAt
@@ -277,6 +321,7 @@ export const updateTransaction = /* GraphQL */ `
       description
       orderID
       paymentID
+      reference
       status
       createdAt
       updatedAt
@@ -300,6 +345,7 @@ export const deleteTransaction = /* GraphQL */ `
       description
       orderID
       paymentID
+      reference
       status
       createdAt
       updatedAt
@@ -319,9 +365,9 @@ export const createWallet = /* GraphQL */ `
       id
       ownerID
       ownerType
-      balance
+      availableBalance
       pendingBalance
-      totalEarnings
+      lifetimeEarnings
       transactions {
         nextToken
         startedAt
@@ -345,9 +391,9 @@ export const updateWallet = /* GraphQL */ `
       id
       ownerID
       ownerType
-      balance
+      availableBalance
       pendingBalance
-      totalEarnings
+      lifetimeEarnings
       transactions {
         nextToken
         startedAt
@@ -371,9 +417,9 @@ export const deleteWallet = /* GraphQL */ `
       id
       ownerID
       ownerType
-      balance
+      availableBalance
       pendingBalance
-      totalEarnings
+      lifetimeEarnings
       transactions {
         nextToken
         startedAt
@@ -493,8 +539,19 @@ export const createPayment = /* GraphQL */ `
         acceptedOfferID
         paymentStatus
         paymentID
+        paymentReference
         payoutStatus
         fundsStatus
+        earningsAllocationStatus
+        earningsAllocatedAt
+        fundsReleaseBlocked
+        fundsHoldReason
+        fundsHeldBy
+        fundsHeldAt
+        fundsReleasedAmount
+        pickupFundsReleasedAt
+        fundsReleasedAt
+        fundsReleaseType
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -644,8 +701,19 @@ export const updatePayment = /* GraphQL */ `
         acceptedOfferID
         paymentStatus
         paymentID
+        paymentReference
         payoutStatus
         fundsStatus
+        earningsAllocationStatus
+        earningsAllocatedAt
+        fundsReleaseBlocked
+        fundsHoldReason
+        fundsHeldBy
+        fundsHeldAt
+        fundsReleasedAmount
+        pickupFundsReleasedAt
+        fundsReleasedAt
+        fundsReleaseType
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -795,8 +863,19 @@ export const deletePayment = /* GraphQL */ `
         acceptedOfferID
         paymentStatus
         paymentID
+        paymentReference
         payoutStatus
         fundsStatus
+        earningsAllocationStatus
+        earningsAllocatedAt
+        fundsReleaseBlocked
+        fundsHoldReason
+        fundsHeldBy
+        fundsHeldAt
+        fundsReleasedAmount
+        pickupFundsReleasedAt
+        fundsReleasedAt
+        fundsReleaseType
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -939,8 +1018,19 @@ export const createOffer = /* GraphQL */ `
         acceptedOfferID
         paymentStatus
         paymentID
+        paymentReference
         payoutStatus
         fundsStatus
+        earningsAllocationStatus
+        earningsAllocatedAt
+        fundsReleaseBlocked
+        fundsHoldReason
+        fundsHeldBy
+        fundsHeldAt
+        fundsReleasedAmount
+        pickupFundsReleasedAt
+        fundsReleasedAt
+        fundsReleaseType
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -999,6 +1089,9 @@ export const createOffer = /* GraphQL */ `
         currentExpressCount
         currentMaxiCount
         lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
         statusKey
         walletID
         createdAt
@@ -1118,8 +1211,19 @@ export const updateOffer = /* GraphQL */ `
         acceptedOfferID
         paymentStatus
         paymentID
+        paymentReference
         payoutStatus
         fundsStatus
+        earningsAllocationStatus
+        earningsAllocatedAt
+        fundsReleaseBlocked
+        fundsHoldReason
+        fundsHeldBy
+        fundsHeldAt
+        fundsReleasedAmount
+        pickupFundsReleasedAt
+        fundsReleasedAt
+        fundsReleaseType
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -1178,6 +1282,9 @@ export const updateOffer = /* GraphQL */ `
         currentExpressCount
         currentMaxiCount
         lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
         statusKey
         walletID
         createdAt
@@ -1297,8 +1404,19 @@ export const deleteOffer = /* GraphQL */ `
         acceptedOfferID
         paymentStatus
         paymentID
+        paymentReference
         payoutStatus
         fundsStatus
+        earningsAllocationStatus
+        earningsAllocatedAt
+        fundsReleaseBlocked
+        fundsHoldReason
+        fundsHeldBy
+        fundsHeldAt
+        fundsReleasedAmount
+        pickupFundsReleasedAt
+        fundsReleasedAt
+        fundsReleaseType
         assignedCourierId
         assignmentExpiresAt
         assignmentAttempts
@@ -1357,6 +1475,9 @@ export const deleteOffer = /* GraphQL */ `
         currentExpressCount
         currentMaxiCount
         lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
         statusKey
         walletID
         createdAt
@@ -1473,8 +1594,19 @@ export const createOrder = /* GraphQL */ `
       acceptedOfferID
       paymentStatus
       paymentID
+      paymentReference
       payoutStatus
       fundsStatus
+      earningsAllocationStatus
+      earningsAllocatedAt
+      fundsReleaseBlocked
+      fundsHoldReason
+      fundsHeldBy
+      fundsHeldAt
+      fundsReleasedAmount
+      pickupFundsReleasedAt
+      fundsReleasedAt
+      fundsReleaseType
       assignedCourierId
       assignmentExpiresAt
       assignmentAttempts
@@ -1482,6 +1614,16 @@ export const createOrder = /* GraphQL */ `
       rejectedCourierIds
       assignmentStatus
       userID
+      reviews {
+        nextToken
+        startedAt
+        __typename
+      }
+      reports {
+        nextToken
+        startedAt
+        __typename
+      }
       offers {
         nextToken
         startedAt
@@ -1530,6 +1672,9 @@ export const createOrder = /* GraphQL */ `
         currentExpressCount
         currentMaxiCount
         lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
         statusKey
         walletID
         createdAt
@@ -1648,8 +1793,19 @@ export const updateOrder = /* GraphQL */ `
       acceptedOfferID
       paymentStatus
       paymentID
+      paymentReference
       payoutStatus
       fundsStatus
+      earningsAllocationStatus
+      earningsAllocatedAt
+      fundsReleaseBlocked
+      fundsHoldReason
+      fundsHeldBy
+      fundsHeldAt
+      fundsReleasedAmount
+      pickupFundsReleasedAt
+      fundsReleasedAt
+      fundsReleaseType
       assignedCourierId
       assignmentExpiresAt
       assignmentAttempts
@@ -1657,6 +1813,16 @@ export const updateOrder = /* GraphQL */ `
       rejectedCourierIds
       assignmentStatus
       userID
+      reviews {
+        nextToken
+        startedAt
+        __typename
+      }
+      reports {
+        nextToken
+        startedAt
+        __typename
+      }
       offers {
         nextToken
         startedAt
@@ -1705,6 +1871,9 @@ export const updateOrder = /* GraphQL */ `
         currentExpressCount
         currentMaxiCount
         lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
         statusKey
         walletID
         createdAt
@@ -1823,8 +1992,19 @@ export const deleteOrder = /* GraphQL */ `
       acceptedOfferID
       paymentStatus
       paymentID
+      paymentReference
       payoutStatus
       fundsStatus
+      earningsAllocationStatus
+      earningsAllocatedAt
+      fundsReleaseBlocked
+      fundsHoldReason
+      fundsHeldBy
+      fundsHeldAt
+      fundsReleasedAmount
+      pickupFundsReleasedAt
+      fundsReleasedAt
+      fundsReleaseType
       assignedCourierId
       assignmentExpiresAt
       assignmentAttempts
@@ -1832,6 +2012,16 @@ export const deleteOrder = /* GraphQL */ `
       rejectedCourierIds
       assignmentStatus
       userID
+      reviews {
+        nextToken
+        startedAt
+        __typename
+      }
+      reports {
+        nextToken
+        startedAt
+        __typename
+      }
       offers {
         nextToken
         startedAt
@@ -1880,6 +2070,9 @@ export const deleteOrder = /* GraphQL */ `
         currentExpressCount
         currentMaxiCount
         lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
         statusKey
         walletID
         createdAt
@@ -1894,6 +2087,1302 @@ export const deleteOrder = /* GraphQL */ `
         startedAt
         __typename
       }
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const createCourierReport = /* GraphQL */ `
+  mutation CreateCourierReport(
+    $input: CreateCourierReportInput!
+    $condition: ModelCourierReportConditionInput
+  ) {
+    createCourierReport(input: $input, condition: $condition) {
+      id
+      courierID
+      courier {
+        id
+        sub
+        isOnline
+        firstName
+        lastName
+        profilePic
+        address
+        landMark
+        phoneNumber
+        email
+        courierNIN
+        courierNINImage
+        bankCode
+        bankName
+        accountName
+        accountNumber
+        transportationType
+        vehicleClass
+        model
+        vehicleColour
+        plateNumber
+        maxiImages
+        maxiDescription
+        guarantorName
+        guarantorLastName
+        guarantorProfession
+        guarantorNumber
+        guarantorRelationship
+        guarantorAddress
+        guarantorEmail
+        guarantorNIN
+        guarantorNINImage
+        lat
+        lng
+        heading
+        push_token
+        isApproved
+        approvedById
+        currentBatchCount
+        currentExpressCount
+        currentMaxiCount
+        lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
+        statusKey
+        walletID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      userID
+      user {
+        id
+        sub
+        firstName
+        lastName
+        email
+        phoneNumber
+        profilePic
+        address
+        exactAddress
+        lat
+        lng
+        isBlocked
+        push_token
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      orderID
+      order {
+        id
+        recipientName
+        recipientNumber
+        recipientNumber2
+        orderDetails
+        originAddress
+        originState
+        originLat
+        originLng
+        destinationAddress
+        destinationState
+        destinationLat
+        destinationLng
+        tripType
+        distance
+        transportationType
+        vehicleClass
+        status
+        hasNewOffer
+        lastOfferAt
+        lastOfferSenderType
+        loadCategory
+        isInterState
+        estimatedMinPrice
+        estimatedMaxPrice
+        initialOfferPrice
+        loadingFee
+        unloadingFee
+        floorSurcharge
+        fragileSurcharge
+        extrasTotal
+        totalPrice
+        operationalFare
+        courierEarnings
+        commissionAmount
+        platformFee
+        platformServiceRevenue
+        vatAmount
+        platformNetRevenue
+        deliveryVerificationCode
+        declaredWeightBracket
+        senderPreTransferPhotos
+        senderPreTransferVideo
+        senderPreTransferRecordedAt
+        senderPreTransferLocalPhotos
+        senderPreTransferLocalVideo
+        mediaUploadStatus
+        courierPreTransferUploadStatus
+        courierPostLoadingUploadStatus
+        dropoffUploadStatus
+        courierPreTransferPhotos
+        courierPreTransferVideo
+        courierPreTransferRecordedAt
+        courierPreTransferLocalPhotos
+        courierPreTransferLocalVideo
+        courierPostLoadingPhotos
+        courierPostLoadingVideo
+        courierPostLoadingLocalPhotos
+        courierPostLoadingLocalVideo
+        dropoffArrivalPhotos
+        dropoffArrivalVideo
+        dropoffArrivalLocalPhotos
+        dropoffArrivalLocalVideo
+        postDeliveryPhotos
+        postDeliveryVideo
+        pickupLoadingResponsibility
+        pickupFloorLevel
+        pickupFloorLevelPrice
+        pickupHasElevator
+        dropoffUnloadingResponsibility
+        dropoffFloorLevel
+        dropoffFloorLevelPrice
+        dropoffHasElevator
+        acceptedAt
+        arrivedPickupAt
+        loadingStartedAt
+        tripStartedAt
+        arrivedDropoffAt
+        unloadingCompletedAt
+        logisticsCompanyId
+        waybillNumber
+        waybillPhoto
+        logisticsTrackingCode
+        logisticsTrackingStatus
+        handedOverToLogisticsAt
+        logisticsIntakeConfirmedAt
+        acceptedOfferID
+        paymentStatus
+        paymentID
+        paymentReference
+        payoutStatus
+        fundsStatus
+        earningsAllocationStatus
+        earningsAllocatedAt
+        fundsReleaseBlocked
+        fundsHoldReason
+        fundsHeldBy
+        fundsHeldAt
+        fundsReleasedAmount
+        pickupFundsReleasedAt
+        fundsReleasedAt
+        fundsReleaseType
+        assignedCourierId
+        assignmentExpiresAt
+        assignmentAttempts
+        lastAssignedAt
+        rejectedCourierIds
+        assignmentStatus
+        userID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      reason
+      description
+      evidencePhotos
+      evidenceVideo
+      status
+      adminComment
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const updateCourierReport = /* GraphQL */ `
+  mutation UpdateCourierReport(
+    $input: UpdateCourierReportInput!
+    $condition: ModelCourierReportConditionInput
+  ) {
+    updateCourierReport(input: $input, condition: $condition) {
+      id
+      courierID
+      courier {
+        id
+        sub
+        isOnline
+        firstName
+        lastName
+        profilePic
+        address
+        landMark
+        phoneNumber
+        email
+        courierNIN
+        courierNINImage
+        bankCode
+        bankName
+        accountName
+        accountNumber
+        transportationType
+        vehicleClass
+        model
+        vehicleColour
+        plateNumber
+        maxiImages
+        maxiDescription
+        guarantorName
+        guarantorLastName
+        guarantorProfession
+        guarantorNumber
+        guarantorRelationship
+        guarantorAddress
+        guarantorEmail
+        guarantorNIN
+        guarantorNINImage
+        lat
+        lng
+        heading
+        push_token
+        isApproved
+        approvedById
+        currentBatchCount
+        currentExpressCount
+        currentMaxiCount
+        lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
+        statusKey
+        walletID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      userID
+      user {
+        id
+        sub
+        firstName
+        lastName
+        email
+        phoneNumber
+        profilePic
+        address
+        exactAddress
+        lat
+        lng
+        isBlocked
+        push_token
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      orderID
+      order {
+        id
+        recipientName
+        recipientNumber
+        recipientNumber2
+        orderDetails
+        originAddress
+        originState
+        originLat
+        originLng
+        destinationAddress
+        destinationState
+        destinationLat
+        destinationLng
+        tripType
+        distance
+        transportationType
+        vehicleClass
+        status
+        hasNewOffer
+        lastOfferAt
+        lastOfferSenderType
+        loadCategory
+        isInterState
+        estimatedMinPrice
+        estimatedMaxPrice
+        initialOfferPrice
+        loadingFee
+        unloadingFee
+        floorSurcharge
+        fragileSurcharge
+        extrasTotal
+        totalPrice
+        operationalFare
+        courierEarnings
+        commissionAmount
+        platformFee
+        platformServiceRevenue
+        vatAmount
+        platformNetRevenue
+        deliveryVerificationCode
+        declaredWeightBracket
+        senderPreTransferPhotos
+        senderPreTransferVideo
+        senderPreTransferRecordedAt
+        senderPreTransferLocalPhotos
+        senderPreTransferLocalVideo
+        mediaUploadStatus
+        courierPreTransferUploadStatus
+        courierPostLoadingUploadStatus
+        dropoffUploadStatus
+        courierPreTransferPhotos
+        courierPreTransferVideo
+        courierPreTransferRecordedAt
+        courierPreTransferLocalPhotos
+        courierPreTransferLocalVideo
+        courierPostLoadingPhotos
+        courierPostLoadingVideo
+        courierPostLoadingLocalPhotos
+        courierPostLoadingLocalVideo
+        dropoffArrivalPhotos
+        dropoffArrivalVideo
+        dropoffArrivalLocalPhotos
+        dropoffArrivalLocalVideo
+        postDeliveryPhotos
+        postDeliveryVideo
+        pickupLoadingResponsibility
+        pickupFloorLevel
+        pickupFloorLevelPrice
+        pickupHasElevator
+        dropoffUnloadingResponsibility
+        dropoffFloorLevel
+        dropoffFloorLevelPrice
+        dropoffHasElevator
+        acceptedAt
+        arrivedPickupAt
+        loadingStartedAt
+        tripStartedAt
+        arrivedDropoffAt
+        unloadingCompletedAt
+        logisticsCompanyId
+        waybillNumber
+        waybillPhoto
+        logisticsTrackingCode
+        logisticsTrackingStatus
+        handedOverToLogisticsAt
+        logisticsIntakeConfirmedAt
+        acceptedOfferID
+        paymentStatus
+        paymentID
+        paymentReference
+        payoutStatus
+        fundsStatus
+        earningsAllocationStatus
+        earningsAllocatedAt
+        fundsReleaseBlocked
+        fundsHoldReason
+        fundsHeldBy
+        fundsHeldAt
+        fundsReleasedAmount
+        pickupFundsReleasedAt
+        fundsReleasedAt
+        fundsReleaseType
+        assignedCourierId
+        assignmentExpiresAt
+        assignmentAttempts
+        lastAssignedAt
+        rejectedCourierIds
+        assignmentStatus
+        userID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      reason
+      description
+      evidencePhotos
+      evidenceVideo
+      status
+      adminComment
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const deleteCourierReport = /* GraphQL */ `
+  mutation DeleteCourierReport(
+    $input: DeleteCourierReportInput!
+    $condition: ModelCourierReportConditionInput
+  ) {
+    deleteCourierReport(input: $input, condition: $condition) {
+      id
+      courierID
+      courier {
+        id
+        sub
+        isOnline
+        firstName
+        lastName
+        profilePic
+        address
+        landMark
+        phoneNumber
+        email
+        courierNIN
+        courierNINImage
+        bankCode
+        bankName
+        accountName
+        accountNumber
+        transportationType
+        vehicleClass
+        model
+        vehicleColour
+        plateNumber
+        maxiImages
+        maxiDescription
+        guarantorName
+        guarantorLastName
+        guarantorProfession
+        guarantorNumber
+        guarantorRelationship
+        guarantorAddress
+        guarantorEmail
+        guarantorNIN
+        guarantorNINImage
+        lat
+        lng
+        heading
+        push_token
+        isApproved
+        approvedById
+        currentBatchCount
+        currentExpressCount
+        currentMaxiCount
+        lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
+        statusKey
+        walletID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      userID
+      user {
+        id
+        sub
+        firstName
+        lastName
+        email
+        phoneNumber
+        profilePic
+        address
+        exactAddress
+        lat
+        lng
+        isBlocked
+        push_token
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      orderID
+      order {
+        id
+        recipientName
+        recipientNumber
+        recipientNumber2
+        orderDetails
+        originAddress
+        originState
+        originLat
+        originLng
+        destinationAddress
+        destinationState
+        destinationLat
+        destinationLng
+        tripType
+        distance
+        transportationType
+        vehicleClass
+        status
+        hasNewOffer
+        lastOfferAt
+        lastOfferSenderType
+        loadCategory
+        isInterState
+        estimatedMinPrice
+        estimatedMaxPrice
+        initialOfferPrice
+        loadingFee
+        unloadingFee
+        floorSurcharge
+        fragileSurcharge
+        extrasTotal
+        totalPrice
+        operationalFare
+        courierEarnings
+        commissionAmount
+        platformFee
+        platformServiceRevenue
+        vatAmount
+        platformNetRevenue
+        deliveryVerificationCode
+        declaredWeightBracket
+        senderPreTransferPhotos
+        senderPreTransferVideo
+        senderPreTransferRecordedAt
+        senderPreTransferLocalPhotos
+        senderPreTransferLocalVideo
+        mediaUploadStatus
+        courierPreTransferUploadStatus
+        courierPostLoadingUploadStatus
+        dropoffUploadStatus
+        courierPreTransferPhotos
+        courierPreTransferVideo
+        courierPreTransferRecordedAt
+        courierPreTransferLocalPhotos
+        courierPreTransferLocalVideo
+        courierPostLoadingPhotos
+        courierPostLoadingVideo
+        courierPostLoadingLocalPhotos
+        courierPostLoadingLocalVideo
+        dropoffArrivalPhotos
+        dropoffArrivalVideo
+        dropoffArrivalLocalPhotos
+        dropoffArrivalLocalVideo
+        postDeliveryPhotos
+        postDeliveryVideo
+        pickupLoadingResponsibility
+        pickupFloorLevel
+        pickupFloorLevelPrice
+        pickupHasElevator
+        dropoffUnloadingResponsibility
+        dropoffFloorLevel
+        dropoffFloorLevelPrice
+        dropoffHasElevator
+        acceptedAt
+        arrivedPickupAt
+        loadingStartedAt
+        tripStartedAt
+        arrivedDropoffAt
+        unloadingCompletedAt
+        logisticsCompanyId
+        waybillNumber
+        waybillPhoto
+        logisticsTrackingCode
+        logisticsTrackingStatus
+        handedOverToLogisticsAt
+        logisticsIntakeConfirmedAt
+        acceptedOfferID
+        paymentStatus
+        paymentID
+        paymentReference
+        payoutStatus
+        fundsStatus
+        earningsAllocationStatus
+        earningsAllocatedAt
+        fundsReleaseBlocked
+        fundsHoldReason
+        fundsHeldBy
+        fundsHeldAt
+        fundsReleasedAmount
+        pickupFundsReleasedAt
+        fundsReleasedAt
+        fundsReleaseType
+        assignedCourierId
+        assignmentExpiresAt
+        assignmentAttempts
+        lastAssignedAt
+        rejectedCourierIds
+        assignmentStatus
+        userID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      reason
+      description
+      evidencePhotos
+      evidenceVideo
+      status
+      adminComment
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const createCourierReview = /* GraphQL */ `
+  mutation CreateCourierReview(
+    $input: CreateCourierReviewInput!
+    $condition: ModelCourierReviewConditionInput
+  ) {
+    createCourierReview(input: $input, condition: $condition) {
+      id
+      courierID
+      courier {
+        id
+        sub
+        isOnline
+        firstName
+        lastName
+        profilePic
+        address
+        landMark
+        phoneNumber
+        email
+        courierNIN
+        courierNINImage
+        bankCode
+        bankName
+        accountName
+        accountNumber
+        transportationType
+        vehicleClass
+        model
+        vehicleColour
+        plateNumber
+        maxiImages
+        maxiDescription
+        guarantorName
+        guarantorLastName
+        guarantorProfession
+        guarantorNumber
+        guarantorRelationship
+        guarantorAddress
+        guarantorEmail
+        guarantorNIN
+        guarantorNINImage
+        lat
+        lng
+        heading
+        push_token
+        isApproved
+        approvedById
+        currentBatchCount
+        currentExpressCount
+        currentMaxiCount
+        lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
+        statusKey
+        walletID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      userID
+      user {
+        id
+        sub
+        firstName
+        lastName
+        email
+        phoneNumber
+        profilePic
+        address
+        exactAddress
+        lat
+        lng
+        isBlocked
+        push_token
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      orderID
+      order {
+        id
+        recipientName
+        recipientNumber
+        recipientNumber2
+        orderDetails
+        originAddress
+        originState
+        originLat
+        originLng
+        destinationAddress
+        destinationState
+        destinationLat
+        destinationLng
+        tripType
+        distance
+        transportationType
+        vehicleClass
+        status
+        hasNewOffer
+        lastOfferAt
+        lastOfferSenderType
+        loadCategory
+        isInterState
+        estimatedMinPrice
+        estimatedMaxPrice
+        initialOfferPrice
+        loadingFee
+        unloadingFee
+        floorSurcharge
+        fragileSurcharge
+        extrasTotal
+        totalPrice
+        operationalFare
+        courierEarnings
+        commissionAmount
+        platformFee
+        platformServiceRevenue
+        vatAmount
+        platformNetRevenue
+        deliveryVerificationCode
+        declaredWeightBracket
+        senderPreTransferPhotos
+        senderPreTransferVideo
+        senderPreTransferRecordedAt
+        senderPreTransferLocalPhotos
+        senderPreTransferLocalVideo
+        mediaUploadStatus
+        courierPreTransferUploadStatus
+        courierPostLoadingUploadStatus
+        dropoffUploadStatus
+        courierPreTransferPhotos
+        courierPreTransferVideo
+        courierPreTransferRecordedAt
+        courierPreTransferLocalPhotos
+        courierPreTransferLocalVideo
+        courierPostLoadingPhotos
+        courierPostLoadingVideo
+        courierPostLoadingLocalPhotos
+        courierPostLoadingLocalVideo
+        dropoffArrivalPhotos
+        dropoffArrivalVideo
+        dropoffArrivalLocalPhotos
+        dropoffArrivalLocalVideo
+        postDeliveryPhotos
+        postDeliveryVideo
+        pickupLoadingResponsibility
+        pickupFloorLevel
+        pickupFloorLevelPrice
+        pickupHasElevator
+        dropoffUnloadingResponsibility
+        dropoffFloorLevel
+        dropoffFloorLevelPrice
+        dropoffHasElevator
+        acceptedAt
+        arrivedPickupAt
+        loadingStartedAt
+        tripStartedAt
+        arrivedDropoffAt
+        unloadingCompletedAt
+        logisticsCompanyId
+        waybillNumber
+        waybillPhoto
+        logisticsTrackingCode
+        logisticsTrackingStatus
+        handedOverToLogisticsAt
+        logisticsIntakeConfirmedAt
+        acceptedOfferID
+        paymentStatus
+        paymentID
+        paymentReference
+        payoutStatus
+        fundsStatus
+        earningsAllocationStatus
+        earningsAllocatedAt
+        fundsReleaseBlocked
+        fundsHoldReason
+        fundsHeldBy
+        fundsHeldAt
+        fundsReleasedAmount
+        pickupFundsReleasedAt
+        fundsReleasedAt
+        fundsReleaseType
+        assignedCourierId
+        assignmentExpiresAt
+        assignmentAttempts
+        lastAssignedAt
+        rejectedCourierIds
+        assignmentStatus
+        userID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      rating
+      comment
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const updateCourierReview = /* GraphQL */ `
+  mutation UpdateCourierReview(
+    $input: UpdateCourierReviewInput!
+    $condition: ModelCourierReviewConditionInput
+  ) {
+    updateCourierReview(input: $input, condition: $condition) {
+      id
+      courierID
+      courier {
+        id
+        sub
+        isOnline
+        firstName
+        lastName
+        profilePic
+        address
+        landMark
+        phoneNumber
+        email
+        courierNIN
+        courierNINImage
+        bankCode
+        bankName
+        accountName
+        accountNumber
+        transportationType
+        vehicleClass
+        model
+        vehicleColour
+        plateNumber
+        maxiImages
+        maxiDescription
+        guarantorName
+        guarantorLastName
+        guarantorProfession
+        guarantorNumber
+        guarantorRelationship
+        guarantorAddress
+        guarantorEmail
+        guarantorNIN
+        guarantorNINImage
+        lat
+        lng
+        heading
+        push_token
+        isApproved
+        approvedById
+        currentBatchCount
+        currentExpressCount
+        currentMaxiCount
+        lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
+        statusKey
+        walletID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      userID
+      user {
+        id
+        sub
+        firstName
+        lastName
+        email
+        phoneNumber
+        profilePic
+        address
+        exactAddress
+        lat
+        lng
+        isBlocked
+        push_token
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      orderID
+      order {
+        id
+        recipientName
+        recipientNumber
+        recipientNumber2
+        orderDetails
+        originAddress
+        originState
+        originLat
+        originLng
+        destinationAddress
+        destinationState
+        destinationLat
+        destinationLng
+        tripType
+        distance
+        transportationType
+        vehicleClass
+        status
+        hasNewOffer
+        lastOfferAt
+        lastOfferSenderType
+        loadCategory
+        isInterState
+        estimatedMinPrice
+        estimatedMaxPrice
+        initialOfferPrice
+        loadingFee
+        unloadingFee
+        floorSurcharge
+        fragileSurcharge
+        extrasTotal
+        totalPrice
+        operationalFare
+        courierEarnings
+        commissionAmount
+        platformFee
+        platformServiceRevenue
+        vatAmount
+        platformNetRevenue
+        deliveryVerificationCode
+        declaredWeightBracket
+        senderPreTransferPhotos
+        senderPreTransferVideo
+        senderPreTransferRecordedAt
+        senderPreTransferLocalPhotos
+        senderPreTransferLocalVideo
+        mediaUploadStatus
+        courierPreTransferUploadStatus
+        courierPostLoadingUploadStatus
+        dropoffUploadStatus
+        courierPreTransferPhotos
+        courierPreTransferVideo
+        courierPreTransferRecordedAt
+        courierPreTransferLocalPhotos
+        courierPreTransferLocalVideo
+        courierPostLoadingPhotos
+        courierPostLoadingVideo
+        courierPostLoadingLocalPhotos
+        courierPostLoadingLocalVideo
+        dropoffArrivalPhotos
+        dropoffArrivalVideo
+        dropoffArrivalLocalPhotos
+        dropoffArrivalLocalVideo
+        postDeliveryPhotos
+        postDeliveryVideo
+        pickupLoadingResponsibility
+        pickupFloorLevel
+        pickupFloorLevelPrice
+        pickupHasElevator
+        dropoffUnloadingResponsibility
+        dropoffFloorLevel
+        dropoffFloorLevelPrice
+        dropoffHasElevator
+        acceptedAt
+        arrivedPickupAt
+        loadingStartedAt
+        tripStartedAt
+        arrivedDropoffAt
+        unloadingCompletedAt
+        logisticsCompanyId
+        waybillNumber
+        waybillPhoto
+        logisticsTrackingCode
+        logisticsTrackingStatus
+        handedOverToLogisticsAt
+        logisticsIntakeConfirmedAt
+        acceptedOfferID
+        paymentStatus
+        paymentID
+        paymentReference
+        payoutStatus
+        fundsStatus
+        earningsAllocationStatus
+        earningsAllocatedAt
+        fundsReleaseBlocked
+        fundsHoldReason
+        fundsHeldBy
+        fundsHeldAt
+        fundsReleasedAmount
+        pickupFundsReleasedAt
+        fundsReleasedAt
+        fundsReleaseType
+        assignedCourierId
+        assignmentExpiresAt
+        assignmentAttempts
+        lastAssignedAt
+        rejectedCourierIds
+        assignmentStatus
+        userID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      rating
+      comment
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const deleteCourierReview = /* GraphQL */ `
+  mutation DeleteCourierReview(
+    $input: DeleteCourierReviewInput!
+    $condition: ModelCourierReviewConditionInput
+  ) {
+    deleteCourierReview(input: $input, condition: $condition) {
+      id
+      courierID
+      courier {
+        id
+        sub
+        isOnline
+        firstName
+        lastName
+        profilePic
+        address
+        landMark
+        phoneNumber
+        email
+        courierNIN
+        courierNINImage
+        bankCode
+        bankName
+        accountName
+        accountNumber
+        transportationType
+        vehicleClass
+        model
+        vehicleColour
+        plateNumber
+        maxiImages
+        maxiDescription
+        guarantorName
+        guarantorLastName
+        guarantorProfession
+        guarantorNumber
+        guarantorRelationship
+        guarantorAddress
+        guarantorEmail
+        guarantorNIN
+        guarantorNINImage
+        lat
+        lng
+        heading
+        push_token
+        isApproved
+        approvedById
+        currentBatchCount
+        currentExpressCount
+        currentMaxiCount
+        lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
+        statusKey
+        walletID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      userID
+      user {
+        id
+        sub
+        firstName
+        lastName
+        email
+        phoneNumber
+        profilePic
+        address
+        exactAddress
+        lat
+        lng
+        isBlocked
+        push_token
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      orderID
+      order {
+        id
+        recipientName
+        recipientNumber
+        recipientNumber2
+        orderDetails
+        originAddress
+        originState
+        originLat
+        originLng
+        destinationAddress
+        destinationState
+        destinationLat
+        destinationLng
+        tripType
+        distance
+        transportationType
+        vehicleClass
+        status
+        hasNewOffer
+        lastOfferAt
+        lastOfferSenderType
+        loadCategory
+        isInterState
+        estimatedMinPrice
+        estimatedMaxPrice
+        initialOfferPrice
+        loadingFee
+        unloadingFee
+        floorSurcharge
+        fragileSurcharge
+        extrasTotal
+        totalPrice
+        operationalFare
+        courierEarnings
+        commissionAmount
+        platformFee
+        platformServiceRevenue
+        vatAmount
+        platformNetRevenue
+        deliveryVerificationCode
+        declaredWeightBracket
+        senderPreTransferPhotos
+        senderPreTransferVideo
+        senderPreTransferRecordedAt
+        senderPreTransferLocalPhotos
+        senderPreTransferLocalVideo
+        mediaUploadStatus
+        courierPreTransferUploadStatus
+        courierPostLoadingUploadStatus
+        dropoffUploadStatus
+        courierPreTransferPhotos
+        courierPreTransferVideo
+        courierPreTransferRecordedAt
+        courierPreTransferLocalPhotos
+        courierPreTransferLocalVideo
+        courierPostLoadingPhotos
+        courierPostLoadingVideo
+        courierPostLoadingLocalPhotos
+        courierPostLoadingLocalVideo
+        dropoffArrivalPhotos
+        dropoffArrivalVideo
+        dropoffArrivalLocalPhotos
+        dropoffArrivalLocalVideo
+        postDeliveryPhotos
+        postDeliveryVideo
+        pickupLoadingResponsibility
+        pickupFloorLevel
+        pickupFloorLevelPrice
+        pickupHasElevator
+        dropoffUnloadingResponsibility
+        dropoffFloorLevel
+        dropoffFloorLevelPrice
+        dropoffHasElevator
+        acceptedAt
+        arrivedPickupAt
+        loadingStartedAt
+        tripStartedAt
+        arrivedDropoffAt
+        unloadingCompletedAt
+        logisticsCompanyId
+        waybillNumber
+        waybillPhoto
+        logisticsTrackingCode
+        logisticsTrackingStatus
+        handedOverToLogisticsAt
+        logisticsIntakeConfirmedAt
+        acceptedOfferID
+        paymentStatus
+        paymentID
+        paymentReference
+        payoutStatus
+        fundsStatus
+        earningsAllocationStatus
+        earningsAllocatedAt
+        fundsReleaseBlocked
+        fundsHoldReason
+        fundsHeldBy
+        fundsHeldAt
+        fundsReleasedAmount
+        pickupFundsReleasedAt
+        fundsReleasedAt
+        fundsReleaseType
+        assignedCourierId
+        assignmentExpiresAt
+        assignmentAttempts
+        lastAssignedAt
+        rejectedCourierIds
+        assignmentStatus
+        userID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      rating
+      comment
       createdAt
       updatedAt
       _version
@@ -1951,6 +3440,19 @@ export const createCourier = /* GraphQL */ `
       currentExpressCount
       currentMaxiCount
       lastBatchAssignedAt
+      averageRating
+      reviewCount
+      totalReports
+      reviews {
+        nextToken
+        startedAt
+        __typename
+      }
+      reports {
+        nextToken
+        startedAt
+        __typename
+      }
       statusKey
       offers {
         nextToken
@@ -1967,9 +3469,9 @@ export const createCourier = /* GraphQL */ `
         id
         ownerID
         ownerType
-        balance
+        availableBalance
         pendingBalance
-        totalEarnings
+        lifetimeEarnings
         createdAt
         updatedAt
         _version
@@ -2034,6 +3536,19 @@ export const updateCourier = /* GraphQL */ `
       currentExpressCount
       currentMaxiCount
       lastBatchAssignedAt
+      averageRating
+      reviewCount
+      totalReports
+      reviews {
+        nextToken
+        startedAt
+        __typename
+      }
+      reports {
+        nextToken
+        startedAt
+        __typename
+      }
       statusKey
       offers {
         nextToken
@@ -2050,9 +3565,9 @@ export const updateCourier = /* GraphQL */ `
         id
         ownerID
         ownerType
-        balance
+        availableBalance
         pendingBalance
-        totalEarnings
+        lifetimeEarnings
         createdAt
         updatedAt
         _version
@@ -2117,6 +3632,19 @@ export const deleteCourier = /* GraphQL */ `
       currentExpressCount
       currentMaxiCount
       lastBatchAssignedAt
+      averageRating
+      reviewCount
+      totalReports
+      reviews {
+        nextToken
+        startedAt
+        __typename
+      }
+      reports {
+        nextToken
+        startedAt
+        __typename
+      }
       statusKey
       offers {
         nextToken
@@ -2133,9 +3661,9 @@ export const deleteCourier = /* GraphQL */ `
         id
         ownerID
         ownerType
-        balance
+        availableBalance
         pendingBalance
-        totalEarnings
+        lifetimeEarnings
         createdAt
         updatedAt
         _version
@@ -2171,6 +3699,16 @@ export const createUser = /* GraphQL */ `
       lng
       isBlocked
       push_token
+      courierReviews {
+        nextToken
+        startedAt
+        __typename
+      }
+      courierReports {
+        nextToken
+        startedAt
+        __typename
+      }
       Orders {
         nextToken
         startedAt
@@ -2209,6 +3747,16 @@ export const updateUser = /* GraphQL */ `
       lng
       isBlocked
       push_token
+      courierReviews {
+        nextToken
+        startedAt
+        __typename
+      }
+      courierReports {
+        nextToken
+        startedAt
+        __typename
+      }
       Orders {
         nextToken
         startedAt
@@ -2247,6 +3795,16 @@ export const deleteUser = /* GraphQL */ `
       lng
       isBlocked
       push_token
+      courierReviews {
+        nextToken
+        startedAt
+        __typename
+      }
+      courierReports {
+        nextToken
+        startedAt
+        __typename
+      }
       Orders {
         nextToken
         startedAt

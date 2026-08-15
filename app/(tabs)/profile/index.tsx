@@ -22,8 +22,15 @@ const Profile = () => {
 
         <Text style={{ marginTop: 10 }}>Setting up your account...</Text>
 
-        <Text style={{ marginTop: 10, color: "blue" }} onPress={refreshCourier}>
+        {/* <Text style={{ marginTop: 10, color: "blue" }} onPress={refreshCourier}>
           Tap here if it's taking too long
+        </Text> */}
+        <Text
+          style={{ textAlign: "center", marginTop: 10, color: "grey" }}
+          onPress={refreshCourier}
+        >
+          Please wait while we finish setting up your account. If this takes
+          longer than 1 minute, completely close the app and reopen it.
         </Text>
       </View>
     );

@@ -286,6 +286,13 @@ export const schema = {
                     "isRequired": true,
                     "attributes": []
                 },
+                "walletID": {
+                    "name": "walletID",
+                    "isArray": false,
+                    "type": "ID",
+                    "isRequired": false,
+                    "attributes": []
+                },
                 "amount": {
                     "name": "amount",
                     "isArray": false,
@@ -323,10 +330,52 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
-                "walletID": {
-                    "name": "walletID",
+                "transferCode": {
+                    "name": "transferCode",
                     "isArray": false,
-                    "type": "ID",
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "transferID": {
+                    "name": "transferID",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "failureReason": {
+                    "name": "failureReason",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "payoutMethod": {
+                    "name": "payoutMethod",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "processedAt": {
+                    "name": "processedAt",
+                    "isArray": false,
+                    "type": "AWSDateTime",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "paidAt": {
+                    "name": "paidAt",
+                    "isArray": false,
+                    "type": "AWSDateTime",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "failedAt": {
+                    "name": "failedAt",
+                    "isArray": false,
+                    "type": "AWSDateTime",
                     "isRequired": false,
                     "attributes": []
                 },
@@ -369,6 +418,15 @@ export const schema = {
                         "name": "byWallet",
                         "fields": [
                             "walletID"
+                        ]
+                    }
+                },
+                {
+                    "type": "key",
+                    "properties": {
+                        "name": "byPayoutReference",
+                        "fields": [
+                            "reference"
                         ]
                     }
                 },
@@ -444,6 +502,13 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
+                "reference": {
+                    "name": "reference",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
                 "status": {
                     "name": "status",
                     "isArray": false,
@@ -505,6 +570,15 @@ export const schema = {
                     }
                 },
                 {
+                    "type": "key",
+                    "properties": {
+                        "name": "byTransactionReference",
+                        "fields": [
+                            "reference"
+                        ]
+                    }
+                },
+                {
                     "type": "auth",
                     "properties": {
                         "rules": [
@@ -548,8 +622,8 @@ export const schema = {
                     "isRequired": true,
                     "attributes": []
                 },
-                "balance": {
-                    "name": "balance",
+                "availableBalance": {
+                    "name": "availableBalance",
                     "isArray": false,
                     "type": "Float",
                     "isRequired": false,
@@ -562,8 +636,8 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
-                "totalEarnings": {
-                    "name": "totalEarnings",
+                "lifetimeEarnings": {
+                    "name": "lifetimeEarnings",
                     "isArray": false,
                     "type": "Float",
                     "isRequired": false,
@@ -764,6 +838,15 @@ export const schema = {
                         "name": "byUser",
                         "fields": [
                             "userID"
+                        ]
+                    }
+                },
+                {
+                    "type": "key",
+                    "properties": {
+                        "name": "byPaymentReference",
+                        "fields": [
+                            "reference"
                         ]
                     }
                 },
@@ -1569,6 +1652,13 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
+                "paymentReference": {
+                    "name": "paymentReference",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
                 "payoutStatus": {
                     "name": "payoutStatus",
                     "isArray": false,
@@ -1584,6 +1674,78 @@ export const schema = {
                     "type": {
                         "enum": "FundsStatus"
                     },
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "earningsAllocationStatus": {
+                    "name": "earningsAllocationStatus",
+                    "isArray": false,
+                    "type": {
+                        "enum": "EarningsAllocationStatus"
+                    },
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "earningsAllocatedAt": {
+                    "name": "earningsAllocatedAt",
+                    "isArray": false,
+                    "type": "AWSDateTime",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "fundsReleaseBlocked": {
+                    "name": "fundsReleaseBlocked",
+                    "isArray": false,
+                    "type": "Boolean",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "fundsHoldReason": {
+                    "name": "fundsHoldReason",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "fundsHeldBy": {
+                    "name": "fundsHeldBy",
+                    "isArray": false,
+                    "type": "ID",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "fundsHeldAt": {
+                    "name": "fundsHeldAt",
+                    "isArray": false,
+                    "type": "AWSDateTime",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "fundsReleasedAmount": {
+                    "name": "fundsReleasedAmount",
+                    "isArray": false,
+                    "type": "Float",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "pickupFundsReleasedAt": {
+                    "name": "pickupFundsReleasedAt",
+                    "isArray": false,
+                    "type": "AWSDateTime",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "fundsReleasedAt": {
+                    "name": "fundsReleasedAt",
+                    "isArray": false,
+                    "type": "AWSDateTime",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "fundsReleaseType": {
+                    "name": "fundsReleaseType",
+                    "isArray": false,
+                    "type": "String",
                     "isRequired": false,
                     "attributes": []
                 },
@@ -1636,6 +1798,38 @@ export const schema = {
                     "type": "ID",
                     "isRequired": true,
                     "attributes": []
+                },
+                "reviews": {
+                    "name": "reviews",
+                    "isArray": true,
+                    "type": {
+                        "model": "CourierReview"
+                    },
+                    "isRequired": false,
+                    "attributes": [],
+                    "isArrayNullable": true,
+                    "association": {
+                        "connectionType": "HAS_MANY",
+                        "associatedWith": [
+                            "order"
+                        ]
+                    }
+                },
+                "reports": {
+                    "name": "reports",
+                    "isArray": true,
+                    "type": {
+                        "model": "CourierReport"
+                    },
+                    "isRequired": false,
+                    "attributes": [],
+                    "isArrayNullable": true,
+                    "association": {
+                        "connectionType": "HAS_MANY",
+                        "associatedWith": [
+                            "order"
+                        ]
+                    }
                 },
                 "offers": {
                     "name": "offers",
@@ -1733,6 +1927,355 @@ export const schema = {
                         "name": "byUser",
                         "fields": [
                             "userID"
+                        ]
+                    }
+                },
+                {
+                    "type": "auth",
+                    "properties": {
+                        "rules": [
+                            {
+                                "allow": "public",
+                                "operations": [
+                                    "create",
+                                    "update",
+                                    "delete",
+                                    "read"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "CourierReport": {
+            "name": "CourierReport",
+            "fields": {
+                "id": {
+                    "name": "id",
+                    "isArray": false,
+                    "type": "ID",
+                    "isRequired": true,
+                    "attributes": []
+                },
+                "courierID": {
+                    "name": "courierID",
+                    "isArray": false,
+                    "type": "ID",
+                    "isRequired": true,
+                    "attributes": []
+                },
+                "courier": {
+                    "name": "courier",
+                    "isArray": false,
+                    "type": {
+                        "model": "Courier"
+                    },
+                    "isRequired": false,
+                    "attributes": [],
+                    "association": {
+                        "connectionType": "BELONGS_TO",
+                        "targetNames": [
+                            "courierID"
+                        ]
+                    }
+                },
+                "userID": {
+                    "name": "userID",
+                    "isArray": false,
+                    "type": "ID",
+                    "isRequired": true,
+                    "attributes": []
+                },
+                "user": {
+                    "name": "user",
+                    "isArray": false,
+                    "type": {
+                        "model": "User"
+                    },
+                    "isRequired": false,
+                    "attributes": [],
+                    "association": {
+                        "connectionType": "BELONGS_TO",
+                        "targetNames": [
+                            "userID"
+                        ]
+                    }
+                },
+                "orderID": {
+                    "name": "orderID",
+                    "isArray": false,
+                    "type": "ID",
+                    "isRequired": true,
+                    "attributes": []
+                },
+                "order": {
+                    "name": "order",
+                    "isArray": false,
+                    "type": {
+                        "model": "Order"
+                    },
+                    "isRequired": false,
+                    "attributes": [],
+                    "association": {
+                        "connectionType": "BELONGS_TO",
+                        "targetNames": [
+                            "orderID"
+                        ]
+                    }
+                },
+                "reason": {
+                    "name": "reason",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": true,
+                    "attributes": []
+                },
+                "description": {
+                    "name": "description",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "evidencePhotos": {
+                    "name": "evidencePhotos",
+                    "isArray": true,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": [],
+                    "isArrayNullable": true
+                },
+                "evidenceVideo": {
+                    "name": "evidenceVideo",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "status": {
+                    "name": "status",
+                    "isArray": false,
+                    "type": {
+                        "enum": "CourierReportStatus"
+                    },
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "adminComment": {
+                    "name": "adminComment",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "createdAt": {
+                    "name": "createdAt",
+                    "isArray": false,
+                    "type": "AWSDateTime",
+                    "isRequired": false,
+                    "attributes": [],
+                    "isReadOnly": true
+                },
+                "updatedAt": {
+                    "name": "updatedAt",
+                    "isArray": false,
+                    "type": "AWSDateTime",
+                    "isRequired": false,
+                    "attributes": [],
+                    "isReadOnly": true
+                }
+            },
+            "syncable": true,
+            "pluralName": "CourierReports",
+            "attributes": [
+                {
+                    "type": "model",
+                    "properties": {}
+                },
+                {
+                    "type": "key",
+                    "properties": {
+                        "name": "byCourier",
+                        "fields": [
+                            "courierID"
+                        ]
+                    }
+                },
+                {
+                    "type": "key",
+                    "properties": {
+                        "name": "byUser",
+                        "fields": [
+                            "userID"
+                        ]
+                    }
+                },
+                {
+                    "type": "key",
+                    "properties": {
+                        "name": "byOrder",
+                        "fields": [
+                            "orderID"
+                        ]
+                    }
+                },
+                {
+                    "type": "auth",
+                    "properties": {
+                        "rules": [
+                            {
+                                "allow": "public",
+                                "operations": [
+                                    "create",
+                                    "update",
+                                    "delete",
+                                    "read"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "CourierReview": {
+            "name": "CourierReview",
+            "fields": {
+                "id": {
+                    "name": "id",
+                    "isArray": false,
+                    "type": "ID",
+                    "isRequired": true,
+                    "attributes": []
+                },
+                "courierID": {
+                    "name": "courierID",
+                    "isArray": false,
+                    "type": "ID",
+                    "isRequired": true,
+                    "attributes": []
+                },
+                "courier": {
+                    "name": "courier",
+                    "isArray": false,
+                    "type": {
+                        "model": "Courier"
+                    },
+                    "isRequired": false,
+                    "attributes": [],
+                    "association": {
+                        "connectionType": "BELONGS_TO",
+                        "targetNames": [
+                            "courierID"
+                        ]
+                    }
+                },
+                "userID": {
+                    "name": "userID",
+                    "isArray": false,
+                    "type": "ID",
+                    "isRequired": true,
+                    "attributes": []
+                },
+                "user": {
+                    "name": "user",
+                    "isArray": false,
+                    "type": {
+                        "model": "User"
+                    },
+                    "isRequired": false,
+                    "attributes": [],
+                    "association": {
+                        "connectionType": "BELONGS_TO",
+                        "targetNames": [
+                            "userID"
+                        ]
+                    }
+                },
+                "orderID": {
+                    "name": "orderID",
+                    "isArray": false,
+                    "type": "ID",
+                    "isRequired": true,
+                    "attributes": []
+                },
+                "order": {
+                    "name": "order",
+                    "isArray": false,
+                    "type": {
+                        "model": "Order"
+                    },
+                    "isRequired": false,
+                    "attributes": [],
+                    "association": {
+                        "connectionType": "BELONGS_TO",
+                        "targetNames": [
+                            "orderID"
+                        ]
+                    }
+                },
+                "rating": {
+                    "name": "rating",
+                    "isArray": false,
+                    "type": "Int",
+                    "isRequired": true,
+                    "attributes": []
+                },
+                "comment": {
+                    "name": "comment",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "createdAt": {
+                    "name": "createdAt",
+                    "isArray": false,
+                    "type": "AWSDateTime",
+                    "isRequired": false,
+                    "attributes": [],
+                    "isReadOnly": true
+                },
+                "updatedAt": {
+                    "name": "updatedAt",
+                    "isArray": false,
+                    "type": "AWSDateTime",
+                    "isRequired": false,
+                    "attributes": [],
+                    "isReadOnly": true
+                }
+            },
+            "syncable": true,
+            "pluralName": "CourierReviews",
+            "attributes": [
+                {
+                    "type": "model",
+                    "properties": {}
+                },
+                {
+                    "type": "key",
+                    "properties": {
+                        "name": "byCourier",
+                        "fields": [
+                            "courierID"
+                        ]
+                    }
+                },
+                {
+                    "type": "key",
+                    "properties": {
+                        "name": "byUser",
+                        "fields": [
+                            "userID"
+                        ]
+                    }
+                },
+                {
+                    "type": "key",
+                    "properties": {
+                        "name": "byOrder",
+                        "fields": [
+                            "orderID"
                         ]
                     }
                 },
@@ -2052,6 +2595,59 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
+                "averageRating": {
+                    "name": "averageRating",
+                    "isArray": false,
+                    "type": "Float",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "reviewCount": {
+                    "name": "reviewCount",
+                    "isArray": false,
+                    "type": "Int",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "totalReports": {
+                    "name": "totalReports",
+                    "isArray": false,
+                    "type": "Int",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "reviews": {
+                    "name": "reviews",
+                    "isArray": true,
+                    "type": {
+                        "model": "CourierReview"
+                    },
+                    "isRequired": false,
+                    "attributes": [],
+                    "isArrayNullable": true,
+                    "association": {
+                        "connectionType": "HAS_MANY",
+                        "associatedWith": [
+                            "courier"
+                        ]
+                    }
+                },
+                "reports": {
+                    "name": "reports",
+                    "isArray": true,
+                    "type": {
+                        "model": "CourierReport"
+                    },
+                    "isRequired": false,
+                    "attributes": [],
+                    "isArrayNullable": true,
+                    "association": {
+                        "connectionType": "HAS_MANY",
+                        "associatedWith": [
+                            "courier"
+                        ]
+                    }
+                },
                 "statusKey": {
                     "name": "statusKey",
                     "isArray": false,
@@ -2262,6 +2858,38 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
+                "courierReviews": {
+                    "name": "courierReviews",
+                    "isArray": true,
+                    "type": {
+                        "model": "CourierReview"
+                    },
+                    "isRequired": false,
+                    "attributes": [],
+                    "isArrayNullable": true,
+                    "association": {
+                        "connectionType": "HAS_MANY",
+                        "associatedWith": [
+                            "user"
+                        ]
+                    }
+                },
+                "courierReports": {
+                    "name": "courierReports",
+                    "isArray": true,
+                    "type": {
+                        "model": "CourierReport"
+                    },
+                    "isRequired": false,
+                    "attributes": [],
+                    "isArrayNullable": true,
+                    "association": {
+                        "connectionType": "HAS_MANY",
+                        "associatedWith": [
+                            "user"
+                        ]
+                    }
+                },
                 "Orders": {
                     "name": "Orders",
                     "isArray": true,
@@ -2338,10 +2966,20 @@ export const schema = {
         }
     },
     "enums": {
+        "EarningsAllocationStatus": {
+            "name": "EarningsAllocationStatus",
+            "values": [
+                "NOT_ALLOCATED",
+                "PROCESSING",
+                "ALLOCATED",
+                "FAILED"
+            ]
+        },
         "FundsStatus": {
             "name": "FundsStatus",
             "values": [
                 "HELD",
+                "PARTIALLY_RELEASED",
                 "RELEASED"
             ]
         },
@@ -2356,13 +2994,16 @@ export const schema = {
             "name": "OrderPaymentStatus",
             "values": [
                 "PENDING",
-                "PAID"
+                "PROCESSING",
+                "PAID",
+                "FAILED"
             ]
         },
         "PaymentStatus": {
             "name": "PaymentStatus",
             "values": [
                 "PENDING",
+                "PROCESSING",
                 "SUCCESS",
                 "FAILED"
             ]
@@ -2460,9 +3101,122 @@ export const schema = {
                 "CANCELLED",
                 "DISPUTED"
             ]
+        },
+        "CourierReportStatus": {
+            "name": "CourierReportStatus",
+            "values": [
+                "OPEN",
+                "UNDER_REVIEW",
+                "RESOLVED",
+                "DISMISSED"
+            ]
         }
     },
-    "nonModels": {},
+    "nonModels": {
+        "VerifyAtuaPaymentResult": {
+            "name": "VerifyAtuaPaymentResult",
+            "fields": {
+                "success": {
+                    "name": "success",
+                    "isArray": false,
+                    "type": "Boolean",
+                    "isRequired": true,
+                    "attributes": []
+                },
+                "verified": {
+                    "name": "verified",
+                    "isArray": false,
+                    "type": "Boolean",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "alreadyPaid": {
+                    "name": "alreadyPaid",
+                    "isArray": false,
+                    "type": "Boolean",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "message": {
+                    "name": "message",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": true,
+                    "attributes": []
+                },
+                "orderId": {
+                    "name": "orderId",
+                    "isArray": false,
+                    "type": "ID",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "deliveryVerificationCode": {
+                    "name": "deliveryVerificationCode",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "payment": {
+                    "name": "payment",
+                    "isArray": false,
+                    "type": {
+                        "nonModel": "VerifiedPaymentDetails"
+                    },
+                    "isRequired": false,
+                    "attributes": []
+                }
+            }
+        },
+        "VerifiedPaymentDetails": {
+            "name": "VerifiedPaymentDetails",
+            "fields": {
+                "reference": {
+                    "name": "reference",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "amount": {
+                    "name": "amount",
+                    "isArray": false,
+                    "type": "Float",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "currency": {
+                    "name": "currency",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "status": {
+                    "name": "status",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "channel": {
+                    "name": "channel",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
+                },
+                "paidAt": {
+                    "name": "paidAt",
+                    "isArray": false,
+                    "type": "AWSDateTime",
+                    "isRequired": false,
+                    "attributes": []
+                }
+            }
+        }
+    },
     "codegenVersion": "3.4.4",
-    "version": "8ef13fd786b603c985c31424dcfe685d"
+    "version": "bbe4ca145f6022de4b78642299d35724"
 };
