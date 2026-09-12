@@ -18,7 +18,7 @@ const ProfileProvider = ({ children }) => {
   const [model, setModel] = useState("");
   const [vehicleColour, setVehicleColour] = useState(null);
   const [plateNumber, setPlateNumber] = useState("");
-  const [maxiImages, setMaxiImages] = useState("");
+  const [maxiImages, setMaxiImages] = useState([]);
   const [maxiDescription, setMaxiDescription] = useState("");
   const [address, setAddress] = useState("");
   const [landMark, setLandMark] = useState("");
@@ -40,7 +40,7 @@ const ProfileProvider = ({ children }) => {
   const [guarantorNINImage, setGuarantorNINImage] = useState("");
   const [lat, setLat] = useState("0");
   const [lng, setLng] = useState("0");
-  const [heading, setHeading] = useState(heading);
+  const [heading, setHeading] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
 
   // Courier Function Validation
@@ -199,16 +199,16 @@ const ProfileProvider = ({ children }) => {
 
   // useEffect for setting transportation type
   useEffect(() => {
-    if (transportationType === "Micro") {
+    if (transportationType === "MICRO") {
       setVehicleClass(null);
       setModel(null);
       setVehicleColour(null);
       setPlateNumber(null);
-      setMaxiImages(null);
+      setMaxiImages([]);
     }
 
-    if (transportationType === "Moto") {
-      setMaxiImages(null);
+    if (transportationType === "MOTO") {
+      setMaxiImages([]);
     }
   }, [transportationType]);
 
@@ -246,7 +246,7 @@ const ProfileProvider = ({ children }) => {
       setGuarantorNINImage(dbCourier?.guarantorNINImage || "");
       setLat(dbCourier?.lat?.toString() || "0");
       setLng(dbCourier?.lng?.toString() || "0");
-      setHeading(dbCourier.heading || heading);
+      setHeading(dbCourier?.heading ?? 0);
     }
   }, [dbCourier]); // This effect runs whenever dbCourier changes
 
