@@ -827,6 +827,7 @@ type EagerCourier = {
   readonly id: string;
   readonly sub: string;
   readonly isOnline?: boolean | null;
+  readonly isBlocked?: boolean | null;
   readonly firstName: string;
   readonly lastName?: string | null;
   readonly profilePic?: string | null;
@@ -888,6 +889,7 @@ type LazyCourier = {
   readonly id: string;
   readonly sub: string;
   readonly isOnline?: boolean | null;
+  readonly isBlocked?: boolean | null;
   readonly firstName: string;
   readonly lastName?: string | null;
   readonly profilePic?: string | null;

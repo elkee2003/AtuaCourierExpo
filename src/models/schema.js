@@ -2321,6 +2321,13 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
+                "isBlocked": {
+                    "name": "isBlocked",
+                    "isArray": false,
+                    "type": "Boolean",
+                    "isRequired": false,
+                    "attributes": []
+                },
                 "firstName": {
                     "name": "firstName",
                     "isArray": false,
@@ -3218,5 +3225,5 @@ export const schema = {
         }
     },
     "codegenVersion": "3.4.4",
-    "version": "bbe4ca145f6022de4b78642299d35724"
+    "version": "8e3897fbca4c314b94125617510f78f8"
 };

@@ -407,7 +407,6 @@ type Order @model @auth(rules: [{ allow: public }]) {
 
   # ---------------- ASSIGNMENT FIELDS ----------------
   assignedCourierId: ID @index(name: "byAssignedCourier")
-  #assignmentStatus: String
   assignmentExpiresAt: AWSDateTime
   assignmentAttempts: Int
   lastAssignedAt: AWSDateTime
@@ -469,6 +468,7 @@ type Courier @model @auth(rules: [{ allow: public }]) {
   id: ID!
   sub: String!
   isOnline: Boolean
+  isBlocked: Boolean
   firstName: String!
   lastName: String
   profilePic: String

@@ -82,6 +82,20 @@ export default StyleSheet.create({
     elevation: 2,
   },
 
+  /* ==========================================================
+     BLOCKED STATUS INDICATOR
+  ========================================================== */
+
+  statusIndicatorBlocked: {
+    backgroundColor: "#EF4444",
+
+    shadowColor: "#EF4444",
+    shadowOpacity: 0.45,
+    shadowRadius: 5,
+
+    elevation: 2,
+  },
+
   statusContent: {
     flex: 1,
 
@@ -138,6 +152,15 @@ export default StyleSheet.create({
     borderColor: "rgba(239, 68, 68, 0.25)",
   },
 
+  /* ==========================================================
+     BLOCKED STATUS BADGE
+  ========================================================== */
+
+  statusBadgeBlocked: {
+    backgroundColor: "rgba(239, 68, 68, 0.12)",
+    borderColor: "rgba(239, 68, 68, 0.30)",
+  },
+
   statusBadgeText: {
     fontSize: 7,
 
@@ -154,8 +177,12 @@ export default StyleSheet.create({
     color: "#F87171",
   },
 
+  statusBadgeTextBlocked: {
+    color: "#F87171",
+  },
+
   /* ==========================================================
-     APPROVAL WARNING
+     APPROVAL / BLOCKED WARNING
   ========================================================== */
 
   warningContainer: {
@@ -273,6 +300,14 @@ export default StyleSheet.create({
 
   onlineButtonIndicatorOffline: {
     backgroundColor: "#FECACA",
+  },
+
+  /* ==========================================================
+     BLOCKED BUTTON INDICATOR
+  ========================================================== */
+
+  onlineButtonIndicatorBlocked: {
+    backgroundColor: "#FCA5A5",
   },
 
   onlineButtonText: {

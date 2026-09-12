@@ -78,6 +78,10 @@ export default StyleSheet.create({
     backgroundColor: "#F59E0B",
   },
 
+  blocked: {
+    backgroundColor: "#DC2626",
+  },
+
   /* Cards */
   card: {
     backgroundColor: "#fff",

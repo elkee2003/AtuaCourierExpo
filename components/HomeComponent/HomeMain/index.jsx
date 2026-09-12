@@ -7,12 +7,16 @@ import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { DataStore } from "aws-amplify/datastore";
 
 import { Audio } from "expo-av";
-
 import * as Haptics from "expo-haptics";
-
 import { router } from "expo-router";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { ActivityIndicator, Alert, Text } from "react-native";
 
@@ -35,7 +39,6 @@ const getDistance = (lat1, lng1, lat2, lng2) => {
   const R = 6371;
 
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
-
   const dLng = ((lng2 - lng1) * Math.PI) / 180;
 
   const a =
@@ -50,7 +53,7 @@ const getDistance = (lat1, lng1, lat2, lng2) => {
 
 /*
 ============================================================
-HOME MAIN
+HOME COMPONENT
 ============================================================
 */
 
@@ -67,15 +70,51 @@ const HomeComponent = () => {
 
   /*
   ==========================================================
-  ORDER STATE
+  LOCATION
   ==========================================================
   */
 
   const [location, setLocation] = useState(null);
 
+  /*
+  ==========================================================
+  ORDERS
+  ==========================================================
+
+  MICRO / MOTO:
+  ----------------------------------------------------------
+  orders = ONLY OFFERED orders assigned to this courier.
+
+  MAXI:
+  ----------------------------------------------------------
+  orders = MAXI orders within the 80km display radius.
+  ==========================================================
+  */
+
   const [orders, setOrders] = useState([]);
 
+  /*
+  ==========================================================
+  STATS ORDERS
+  ==========================================================
+
+  MICRO / MOTO:
+  ----------------------------------------------------------
+  statsOrders = OFFERED orders assigned to this courier.
+
+  MAXI:
+  ----------------------------------------------------------
+  statsOrders = ALL eligible MAXI marketplace orders.
+  ==========================================================
+  */
+
   const [statsOrders, setStatsOrders] = useState([]);
+
+  /*
+  ==========================================================
+  STATS
+  ==========================================================
+  */
 
   const [stats, setStats] = useState({
     total: 0,
@@ -86,7 +125,7 @@ const HomeComponent = () => {
 
   /*
   ==========================================================
-  GENERAL LOADING
+  LOADING
   ==========================================================
   */
 
@@ -99,9 +138,7 @@ const HomeComponent = () => {
   */
 
   const [todayEarnings, setTodayEarnings] = useState(0);
-
   const [todayDeliveryCount, setTodayDeliveryCount] = useState(0);
-
   const [earningsLoading, setEarningsLoading] = useState(true);
 
   /*
@@ -126,11 +163,32 @@ const HomeComponent = () => {
 
   /*
   ==========================================================
-  GET TODAY'S DATE RANGE
+  COURIER TYPE
   ==========================================================
   */
 
-  const getTodayRange = () => {
+  const isMaxi = dbCourier?.transportationType === "MAXI";
+
+  /*
+  ==========================================================
+  MAXI DISPLAY RADIUS
+  ==========================================================
+
+  This controls what MAXI couriers SEE.
+
+  It does NOT control the MAXI job count.
+  ==========================================================
+  */
+
+  const MAXI_RADIUS = 80;
+
+  /*
+  ==========================================================
+  GET TODAY RANGE
+  ==========================================================
+  */
+
+  const getTodayRange = useCallback(() => {
     const now = new Date();
 
     const startOfToday = new Date(
@@ -157,36 +215,19 @@ const HomeComponent = () => {
       startOfToday,
       startOfTomorrow,
     };
-  };
+  }, []);
 
   /*
   ==========================================================
-  FETCH TODAY'S EARNINGS
-  ==========================================================
-  
-  We do NOT store today's earnings on Courier.
-
-  The amount is calculated from the courier's Wallet
-  transactions.
-
-  Only:
-    - CREDIT
-    - COMPLETED
-    - today's createdAt
-
-  are counted.
-
-  We also use transaction.orderID to count the number
-  of unique deliveries that generated today's earnings.
+  TODAY'S EARNINGS
   ==========================================================
   */
 
-  const fetchTodayEarnings = async () => {
+  const fetchTodayEarnings = useCallback(async () => {
     if (!dbCourier?.walletID) {
       setTodayEarnings(0);
       setTodayDeliveryCount(0);
       setEarningsLoading(false);
-
       return;
     }
 
@@ -195,21 +236,9 @@ const HomeComponent = () => {
     try {
       const { startOfToday, startOfTomorrow } = getTodayRange();
 
-      /*
-        ======================================================
-        GET COURIER WALLET TRANSACTIONS
-        ======================================================
-        */
-
       const transactions = await DataStore.query(Transaction, (transaction) =>
         transaction.walletID.eq(dbCourier.walletID),
       );
-
-      /*
-        ======================================================
-        FILTER TODAY'S COMPLETED CREDITS
-        ======================================================
-        */
 
       const todayTransactions = transactions.filter((transaction) => {
         if (!transaction) {
@@ -233,28 +262,10 @@ const HomeComponent = () => {
         return createdAt >= startOfToday && createdAt < startOfTomorrow;
       });
 
-      /*
-        ======================================================
-        CALCULATE TODAY'S EARNINGS
-        ======================================================
-        */
-
-      const earnings = todayTransactions.reduce((total, transaction) => {
-        return total + Number(transaction.amount || 0);
-      }, 0);
-
-      /*
-        ======================================================
-        COUNT TODAY'S DELIVERIES
-        ======================================================
-
-        We count unique order IDs instead of simply counting
-        transactions.
-
-        This prevents multiple transactions belonging to the
-        same order from being counted as multiple deliveries.
-        ======================================================
-        */
+      const earnings = todayTransactions.reduce(
+        (total, transaction) => total + Number(transaction.amount || 0),
+        0,
+      );
 
       const orderIds = new Set();
 
@@ -265,7 +276,6 @@ const HomeComponent = () => {
       });
 
       setTodayEarnings(earnings);
-
       setTodayDeliveryCount(orderIds.size);
     } catch (error) {
       console.log("Today's earnings error:", error);
@@ -275,17 +285,17 @@ const HomeComponent = () => {
     } finally {
       setEarningsLoading(false);
     }
-  };
+  }, [dbCourier?.walletID, getTodayRange]);
 
   /*
   ==========================================================
-  LOAD TODAY'S EARNINGS
+  LOAD EARNINGS
   ==========================================================
   */
 
   useEffect(() => {
     fetchTodayEarnings();
-  }, [dbCourier?.id, dbCourier?.walletID]);
+  }, [fetchTodayEarnings]);
 
   /*
   ==========================================================
@@ -293,18 +303,37 @@ const HomeComponent = () => {
   ==========================================================
   */
 
-  const onGoPress = async () => {
+  const onGoPress = useCallback(async () => {
     if (!location || !dbCourier?.id) {
       return;
     }
 
     /*
-      ======================================================
-      BLOCK UNAPPROVED COURIERS
-      ======================================================
-      */
+    --------------------------------------------------------
+    BLOCKED
+    --------------------------------------------------------
+    */
 
-    if (!dbCourier?.isApproved) {
+    if (dbCourier.isBlocked) {
+      setIsOnline(false);
+
+      Alert.alert(
+        "Account Blocked",
+        "Your account has been blocked. You cannot go online or receive delivery requests. Please contact Atua support for assistance.",
+      );
+
+      return;
+    }
+
+    /*
+    --------------------------------------------------------
+    NOT APPROVED
+    --------------------------------------------------------
+    */
+
+    if (!dbCourier.isApproved) {
+      setIsOnline(false);
+
       Alert.alert(
         "Account Not Approved",
         "Your account is still under review. You cannot go online yet.",
@@ -314,25 +343,113 @@ const HomeComponent = () => {
     }
 
     try {
-      const freshUser = await DataStore.query(Courier, dbCourier.id);
+      const freshCourier = await DataStore.query(Courier, dbCourier.id);
 
-      const newStatus = !freshUser.isOnline;
+      if (!freshCourier) {
+        return;
+      }
+
+      /*
+      ------------------------------------------------------
+      CHECK BLOCK AGAIN
+      ------------------------------------------------------
+      */
+
+      if (freshCourier.isBlocked) {
+        if (freshCourier.isOnline) {
+          await DataStore.save(
+            Courier.copyOf(freshCourier, (updated) => {
+              updated.isOnline = false;
+              updated.statusKey = "OFFLINE#BLOCKED";
+            }),
+          );
+        }
+
+        setIsOnline(false);
+        setOrders([]);
+        setStatsOrders([]);
+
+        Alert.alert(
+          "Account Blocked",
+          "Your account has been blocked. You cannot go online or receive delivery requests. Please contact Atua support for assistance.",
+        );
+
+        return;
+      }
+
+      /*
+      ------------------------------------------------------
+      CHECK APPROVAL AGAIN
+      ------------------------------------------------------
+      */
+
+      if (!freshCourier.isApproved) {
+        if (freshCourier.isOnline) {
+          await DataStore.save(
+            Courier.copyOf(freshCourier, (updated) => {
+              updated.isOnline = false;
+              updated.statusKey = "OFFLINE#NOT_APPROVED";
+            }),
+          );
+        }
+
+        setIsOnline(false);
+        setOrders([]);
+        setStatsOrders([]);
+
+        Alert.alert(
+          "Account Not Approved",
+          "Your account is still under review. You cannot go online yet.",
+        );
+
+        return;
+      }
+
+      /*
+      ------------------------------------------------------
+      TOGGLE ONLINE STATUS
+      ------------------------------------------------------
+      */
+
+      const newStatus = !Boolean(freshCourier.isOnline);
 
       await DataStore.save(
-        Courier.copyOf(freshUser, (updated) => {
+        Courier.copyOf(freshCourier, (updated) => {
           updated.isOnline = newStatus;
 
-          updated.statusKey = `${newStatus ? "ONLINE" : "OFFLINE"}#${
-            freshUser.isApproved ? "APPROVED" : "NOT_APPROVED"
-          }`;
+          updated.statusKey = newStatus
+            ? "ONLINE#APPROVED"
+            : "OFFLINE#APPROVED";
         }),
       );
 
       setIsOnline(newStatus);
-    } catch (e) {
-      Alert.alert("Error", e.message);
+
+      /*
+      ------------------------------------------------------
+      CLEAR JOBS WHEN GOING OFFLINE
+      ------------------------------------------------------
+      */
+
+      if (!newStatus) {
+        setOrders([]);
+        setStatsOrders([]);
+      }
+    } catch (error) {
+      console.log("Online status error:", error);
+
+      Alert.alert(
+        "Error",
+        error?.message || "Unable to update your online status.",
+      );
     }
-  };
+  }, [
+    dbCourier?.id,
+    dbCourier?.isApproved,
+    dbCourier?.isBlocked,
+    location,
+    setIsOnline,
+  ]);
 
   /*
   ==========================================================
@@ -340,114 +457,194 @@ const HomeComponent = () => {
   ==========================================================
   */
 
-  const onSelectOrder = (order) => {
+  const onSelectOrder = useCallback((order) => {
     router.push(`/home/${order.id}`);
-  };
+  }, []);
 
   /*
   ==========================================================
-  REMOVE ORDER
+  REMOVE ORDER FROM LOCAL UI
   ==========================================================
   */
 
-  const onRemoveOrder = (id) => {
-    const filteredOrders = orders.filter((order) => order.id !== id);
+  const onRemoveOrder = useCallback((id) => {
+    setOrders((prev) => prev.filter((order) => order.id !== id));
 
-    setOrders(filteredOrders);
-  };
+    setStatsOrders((prev) => prev.filter((order) => order.id !== id));
+  }, []);
 
   /*
   ==========================================================
-  FETCH AVAILABLE ORDERS
+  MICRO / MOTO
+  FETCH OFFERED ORDERS
+  ==========================================================
+
+  IMPORTANT:
+
+  The dispatch Lambda does:
+
+      READY_FOR_PICKUP
+              ↓
+      find eligible courier
+              ↓
+      assignedCourierId = courier
+              ↓
+      assignmentStatus = OFFERED
+              ↓
+      courier sees offer
+
+  The courier must therefore look for OFFERED,
+  NOT PENDING.
+
+  PENDING is NOT the state used for an active offer.
   ==========================================================
   */
 
-  const fetchOrders = async () => {
-    if (!location || !dbCourier) {
-      setLoading(false);
-
+  const fetchAssignedOrders = useCallback(async () => {
+    if (
+      !dbCourier?.id ||
+      !isOnline ||
+      dbCourier.isBlocked ||
+      !dbCourier.isApproved
+    ) {
+      setOrders([]);
+      setStatsOrders([]);
       return;
     }
 
-    setLoading(true);
+    try {
+      const offeredOrders = await DataStore.query(Order, (order) =>
+        order.and((o) => [
+          /*
+          ----------------------------------------------------
+          MUST BELONG TO THIS COURIER
+          ----------------------------------------------------
+          */
+
+          o.assignedCourierId.eq(dbCourier.id),
+
+          /*
+          ----------------------------------------------------
+          ACTIVE OFFER ONLY
+          ----------------------------------------------------
+
+          This is the key change.
+
+          Lambda creates:
+
+              assignmentStatus = OFFERED
+
+          so the courier app must query OFFERED.
+          */
+
+          o.assignmentStatus.eq("OFFERED"),
+
+          /*
+          ----------------------------------------------------
+          ORDER MUST STILL BE READY
+          ----------------------------------------------------
+          */
+
+          o.status.eq("READY_FOR_PICKUP"),
+        ]),
+      );
+
+      const sortedOrders = [...offeredOrders].sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+      );
+
+      setOrders(sortedOrders);
+      setStatsOrders(sortedOrders);
+    } catch (error) {
+      console.log("Offered orders error:", error);
+
+      setOrders([]);
+      setStatsOrders([]);
+    }
+  }, [dbCourier?.id, dbCourier?.isApproved, dbCourier?.isBlocked, isOnline]);
+
+  /*
+  ==========================================================
+  MAXI
+  FETCH ALL MAXI ORDERS
+  ==========================================================
+
+  MAXI remains a marketplace.
+
+  statsOrders:
+      ALL eligible MAXI jobs.
+
+  orders:
+      ONLY MAXI jobs within 80km.
+  ==========================================================
+  */
+
+  const fetchMaxiOrders = useCallback(async () => {
+    if (
+      !dbCourier?.id ||
+      !isOnline ||
+      dbCourier.isBlocked ||
+      !dbCourier.isApproved ||
+      !dbCourier.vehicleClass
+    ) {
+      setOrders([]);
+      setStatsOrders([]);
+      return;
+    }
 
     try {
-      const isMaxi = dbCourier.transportationType === "MAXI";
+      /*
+      ------------------------------------------------------
+      FETCH ALL ELIGIBLE MAXI ORDERS
+      ------------------------------------------------------
+      */
 
-      let processedOrders = [];
+      const allMaxiOrders = await DataStore.query(Order, (order) =>
+        order.and((o) => [
+          o.transportationType.eq("MAXI"),
 
-      let availableOrders = [];
+          o.vehicleClass.eq(dbCourier.vehicleClass),
+
+          o.or((status) => [
+            status.status.eq("READY_FOR_PICKUP"),
+            status.status.eq("BIDDING"),
+          ]),
+        ]),
+      );
 
       /*
-        ======================================================
-        MAXI VEHICLE VALIDATION
-        ======================================================
-        */
+      ------------------------------------------------------
+      ALL MAXI ORDERS = STATS
+      ------------------------------------------------------
+      */
 
-      if (isMaxi && !dbCourier?.vehicleClass) {
-        Alert.alert(
-          "Vehicle Not Set",
-          "Please complete your vehicle details to start receiving orders.",
-        );
+      setStatsOrders(allMaxiOrders);
 
+      /*
+      ------------------------------------------------------
+      LOCATION REQUIRED FOR DISPLAY
+      ------------------------------------------------------
+      */
+
+      if (!location) {
+        setOrders([]);
         return;
       }
 
       /*
-        ======================================================
-        MAXI
-        ======================================================
-        */
+      ------------------------------------------------------
+      FILTER 80KM DISPLAY RADIUS
+      ------------------------------------------------------
+      */
 
-      if (isMaxi && dbCourier?.vehicleClass) {
-        availableOrders = await DataStore.query(Order, (o) =>
-          o.and((o2) => [
-            o2.transportationType.eq("MAXI"),
+      const nearbyMaxiOrders = allMaxiOrders.filter((order) => {
+        if (
+          typeof order.originLat !== "number" ||
+          typeof order.originLng !== "number"
+        ) {
+          return false;
+        }
 
-            o2.vehicleClass.eq(dbCourier.vehicleClass),
-
-            o2.or((o3) => [
-              o3.status.eq("READY_FOR_PICKUP"),
-
-              o3.status.eq("BIDDING"),
-            ]),
-          ]),
-        );
-      } else {
-        /*
-          ====================================================
-          MICRO / MOTO
-          ====================================================
-          */
-
-        availableOrders = await DataStore.query(Order, (o) =>
-          o.and((o2) => [
-            o2.status.eq("READY_FOR_PICKUP"),
-
-            o2.or((o3) => [
-              o3.transportationType.eq("MICRO_EXPRESS"),
-
-              o3.transportationType.eq("MOTO_EXPRESS"),
-
-              o3.transportationType.eq("MICRO_BATCH"),
-
-              o3.transportationType.eq("MOTO_BATCH"),
-            ]),
-          ]),
-        );
-      }
-
-      /*
-        ======================================================
-        DISTANCE GROUPING
-        ======================================================
-        */
-
-      const nearbyOrders = [];
-
-      const farOrders = [];
-
-      availableOrders.forEach((order) => {
         const distance = getDistance(
           location.latitude,
           location.longitude,
@@ -455,53 +652,134 @@ const HomeComponent = () => {
           order.originLng,
         );
 
-        /*
-            Maxi = 80km
-            Micro / Moto = 10km
-            */
-
-        const radius = isMaxi ? 80 : 10;
-
-        if (distance <= radius) {
-          nearbyOrders.push(order);
-        } else {
-          farOrders.push(order);
-        }
+        return distance <= MAXI_RADIUS;
       });
 
       /*
-        ======================================================
-        SORT NEARBY ORDERS
-        ======================================================
-        */
+      ------------------------------------------------------
+      SORT BY DISTANCE
+      ------------------------------------------------------
+      */
 
-      nearbyOrders.sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-      );
+      nearbyMaxiOrders.sort((a, b) => {
+        const distanceA = getDistance(
+          location.latitude,
+          location.longitude,
+          a.originLat,
+          a.originLng,
+        );
 
-      /*
-        ======================================================
-        SORT FAR ORDERS
-        ======================================================
-        */
+        const distanceB = getDistance(
+          location.latitude,
+          location.longitude,
+          b.originLat,
+          b.originLng,
+        );
 
-      farOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        return distanceA - distanceB;
+      });
 
-      /*
-        ======================================================
-        COMBINE ORDERS
-        ======================================================
-        */
+      setOrders(nearbyMaxiOrders);
+    } catch (error) {
+      console.log("MAXI orders error:", error);
 
-      processedOrders = [...nearbyOrders, ...farOrders];
+      setOrders([]);
+      setStatsOrders([]);
+    }
+  }, [
+    dbCourier?.id,
+    dbCourier?.vehicleClass,
+    dbCourier?.isApproved,
+    dbCourier?.isBlocked,
+    isOnline,
+    location,
+  ]);
 
-      setOrders(processedOrders);
-    } catch (e) {
-      Alert.alert("Error", e.message);
+  /*
+  ==========================================================
+  FETCH ORDERS
+  ==========================================================
+  */
+
+  const fetchOrders = useCallback(async () => {
+    if (
+      !dbCourier ||
+      !isOnline ||
+      dbCourier.isBlocked ||
+      !dbCourier.isApproved
+    ) {
+      setOrders([]);
+      setStatsOrders([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      if (isMaxi) {
+        await fetchMaxiOrders();
+      } else {
+        await fetchAssignedOrders();
+      }
+    } catch (error) {
+      console.log("Fetch orders error:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [dbCourier, isOnline, isMaxi, fetchMaxiOrders, fetchAssignedOrders]);
+
+  /*
+  ==========================================================
+  LOAD SOUND
+  ==========================================================
+  */
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadSound = async () => {
+      try {
+        const { sound } = await Audio.Sound.createAsync(
+          require("@/assets/sounds/new-order.mp3"),
+        );
+
+        if (mounted) {
+          soundRef.current = sound;
+        } else {
+          await sound.unloadAsync();
+        }
+      } catch (error) {
+        console.log("Load sound error:", error);
+      }
+    };
+
+    loadSound();
+
+    return () => {
+      mounted = false;
+
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+    };
+  }, []);
+
+  /*
+  ==========================================================
+  AUDIO MODE
+  ==========================================================
+  */
+
+  useEffect(() => {
+    Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: true,
+    }).catch((error) => {
+      console.log("Audio mode error:", error);
+    });
+  }, []);
 
   /*
   ==========================================================
@@ -509,7 +787,7 @@ const HomeComponent = () => {
   ==========================================================
   */
 
-  const playNewOrderSound = async () => {
+  const playNewOrderSound = useCallback(async () => {
     try {
       if (soundRef.current) {
         await soundRef.current.replayAsync();
@@ -518,37 +796,9 @@ const HomeComponent = () => {
           Haptics.NotificationFeedbackType.Success,
         );
       }
-    } catch (e) {
-      console.log("Sound error:", e);
+    } catch (error) {
+      console.log("Sound error:", error);
     }
-  };
-
-  /*
-  ==========================================================
-  LOAD NEW ORDER SOUND
-  ==========================================================
-  */
-
-  useEffect(() => {
-    const loadSound = async () => {
-      try {
-        const { sound } = await Audio.Sound.createAsync(
-          require("@/assets/sounds/new-order.mp3"),
-        );
-
-        soundRef.current = sound;
-      } catch (e) {
-        console.log("Load sound error:", e);
-      }
-    };
-
-    loadSound();
-
-    return () => {
-      if (soundRef.current) {
-        soundRef.current.unloadAsync();
-      }
-    };
   }, []);
 
   /*
@@ -574,79 +824,7 @@ const HomeComponent = () => {
     }
 
     prevOrderIdsRef.current = newIds;
-  }, [orders]);
-
-  /*
-  ==========================================================
-  STATS CALCULATION
-  ==========================================================
-  */
-
-  useEffect(() => {
-    if (!location) {
-      return;
-    }
-
-    const isMaxi = dbCourier?.transportationType === "MAXI";
-
-    let total = 0;
-    let nearby = 0;
-    let batch = 0;
-    let express = 0;
-
-    statsOrders.forEach((order) => {
-      total++;
-
-      const distance = getDistance(
-        location.latitude,
-        location.longitude,
-        order.originLat,
-        order.originLng,
-      );
-
-      const radius = isMaxi ? 80 : 10;
-
-      if (distance <= radius) {
-        nearby++;
-      }
-
-      if (!isMaxi) {
-        if (
-          order.transportationType === "MICRO_BATCH" ||
-          order.transportationType === "MOTO_BATCH"
-        ) {
-          batch++;
-        }
-
-        if (
-          order.transportationType === "MICRO_EXPRESS" ||
-          order.transportationType === "MOTO_EXPRESS"
-        ) {
-          express++;
-        }
-      }
-    });
-
-    setStats({
-      total,
-      nearby,
-      batch,
-      express,
-    });
-  }, [statsOrders, location, dbCourier?.transportationType]);
-
-  /*
-  ==========================================================
-  AUDIO MODE
-  ==========================================================
-  */
-
-  useEffect(() => {
-    Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: true,
-    });
-  }, []);
+  }, [orders, playNewOrderSound]);
 
   /*
   ==========================================================
@@ -660,94 +838,120 @@ const HomeComponent = () => {
         return;
       }
 
-      if (dbCourier?.isApproved === false && dbCourier?.isOnline) {
+      if (dbCourier.isApproved === false && dbCourier.isOnline) {
         try {
-          const freshUser = await DataStore.query(Courier, dbCourier.id);
+          const freshCourier = await DataStore.query(Courier, dbCourier.id);
+
+          if (!freshCourier) {
+            return;
+          }
 
           await DataStore.save(
-            Courier.copyOf(freshUser, (updated) => {
+            Courier.copyOf(freshCourier, (updated) => {
               updated.isOnline = false;
-
               updated.statusKey = "OFFLINE#NOT_APPROVED";
             }),
           );
 
           setIsOnline(false);
 
+          setOrders([]);
+          setStatsOrders([]);
+
           Alert.alert(
             "Account Not Approved",
             "You have been taken offline because your account is not approved.",
           );
-        } catch (e) {
-          console.log("Force offline error:", e);
+        } catch (error) {
+          console.log("Force offline error:", error);
         }
       }
     };
 
     forceOfflineIfNotApproved();
-  }, [dbCourier?.isApproved]);
+  }, [dbCourier?.id, dbCourier?.isApproved, dbCourier?.isOnline, setIsOnline]);
 
   /*
   ==========================================================
-  INITIAL ORDERS / STATS
+  FORCE BLOCKED COURIER OFFLINE
   ==========================================================
   */
 
   useEffect(() => {
-    if (!isOnline || !location || !dbCourier || !dbCourier.isApproved) {
-      setOrders([]);
-      setLoading(false);
+    const forceOfflineIfBlocked = async () => {
+      if (!dbCourier?.id) {
+        return;
+      }
 
+      if (dbCourier.isBlocked === true) {
+        try {
+          const freshCourier = await DataStore.query(Courier, dbCourier.id);
+
+          if (!freshCourier) {
+            return;
+          }
+
+          const wasOnline = Boolean(freshCourier.isOnline);
+
+          if (wasOnline) {
+            await DataStore.save(
+              Courier.copyOf(freshCourier, (updated) => {
+                updated.isOnline = false;
+                updated.statusKey = "OFFLINE#BLOCKED";
+              }),
+            );
+          }
+
+          setIsOnline(false);
+
+          setOrders([]);
+          setStatsOrders([]);
+
+          if (wasOnline) {
+            Alert.alert(
+              "Account Blocked",
+              "Your account has been blocked and you have been taken offline. Please contact Atua support for assistance.",
+            );
+          }
+        } catch (error) {
+          console.log("Blocked courier error:", error);
+        }
+      }
+    };
+
+    forceOfflineIfBlocked();
+  }, [dbCourier?.id, dbCourier?.isBlocked, dbCourier?.isOnline, setIsOnline]);
+
+  /*
+  ==========================================================
+  INITIAL / REFRESH ORDER LOAD
+  ==========================================================
+  */
+
+  useEffect(() => {
+    if (
+      !isOnline ||
+      !location ||
+      !dbCourier ||
+      !dbCourier.isApproved ||
+      dbCourier.isBlocked
+    ) {
+      setOrders([]);
+      setStatsOrders([]);
+      setLoading(false);
       return;
     }
 
-    const loadInitialStats = async () => {
-      const isMaxi = dbCourier.transportationType === "MAXI";
-
-      let initialStatsOrders = [];
-
-      if (isMaxi) {
-        initialStatsOrders = await DataStore.query(Order, (o) =>
-          o.and((o2) => [
-            o2.transportationType.eq("MAXI"),
-
-            o2.vehicleClass.eq(dbCourier.vehicleClass),
-
-            o2.or((o3) => [
-              o3.status.eq("READY_FOR_PICKUP"),
-
-              o3.status.eq("BIDDING"),
-            ]),
-          ]),
-        );
-      } else {
-        initialStatsOrders = await DataStore.query(Order, (o) =>
-          o.and((o2) => [
-            o2.status.eq("READY_FOR_PICKUP"),
-
-            o2.or((o3) => [
-              o3.transportationType.eq("MICRO_EXPRESS"),
-
-              o3.transportationType.eq("MOTO_EXPRESS"),
-
-              o3.transportationType.eq("MICRO_BATCH"),
-
-              o3.transportationType.eq("MOTO_BATCH"),
-            ]),
-          ]),
-        );
-      }
-
-      setStatsOrders(initialStatsOrders);
-    };
-
     fetchOrders();
-    loadInitialStats();
   }, [
     isOnline,
     location,
-    dbCourier?.transportationType,
+    dbCourier?.id,
     dbCourier?.isApproved,
+    dbCourier?.isBlocked,
+    dbCourier?.vehicleClass,
+    isMaxi,
+    fetchOrders,
   ]);
 
   /*
@@ -757,108 +961,495 @@ const HomeComponent = () => {
   */
 
   useEffect(() => {
-    if (!isOnline || !location || !dbCourier || !dbCourier.isApproved) {
+    if (
+      !isOnline ||
+      !dbCourier ||
+      !dbCourier.isApproved ||
+      dbCourier.isBlocked
+    ) {
       return;
     }
 
-    const isMaxi = dbCourier.transportationType === "MAXI";
-
     const subscription = DataStore.observe(Order).subscribe(
       ({ opType, element }) => {
-        const isRelevant = isMaxi
-          ? element.transportationType === "MAXI" &&
-            element.vehicleClass === dbCourier.vehicleClass &&
-            (element.status === "READY_FOR_PICKUP" ||
-              element.status === "BIDDING")
-          : element.status === "READY_FOR_PICKUP" &&
-            [
-              "MICRO_EXPRESS",
-              "MOTO_EXPRESS",
-              "MICRO_BATCH",
-              "MOTO_BATCH",
-            ].includes(element.transportationType);
+        // ==========================================================
+        // DEBUG: CONFIRM WHETHER THE COURIER APP RECEIVES THE
+        // REALTIME ORDER EVENT FROM DATASTORE
+        // ==========================================================
 
-        if (!isRelevant) {
+        console.log("🚨 ORDER_REALTIME_EVENT_RECEIVED", {
+          opType,
+          orderId: element?.id || null,
+          assignedCourierId: element?.assignedCourierId || null,
+          myCourierId: dbCourier?.id || null,
+          assignmentStatus: element?.assignmentStatus || null,
+          status: element?.status || null,
+          transportationType: element?.transportationType || null,
+          hasNewOffer: element?.hasNewOffer ?? null,
+          userID: element?.userID || null,
+          version: element?._version ?? null,
+          lastChangedAt: element?._lastChangedAt ?? null,
+        });
+
+        if (!element) {
+          console.log("🚨 ORDER_REALTIME_EVENT_WITHOUT_ELEMENT", {
+            opType,
+          });
+
           return;
         }
 
         /*
+        ====================================================
+        MICRO / MOTO
+        ====================================================
+        */
+
+        if (!isMaxi) {
+          /*
+          --------------------------------------------------
+          DOES THIS ORDER BELONG TO THIS COURIER?
+          --------------------------------------------------
+          */
+
+          const belongsToCourier = element.assignedCourierId === dbCourier.id;
+
+          /*
+          --------------------------------------------------
+          ACTIVE OFFER
+          --------------------------------------------------
+
+          IMPORTANT:
+
+          Lambda uses:
+
+              OFFERED
+
+          not PENDING.
+          */
+
+          const isOffered = element.assignmentStatus === "OFFERED";
+
+          /*
+          --------------------------------------------------
+          ORDER MUST STILL BE READY
+          --------------------------------------------------
+          */
+
+          const isReadyForPickup = element.status === "READY_FOR_PICKUP";
+
+          /*
+          --------------------------------------------------
+          FINAL OFFER CHECK
+          --------------------------------------------------
+          */
+
+          const isMyOffer = belongsToCourier && isOffered && isReadyForPickup;
+
+          /*
           ==================================================
-          UPDATE STATS
+          INSERT
           ==================================================
           */
 
-        setStatsOrders((prev) => {
-          let updated = [...prev];
-
           if (opType === "INSERT") {
-            if (!updated.find((order) => order.id === element.id)) {
-              updated.push(element);
+            if (!isMyOffer) {
+              return;
             }
+
+            setOrders((prev) => {
+              if (prev.some((order) => order.id === element.id)) {
+                return prev;
+              }
+
+              return [element, ...prev];
+            });
+
+            setStatsOrders((prev) => {
+              if (prev.some((order) => order.id === element.id)) {
+                return prev;
+              }
+
+              return [element, ...prev];
+            });
+
+            return;
+          }
+
+          /*
+          ==================================================
+          UPDATE
+          ==================================================
+          */
+
+          if (opType === "UPDATE") {
+            /*
+            ------------------------------------------------
+            ORDER NO LONGER AN ACTIVE OFFER
+            ------------------------------------------------
+
+            Examples:
+
+                OFFERED → ACCEPTED
+                OFFERED → TIMEOUT
+                OFFERED → REJECTED
+                OFFERED → CANCELLED
+                courier changed
+                order no longer READY_FOR_PICKUP
+
+            Remove it from the offer list.
+            ------------------------------------------------
+            */
+
+            if (!isMyOffer) {
+              setOrders((prev) =>
+                prev.filter((order) => order.id !== element.id),
+              );
+
+              setStatsOrders((prev) =>
+                prev.filter((order) => order.id !== element.id),
+              );
+
+              return;
+            }
+
+            /*
+            ------------------------------------------------
+            ACTIVE OFFER UPDATED
+            ------------------------------------------------
+            */
+
+            setOrders((prev) => {
+              const exists = prev.some((order) => order.id === element.id);
+
+              if (!exists) {
+                return [element, ...prev];
+              }
+
+              return prev.map((order) =>
+                order.id === element.id ? element : order,
+              );
+            });
+
+            setStatsOrders((prev) => {
+              const exists = prev.some((order) => order.id === element.id);
+
+              if (!exists) {
+                return [element, ...prev];
+              }
+
+              return prev.map((order) =>
+                order.id === element.id ? element : order,
+              );
+            });
+
+            return;
+          }
+
+          /*
+          ==================================================
+          DELETE
+          ==================================================
+          */
+
+          if (opType === "DELETE") {
+            setOrders((prev) =>
+              prev.filter((order) => order.id !== element.id),
+            );
+
+            setStatsOrders((prev) =>
+              prev.filter((order) => order.id !== element.id),
+            );
+          }
+
+          return;
+        }
+
+        /*
+        ====================================================
+        MAXI
+        ====================================================
+
+        MAXI is still a marketplace.
+
+        ALL eligible MAXI jobs:
+            statsOrders
+
+        MAXI jobs within 80km:
+            orders
+        ====================================================
+        */
+
+        const isRelevantMaxi =
+          element.transportationType === "MAXI" &&
+          element.vehicleClass === dbCourier.vehicleClass &&
+          (element.status === "READY_FOR_PICKUP" ||
+            element.status === "BIDDING");
+
+        /*
+        ----------------------------------------------------
+        DELETE / NO LONGER RELEVANT
+        ----------------------------------------------------
+        */
+
+        if (!isRelevantMaxi) {
+          if (opType === "UPDATE" || opType === "DELETE") {
+            setOrders((prev) =>
+              prev.filter((order) => order.id !== element.id),
+            );
+
+            setStatsOrders((prev) =>
+              prev.filter((order) => order.id !== element.id),
+            );
+          }
+
+          return;
+        }
+
+        /*
+        ----------------------------------------------------
+        UPDATE ALL MAXI STATS
+        ----------------------------------------------------
+        */
+
+        setStatsOrders((prev) => {
+          const exists = prev.some((order) => order.id === element.id);
+
+          if (opType === "INSERT" && !exists) {
+            return [element, ...prev];
           }
 
           if (opType === "UPDATE") {
-            updated = updated.map((order) =>
+            if (!exists) {
+              return [element, ...prev];
+            }
+
+            return prev.map((order) =>
               order.id === element.id ? element : order,
             );
           }
 
-          if (opType === "DELETE") {
-            updated = updated.filter((order) => order.id !== element.id);
-          }
-
-          updated.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-          return updated;
+          return prev;
         });
 
         /*
-          ==================================================
-          UPDATE VISIBLE ORDERS
-          ==================================================
-          */
+        ----------------------------------------------------
+        DELETE
+        ----------------------------------------------------
+        */
 
-        setOrders((prev) => {
-          let updated = [...prev];
+        if (opType === "DELETE") {
+          setOrders((prev) => prev.filter((order) => order.id !== element.id));
 
-          const distance = getDistance(
-            location.latitude,
-            location.longitude,
-            element.originLat,
-            element.originLng,
+          setStatsOrders((prev) =>
+            prev.filter((order) => order.id !== element.id),
           );
 
-          const radius = isMaxi ? 80 : 10;
+          return;
+        }
 
-          if (opType === "INSERT") {
-            if (distance > radius) {
-              return prev;
-            }
+        /*
+        ----------------------------------------------------
+        LOCATION REQUIRED FOR DISPLAY
+        ----------------------------------------------------
+        */
 
-            if (!updated.find((order) => order.id === element.id)) {
-              updated.unshift(element);
-            }
+        if (
+          !location ||
+          typeof element.originLat !== "number" ||
+          typeof element.originLng !== "number"
+        ) {
+          return;
+        }
+
+        /*
+        ----------------------------------------------------
+        CHECK 80KM DISPLAY RADIUS
+        ----------------------------------------------------
+        */
+
+        const distance = getDistance(
+          location.latitude,
+          location.longitude,
+          element.originLat,
+          element.originLng,
+        );
+
+        /*
+        ----------------------------------------------------
+        OUTSIDE 80KM
+
+        Remains in statsOrders,
+        but not visible in orders.
+        ----------------------------------------------------
+        */
+
+        if (distance > MAXI_RADIUS) {
+          setOrders((prev) => prev.filter((order) => order.id !== element.id));
+
+          return;
+        }
+
+        /*
+        ----------------------------------------------------
+        WITHIN 80KM
+        ----------------------------------------------------
+        */
+
+        setOrders((prev) => {
+          const exists = prev.some((order) => order.id === element.id);
+
+          if (opType === "INSERT" && !exists) {
+            return [element, ...prev];
           }
 
           if (opType === "UPDATE") {
-            updated = updated.map((order) =>
+            if (!exists) {
+              return [element, ...prev];
+            }
+
+            return prev.map((order) =>
               order.id === element.id ? element : order,
             );
           }
 
-          if (opType === "DELETE") {
-            updated = updated.filter((order) => order.id !== element.id);
-          }
-
-          updated.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-          return updated;
+          return prev;
         });
       },
     );
 
     return () => subscription.unsubscribe();
-  }, [isOnline, location, dbCourier]);
+  }, [
+    isOnline,
+    isMaxi,
+    location,
+    dbCourier?.id,
+    dbCourier?.vehicleClass,
+    dbCourier?.isApproved,
+    dbCourier?.isBlocked,
+  ]);
+
+  /*
+  ==========================================================
+  STATS CALCULATION
+  ==========================================================
+  */
+
+  useEffect(() => {
+    let total = 0;
+    let nearby = 0;
+    let batch = 0;
+    let express = 0;
+
+    /*
+    ==========================================================
+    MICRO / MOTO
+    ==========================================================
+
+    statsOrders contains only this courier's
+    currently OFFERED jobs.
+    */
+
+    if (!isMaxi) {
+      total = statsOrders.length;
+
+      statsOrders.forEach((order) => {
+        /*
+        -----------------------------------------------
+        BATCH
+        -----------------------------------------------
+        */
+
+        if (
+          order.transportationType === "MICRO_BATCH" ||
+          order.transportationType === "MOTO_BATCH"
+        ) {
+          batch++;
+        }
+
+        /*
+        -----------------------------------------------
+        EXPRESS
+        -----------------------------------------------
+        */
+
+        if (
+          order.transportationType === "MICRO_EXPRESS" ||
+          order.transportationType === "MOTO_EXPRESS"
+        ) {
+          express++;
+        }
+
+        /*
+        -----------------------------------------------
+        NEARBY
+
+        Informational only.
+
+        Lambda has already selected the courier.
+        -----------------------------------------------
+        */
+
+        if (
+          location &&
+          typeof order.originLat === "number" &&
+          typeof order.originLng === "number"
+        ) {
+          const distance = getDistance(
+            location.latitude,
+            location.longitude,
+            order.originLat,
+            order.originLng,
+          );
+
+          /*
+          Keep your existing 15km informational
+          nearby threshold.
+          */
+
+          if (distance <= 15) {
+            nearby++;
+          }
+        }
+      });
+    }
+
+    /*
+    ==========================================================
+    MAXI
+    ==========================================================
+    */
+
+    if (isMaxi) {
+      total = statsOrders.length;
+
+      statsOrders.forEach((order) => {
+        if (
+          location &&
+          typeof order.originLat === "number" &&
+          typeof order.originLng === "number"
+        ) {
+          const distance = getDistance(
+            location.latitude,
+            location.longitude,
+            order.originLat,
+            order.originLng,
+          );
+
+          if (distance <= MAXI_RADIUS) {
+            nearby++;
+          }
+        }
+      });
+    }
+
+    setStats({
+      total,
+      nearby,
+      batch,
+      express,
+    });
+  }, [statsOrders, location, isMaxi]);
 
   /*
   ==========================================================
@@ -909,10 +1500,14 @@ const HomeComponent = () => {
         }}
       >
         <BottomSheetScrollView>
+          {/* ==================================================
+              STATUS / STATS
+          ================================================== */}
+
           <BottomContainer
             isOnline={isOnline}
             isApproved={dbCourier?.isApproved}
-            orders={orders}
+            isBlocked={dbCourier?.isBlocked}
             stats={stats}
             onRefresh={fetchOrders}
             onToggleOnline={onGoPress}
@@ -925,16 +1520,19 @@ const HomeComponent = () => {
 
           {isOnline && orders.length === 0 && (
             <Text style={styles.emptyStateText}>
-              No jobs nearby right now. Stay online
+              {isMaxi
+                ? "No Maxi jobs within 80km right now."
+                : "No delivery offers right now. Stay online."}
             </Text>
           )}
 
           {/* ==================================================
-              AVAILABLE ORDERS
+              ORDER LIST
           ================================================== */}
 
           {isOnline &&
-            [...orders].map((item) => (
+            !dbCourier?.isBlocked &&
+            orders.map((item) => (
               <OrderItem
                 key={item.id}
                 order={item}

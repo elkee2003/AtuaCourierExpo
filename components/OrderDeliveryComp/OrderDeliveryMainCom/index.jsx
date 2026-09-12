@@ -136,7 +136,12 @@ const OrderdeliveryMainCom = ({ order, user }) => {
           router.replace("/home");
         }
       } else {
-        await updateOrderStatus(order.id, nextStatus);
+        const success = await updateOrderStatus(order.id, nextStatus);
+
+        if (!success) {
+          console.log("❌ Failed to update order status:", nextStatus);
+          return;
+        }
       }
 
       bottomSheetRef.current?.collapse();

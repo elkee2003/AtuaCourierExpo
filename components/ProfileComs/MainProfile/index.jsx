@@ -34,6 +34,7 @@ const MainProfile = ({ onRefresh, refreshing }) => {
 
   const { dbCourier } = useAuthContext();
   const isApproved = dbCourier?.isApproved;
+  const isBlocked = dbCourier?.isBlocked;
   const [loading, setLoading] = useState(true);
 
   const onSignout = () => {
@@ -95,15 +96,23 @@ const MainProfile = ({ onRefresh, refreshing }) => {
         </Text>
         <Text style={styles.role}>Courier Partner</Text>
 
-        {/* Approval section */}
+        {/* Approval / Blocked section */}
         <View
           style={[
             styles.statusBadge,
-            isApproved ? styles.approved : styles.pending,
+            isBlocked
+              ? styles.blocked
+              : isApproved
+                ? styles.approved
+                : styles.pending,
           ]}
         >
           <Text style={styles.statusText}>
-            {isApproved ? "Approved" : "Pending Approval"}
+            {isBlocked
+              ? "Blocked"
+              : isApproved
+                ? "Approved"
+                : "Pending Approval"}
           </Text>
         </View>
       </View>
@@ -181,7 +190,7 @@ const MainProfile = ({ onRefresh, refreshing }) => {
         />
         <SettingItem
           label="Policies & Terms"
-          onPress={() => router.push("/policies")}
+          onPress={() => router.push("/privacypolicy")}
         />
       </View>
     </ScrollView>

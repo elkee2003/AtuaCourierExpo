@@ -5,6 +5,7 @@ import styles from "./styles";
 const BottomContainer = ({
   isOnline,
   isApproved,
+  isBlocked,
   stats,
   onRefresh,
   onToggleOnline,
@@ -12,64 +13,136 @@ const BottomContainer = ({
 }) => {
   const isMaxi = transportationType === "MAXI";
 
+  /*
+  ==========================================================
+  STATUS
+  ==========================================================
+  */
+
+  const statusTitle = isBlocked
+    ? "Account Blocked"
+    : isOnline
+      ? "You're Online"
+      : "You're Offline";
+
+  const statusBadge = isBlocked ? "BLOCKED" : isOnline ? "ACTIVE" : "OFFLINE";
+
+  const statusSubtitle = isBlocked
+    ? "Your account has been blocked. You cannot receive delivery requests."
+    : isOnline
+      ? "Receiving delivery requests nearby"
+      : "Go online to start receiving orders";
+
+  /*
+  ==========================================================
+  BUTTON STATE
+  ==========================================================
+  */
+
+  const buttonDisabled = !isApproved || isBlocked;
+
+  const buttonText = isBlocked
+    ? "Account Blocked"
+    : !isApproved
+      ? "Approval Required"
+      : isOnline
+        ? "Go Offline"
+        : "Go Online";
+
+  /*
+  ==========================================================
+  RENDER
+  ==========================================================
+  */
+
   return (
     <View style={styles.wrapper}>
       {/* =====================================================
           STATUS CARD
       ===================================================== */}
+
       <View style={styles.statusCard}>
-        {/* STATUS INFORMATION */}
+        {/* =================================================
+            STATUS INFORMATION
+        ================================================= */}
+
         <View style={styles.statusIdentity}>
-          {/* Status indicator */}
+          {/* STATUS INDICATOR */}
+
           <View
             style={[
               styles.statusIndicator,
-              isOnline
-                ? styles.statusIndicatorOnline
-                : styles.statusIndicatorOffline,
+              isBlocked
+                ? styles.statusIndicatorBlocked
+                : isOnline
+                  ? styles.statusIndicatorOnline
+                  : styles.statusIndicatorOffline,
             ]}
           />
 
-          {/* Status text */}
+          {/* STATUS CONTENT */}
+
           <View style={styles.statusContent}>
             <View style={styles.statusTitleRow}>
-              <Text style={styles.statusTitle}>
-                {isOnline ? "You're Online" : "You're Offline"}
-              </Text>
+              {/* TITLE */}
+
+              <Text style={styles.statusTitle}>{statusTitle}</Text>
+
+              {/* BADGE */}
 
               <View
                 style={[
                   styles.statusBadge,
-                  isOnline
-                    ? styles.statusBadgeOnline
-                    : styles.statusBadgeOffline,
+                  isBlocked
+                    ? styles.statusBadgeBlocked
+                    : isOnline
+                      ? styles.statusBadgeOnline
+                      : styles.statusBadgeOffline,
                 ]}
               >
                 <Text
                   style={[
                     styles.statusBadgeText,
-                    isOnline
-                      ? styles.statusBadgeTextOnline
-                      : styles.statusBadgeTextOffline,
+                    isBlocked
+                      ? styles.statusBadgeTextBlocked
+                      : isOnline
+                        ? styles.statusBadgeTextOnline
+                        : styles.statusBadgeTextOffline,
                   ]}
                 >
-                  {isOnline ? "ACTIVE" : "OFFLINE"}
+                  {statusBadge}
                 </Text>
               </View>
             </View>
 
-            <Text style={styles.statusSubtitle}>
-              {isOnline
-                ? "Receiving delivery requests nearby"
-                : "Go online to start receiving orders"}
-            </Text>
+            {/* SUBTITLE */}
+
+            <Text style={styles.statusSubtitle}>{statusSubtitle}</Text>
           </View>
         </View>
 
         {/* =================================================
+            BLOCKED WARNING
+        ================================================= */}
+
+        {isBlocked && (
+          <View style={styles.warningContainer}>
+            <View style={styles.warningIconContainer}>
+              <Text style={styles.warningIcon}>!</Text>
+            </View>
+
+            <Text style={styles.warningText}>
+              Your account has been blocked. Please contact Atua support for
+              assistance.
+            </Text>
+          </View>
+        )}
+
+        {/* =================================================
             APPROVAL WARNING
         ================================================= */}
-        {!isApproved && (
+
+        {!isBlocked && !isApproved && (
           <View style={styles.warningContainer}>
             <View style={styles.warningIconContainer}>
               <Text style={styles.warningIcon}>!</Text>
@@ -84,74 +157,125 @@ const BottomContainer = ({
 
         {/* =================================================
             ONLINE / OFFLINE BUTTON
-            Still INSIDE the black status card
         ================================================= */}
+
         <Pressable
           style={[
             styles.onlineButton,
-            isOnline ? styles.onlineButtonOffline : styles.onlineButtonOnline,
+
+            /*
+            --------------------------------------------------
+            BLOCKED
+            --------------------------------------------------
+            */
+
+            isBlocked
+              ? styles.disabledButton
+              : /*
+              ------------------------------------------------
+              ONLINE
+              ------------------------------------------------
+              */
+
+                isOnline
+                ? styles.onlineButtonOffline
+                : /*
+                ------------------------------------------------
+                OFFLINE / GO ONLINE
+                ------------------------------------------------
+                */
+
+                  styles.onlineButtonOnline,
+
+            /*
+            --------------------------------------------------
+            UNAPPROVED
+            --------------------------------------------------
+            */
+
             !isApproved && styles.disabledButton,
           ]}
           onPress={onToggleOnline}
-          disabled={!isApproved}
+          disabled={buttonDisabled}
         >
+          {/* BUTTON INDICATOR */}
+
           <View
             style={[
               styles.onlineButtonIndicator,
-              isOnline
-                ? styles.onlineButtonIndicatorOffline
-                : styles.onlineButtonIndicatorOnline,
+
+              isBlocked
+                ? styles.onlineButtonIndicatorBlocked
+                : isOnline
+                  ? styles.onlineButtonIndicatorOffline
+                  : styles.onlineButtonIndicatorOnline,
             ]}
           />
 
-          <Text style={styles.onlineButtonText}>
-            {!isApproved
-              ? "Approval Required"
-              : isOnline
-                ? "Go Offline"
-                : "Go Online"}
-          </Text>
+          {/* BUTTON TEXT */}
+
+          <Text style={styles.onlineButtonText}>{buttonText}</Text>
         </Pressable>
       </View>
 
       {/* =====================================================
           LIVE JOB STATS
       ===================================================== */}
-      {isOnline && (
+
+      {isOnline && !isBlocked && (
         <View style={styles.statsCard}>
-          {/* AVAILABLE / MAXI */}
+          {/* =================================================
+              TOTAL
+          ================================================= */}
+
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{stats.total}</Text>
+            <Text style={styles.statNumber}>{stats?.total ?? 0}</Text>
 
             <Text style={styles.statLabel}>
               {isMaxi ? "Maxi Jobs" : "Available"}
             </Text>
           </View>
 
+          {/* DIVIDER */}
+
           <View style={styles.statDivider} />
 
-          {/* NEARBY */}
+          {/* =================================================
+              NEARBY
+          ================================================= */}
+
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{stats.nearby}</Text>
+            <Text style={styles.statNumber}>{stats?.nearby ?? 0}</Text>
 
             <Text style={styles.statLabel}>Nearby</Text>
           </View>
 
-          {/* MICRO / MOTO ONLY */}
+          {/* =================================================
+              MICRO / MOTO ONLY
+          ================================================= */}
+
           {!isMaxi && (
             <>
+              {/* DIVIDER */}
+
               <View style={styles.statDivider} />
 
+              {/* BATCH */}
+
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{stats.batch}</Text>
+                <Text style={styles.statNumber}>{stats?.batch ?? 0}</Text>
 
                 <Text style={styles.statLabel}>Batch</Text>
               </View>
 
+              {/* DIVIDER */}
+
               <View style={styles.statDivider} />
 
+              {/* EXPRESS */}
+
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{stats.express}</Text>
+                <Text style={styles.statNumber}>{stats?.express ?? 0}</Text>
 
                 <Text style={styles.statLabel}>Express</Text>
               </View>
@@ -163,7 +287,8 @@ const BottomContainer = ({
       {/* =====================================================
           REFRESH JOBS
       ===================================================== */}
-      {isOnline && (
+
+      {isOnline && !isBlocked && (
         <Pressable style={styles.refreshButton} onPress={onRefresh}>
           <Text style={styles.refreshIcon}>↻</Text>
 

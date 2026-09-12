@@ -1084,6 +1084,7 @@ export const createOffer = /* GraphQL */ `
         heading
         push_token
         isApproved
+        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -1277,6 +1278,7 @@ export const updateOffer = /* GraphQL */ `
         heading
         push_token
         isApproved
+        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -1470,6 +1472,7 @@ export const deleteOffer = /* GraphQL */ `
         heading
         push_token
         isApproved
+        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -1667,6 +1670,7 @@ export const createOrder = /* GraphQL */ `
         heading
         push_token
         isApproved
+        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -1866,6 +1870,7 @@ export const updateOrder = /* GraphQL */ `
         heading
         push_token
         isApproved
+        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -2065,6 +2070,7 @@ export const deleteOrder = /* GraphQL */ `
         heading
         push_token
         isApproved
+        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -2142,6 +2148,7 @@ export const createCourierReport = /* GraphQL */ `
         heading
         push_token
         isApproved
+        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -2360,6 +2367,7 @@ export const updateCourierReport = /* GraphQL */ `
         heading
         push_token
         isApproved
+        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -2578,6 +2586,7 @@ export const deleteCourierReport = /* GraphQL */ `
         heading
         push_token
         isApproved
+        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -2796,6 +2805,7 @@ export const createCourierReview = /* GraphQL */ `
         heading
         push_token
         isApproved
+        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -3010,6 +3020,7 @@ export const updateCourierReview = /* GraphQL */ `
         heading
         push_token
         isApproved
+        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -3224,6 +3235,7 @@ export const deleteCourierReview = /* GraphQL */ `
         heading
         push_token
         isApproved
+        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -3435,6 +3447,7 @@ export const createCourier = /* GraphQL */ `
       heading
       push_token
       isApproved
+      isBlocked
       approvedById
       currentBatchCount
       currentExpressCount
@@ -3531,6 +3544,7 @@ export const updateCourier = /* GraphQL */ `
       heading
       push_token
       isApproved
+      isBlocked
       approvedById
       currentBatchCount
       currentExpressCount
@@ -3627,6 +3641,7 @@ export const deleteCourier = /* GraphQL */ `
       heading
       push_token
       isApproved
+      isBlocked
       approvedById
       currentBatchCount
       currentExpressCount

@@ -4,8 +4,10 @@ import { DataStore } from "aws-amplify/datastore";
 import { getUrl } from "aws-amplify/storage";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
+
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Keyboard,
   KeyboardAvoidingView,
@@ -16,41 +18,169 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import MediaPreviewModal from "./MediaPreviewModal/MediaPreviewModal";
 import VideoThumbnail from "./VideoThumbnail";
 import styles from "./styles";
 
-// This code is meant to be where courier is marking completion of orders. For couriers that finished their orders manually, which will not warant the lambda function to be triggered. we would need to update the fields in Courier model. Note that I have already fixed this with resetCourierIfIdle lambda
-// updated.currentBatchCount = 0;
-// updated.currentExpressCount = 0;
-// updated.lastBatchAssignedAt = null;
-
 const OrderSummary = ({ orderId }) => {
   const { dbCourier } = useAuthContext();
+
+  // ============================================================
+  // STATE
+  // ============================================================
+
   const [order, setOrder] = useState(null);
   const [user, setUser] = useState(null);
   const [courier, setCourier] = useState(null);
+
+  // MAXI bidding only
   const [offer, setOffer] = useState("");
   const [offers, setOffers] = useState([]);
+
   const [sending, setSending] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
+
   const [previewVisible, setPreviewVisible] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [resolvedMedia, setResolvedMedia] = useState([]);
 
-  const isBidding = order?.status === "BIDDING";
+  // ============================================================
+  // ORDER TYPE
+  // ============================================================
 
-  const hasActiveExpressOrder = (courier?.currentExpressCount || 0) > 0;
+  const isBidding = order?.status === "BIDDING";
 
   const isMaxi = order?.transportationType === "MAXI";
 
-  // ✅ ONLY S3 MEDIA
-  const mediaList = resolvedMedia;
+  const isMicroOrMoto = !isMaxi;
+
+  // ============================================================
+  // MICRO / MOTO ASSIGNMENT
+  // ============================================================
+  //
+  // assignedCourierId means:
+  //
+  // "This courier currently has the dispatch offer."
+  //
+  // It does NOT mean that the courier has accepted the order.
+  //
+  // assignmentStatus tells us what happened to that offer.
+  //
+  // OFFERED
+  // ACCEPTED
+  // TIMEOUT
+  // RELEASED
+  // etc.
+  //
+  // MAXI DOES NOT USE THIS SYSTEM.
+  // MAXI continues using the Offer model.
+  // ============================================================
+
+  const isAssignedToMe =
+    !!dbCourier?.id &&
+    !!order?.assignedCourierId &&
+    order.assignedCourierId === dbCourier.id;
+
+  const isAssignedToAnotherCourier =
+    !!order?.assignedCourierId && order.assignedCourierId !== dbCourier?.id;
+
+  const assignmentStatus = order?.assignmentStatus || null;
+
+  const isCurrentlyOfferedToMe =
+    isMicroOrMoto && isAssignedToMe && assignmentStatus === "OFFERED";
+
+  // ============================================================
+  // CAPACITY
+  // ============================================================
+
+  const currentExpressCount = Number(courier?.currentExpressCount || 0);
+
+  const currentBatchCount = Number(courier?.currentBatchCount || 0);
+
+  const currentMaxiCount = Number(courier?.currentMaxiCount || 0);
+
+  const courierTotal = currentExpressCount + currentBatchCount;
+
+  // ============================================================
+  // MICRO / MOTO ORDER TYPE
+  // ============================================================
+
+  const isExpress =
+    isMicroOrMoto && order?.transportationType?.includes("EXPRESS");
+
+  const isBatch = isMicroOrMoto && order?.transportationType?.includes("BATCH");
+
+  // ============================================================
+  // EXPRESS CAPACITY
+  // ============================================================
+  //
+  // IMPORTANT:
+  //
+  // assignOrder may already have increased
+  // currentExpressCount because this order was RESERVED
+  // for this courier.
+  //
+  // Therefore:
+  //
+  // currentExpressCount === 1
+  //
+  // does NOT automatically mean:
+  //
+  // "You cannot accept this order."
+  //
+  // If this exact offer belongs to this courier,
+  // allow the courier to accept it.
+  //
+  // ============================================================
+
+  const hasExpressCapacityUsed = currentExpressCount > 0;
+
+  const hasOtherExpressOrder =
+    isExpress && hasExpressCapacityUsed && !isAssignedToMe;
+
+  // ============================================================
+  // TOTAL MICRO / MOTO CAPACITY
+  // ============================================================
+
+  const MAX_ACTIVE_ORDERS = 10;
+
+  const isAtMaximumCapacity = courierTotal >= MAX_ACTIVE_ORDERS;
+
+  const capacityBlocksThisOrder =
+    isMicroOrMoto && isAtMaximumCapacity && !isAssignedToMe;
+
+  // ============================================================
+  // FORCE DISPATCH TIMER
+  // ============================================================
+
+  const lastBatchAssignedAt = courier?.lastBatchAssignedAt
+    ? new Date(courier.lastBatchAssignedAt)
+    : null;
+
+  const THREE_HOURS = 3 * 60 * 60 * 1000;
+
+  const exceededTime =
+    !!lastBatchAssignedAt &&
+    Date.now() - lastBatchAssignedAt.getTime() > THREE_HOURS;
+
+  const forceDispatchBlocksThisOrder =
+    isMicroOrMoto && exceededTime && courierTotal > 0 && !isAssignedToMe;
+
+  // ============================================================
+  // MAXI PRICING
+  // ============================================================
 
   const minPrice = order?.estimatedMinPrice;
+
   const maxPrice = order?.estimatedMaxPrice;
+
+  // ============================================================
+  // MAXI LATEST OFFER
+  // ============================================================
 
   const latestOffer = [...offers].sort(
     (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
@@ -62,155 +192,292 @@ const OrderSummary = ({ orderId }) => {
 
   const numericOffer = offer ? Number(offer) : null;
 
+  // ============================================================
+  // MAXI USER OFFER
+  // ============================================================
+
   const latestUserOffer = [...offers]
-    .filter((o) => o.senderType === "USER")
+    .filter((item) => item.senderType === "USER")
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
 
   const latestUserOfferAmount =
     latestUserOffer?.amount ?? order?.initialOfferPrice;
 
-  // Disable Accept if:
-  // 1. Order already accepted
-  // 2. Latest offer not from user
-  // 3. Courier modified the offer (doesn't match latest user offer)
-  // 3. Courier already has an EXPRESS order
+  // ============================================================
+  // MICRO / MOTO ACCEPT BUTTON
+  // ============================================================
+  //
+  // The courier must:
+  //
+  // 1. Be the courier currently assigned.
+  // 2. Have an OFFERED assignment.
+  // 3. Not have another Express order blocking them.
+  // 4. Not have reached overall capacity.
+  // 5. Not be blocked by force-dispatch rules.
+  //
+  // ============================================================
+
+  const microMotoAcceptDisabled =
+    !isAssignedToMe ||
+    assignmentStatus !== "OFFERED" ||
+    order?.status === "ACCEPTED" ||
+    hasOtherExpressOrder ||
+    capacityBlocksThisOrder ||
+    forceDispatchBlocksThisOrder;
+
+  // ============================================================
+  // MAXI ACCEPT BUTTON
+  // ============================================================
+  //
+  // MAXI continues using the Offer system.
+  //
+  // It does NOT depend on:
+  //
+  // assignmentStatus === "OFFERED"
+  //
+  // ============================================================
+
+  const maxiAcceptDisabled =
+    order?.status === "ACCEPTED" ||
+    (latestOffer && latestOffer.senderType !== "USER") ||
+    numericOffer !== latestUserOfferAmount;
+
+  // ============================================================
+  // FINAL ACCEPT STATE
+  // ============================================================
+
   const isAcceptDisabled = isMaxi
-    ? order?.status === "ACCEPTED" ||
-      (latestOffer && latestOffer.senderType !== "USER") ||
-      numericOffer !== latestUserOfferAmount ||
-      hasActiveExpressOrder
-    : order?.status === "ACCEPTED" || hasActiveExpressOrder;
+    ? maxiAcceptDisabled
+    : microMotoAcceptDisabled;
 
-  // Total Courier accepted orders
-  const courierTotal =
-    (courier?.currentBatchCount || 0) + (courier?.currentExpressCount || 0);
-
-  const isBlocked =
-    courierTotal >= 10 ||
-    (courier?.lastBatchAssignedAt &&
-      new Date() - new Date(courier.lastBatchAssignedAt) > 3 * 60 * 60 * 1000);
+  // ============================================================
+  // COUNTER OFFER
+  // ============================================================
+  //
+  // ONLY MAXI.
+  //
+  // ============================================================
 
   const isCourierTurn = !latestOffer || latestOffer.senderType === "USER";
 
-  const isCounterDisabled = !isCourierTurn || isBlocked || !isBidding;
+  const isCounterDisabled = !isCourierTurn || !isBidding;
 
-  // conversion for 'Handle Myself'
+  // ============================================================
+  // RESPONSIBILITY
+  // ============================================================
+
   const formatResponsibility = (value) => {
-    if (!value) return "Not specified";
+    if (!value) {
+      return "Not specified";
+    }
 
     switch (value) {
       case "Handle Myself":
         return "Handled by sender";
+
       default:
         return value;
     }
   };
 
-  // To fetch couriers
-  useEffect(() => {
-    const fetchCourier = async () => {
-      if (!dbCourier?.id) return;
+  // ============================================================
+  // FETCH COURIER
+  // ============================================================
 
-      const c = await DataStore.query(Courier, dbCourier.id);
-      setCourier(c);
+  useEffect(() => {
+    if (!dbCourier?.id) {
+      return;
+    }
+
+    let mounted = true;
+
+    const fetchCourier = async () => {
+      try {
+        const result = await DataStore.query(Courier, dbCourier.id);
+
+        if (mounted) {
+          setCourier(result);
+        }
+      } catch (error) {
+        console.error("Error fetching courier:", error);
+      }
     };
 
     fetchCourier();
 
-    const sub = DataStore.observe(Courier, dbCourier.id).subscribe((msg) => {
-      if (msg.opType === "UPDATE") {
-        setCourier(msg.element);
-      }
-    });
+    const subscription = DataStore.observe(Courier, dbCourier.id).subscribe(
+      (message) => {
+        if (message.opType === "UPDATE" && mounted) {
+          setCourier(message.element);
+        }
+      },
+    );
 
-    return () => sub.unsubscribe();
-  }, [dbCourier]);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [dbCourier?.id]);
 
-  // ✅ Fetch order + user
+  // ============================================================
+  // FETCH ORDER + USER
+  // ============================================================
+
   useEffect(() => {
+    if (!orderId) {
+      return;
+    }
+
+    let mounted = true;
+
     const fetchData = async () => {
       try {
         const fetchedOrder = await DataStore.query(Order, orderId);
 
-        if (!fetchedOrder) return;
+        if (!fetchedOrder) {
+          return;
+        }
 
-        setOrder(fetchedOrder);
+        if (mounted) {
+          setOrder(fetchedOrder);
+        }
 
-        // fetch user
         if (fetchedOrder.userID) {
           const fetchedUser = await DataStore.query(User, fetchedOrder.userID);
-          setUser(fetchedUser);
+
+          if (mounted) {
+            setUser(fetchedUser);
+          }
         }
-      } catch (e) {
-        console.log(e);
+      } catch (error) {
+        console.error("Error fetching order:", error);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchData();
 
-    // ✅ realtime updates
-    const sub = DataStore.observe(Order, orderId).subscribe(async (msg) => {
-      if (msg.opType === "UPDATE") {
-        setOrder(msg.element);
+    // ==========================================================
+    // REALTIME ORDER UPDATES
+    // ==========================================================
 
-        if (msg.element.userID) {
-          const updatedUser = await DataStore.query(User, msg.element.userID);
-          setUser(updatedUser);
+    const subscription = DataStore.observe(Order, orderId).subscribe(
+      async (message) => {
+        if (message.opType !== "UPDATE") {
+          return;
         }
-      }
-    });
 
-    return () => sub.unsubscribe();
+        if (mounted) {
+          setOrder(message.element);
+        }
+
+        if (message.element.userID) {
+          try {
+            const updatedUser = await DataStore.query(
+              User,
+              message.element.userID,
+            );
+
+            if (mounted) {
+              setUser(updatedUser);
+            }
+          } catch (error) {
+            console.error("Error updating user:", error);
+          }
+        }
+      },
+    );
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [orderId]);
 
-  // useEffect for Offer
+  // ============================================================
+  // FETCH OFFERS
+  // ============================================================
+  //
+  // This is primarily for MAXI.
+  //
+  // ============================================================
+
   useEffect(() => {
+    if (!orderId) {
+      return;
+    }
+
+    let mounted = true;
+
     const fetchOffers = async () => {
-      const result = await DataStore.query(Offer, (o) => o.orderID.eq(orderId));
-      setOffers(result);
+      try {
+        const result = await DataStore.query(Offer, (item) =>
+          item.orderID.eq(orderId),
+        );
+
+        if (mounted) {
+          setOffers(result);
+        }
+      } catch (error) {
+        console.error("Error fetching offers:", error);
+      }
     };
 
     fetchOffers();
 
-    const sub = DataStore.observe(Offer).subscribe((msg) => {
-      if (msg.element.orderID === orderId) {
+    const subscription = DataStore.observe(Offer).subscribe((message) => {
+      if (message.element?.orderID === orderId && mounted) {
         fetchOffers();
       }
     });
 
-    return () => sub.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [orderId]);
 
-  // useEffect for setting latest offerPrice
+  // ============================================================
+  // SET MAXI OFFER INPUT
+  // ============================================================
+
   useEffect(() => {
-    if (!order || isEditing) return;
+    if (!order || !isMaxi || isEditing) {
+      return;
+    }
 
     const basePrice = latestOffer?.amount ?? order.initialOfferPrice;
 
-    if (!isEditing && basePrice) {
+    if (basePrice) {
       setOffer(basePrice.toString());
     }
-  }, [order, latestOffer, isEditing]);
+  }, [order, latestOffer, isMaxi, isEditing]);
 
-  // ✅ Send Counter Offer
+  // ============================================================
+  // SEND MAXI COUNTER OFFER
+  // ============================================================
+
   const onSendOffer = async (price) => {
-    if (sending) return;
+    if (sending) {
+      return;
+    }
+
     setSending(true);
 
-    if (!price || price <= 0) {
-      setSending(false);
-      return;
-    }
-
-    if (price < minPrice || price > maxPrice) {
-      alert("Offer must be within allowed range");
-      setSending(false);
-      return;
-    }
-
     try {
+      if (!price || price <= 0) {
+        return;
+      }
+
+      if (price < minPrice || price > maxPrice) {
+        Alert.alert("Invalid offer", "Offer must be within the allowed range.");
+
+        return;
+      }
+
       await DataStore.save(
         new Offer({
           orderID: order.id,
@@ -223,7 +490,7 @@ const OrderSummary = ({ orderId }) => {
 
       const latestOrder = await DataStore.query(Order, order.id);
 
-      if (latestOrder.status === "BIDDING") {
+      if (latestOrder && latestOrder.status === "BIDDING") {
         await DataStore.save(
           Order.copyOf(latestOrder, (updated) => {
             updated.hasNewOffer = true;
@@ -234,163 +501,353 @@ const OrderSummary = ({ orderId }) => {
       }
 
       setOffer(price.toString());
-    } catch (e) {
-      console.log(e);
+    } catch (error) {
+      console.error("Counter offer error:", error);
+
+      Alert.alert("Error", "Unable to send counter offer.");
     } finally {
-      setSending(false); // ✅ correct place
+      setSending(false);
     }
   };
 
-  // USEEFFECT TO CLEAR LIVE ORDER BADGE WHEN COURIER SEE THE NOTIFICATION OF NEW OFFER
+  // ============================================================
+  // CLEAR LIVE ORDER BADGE
+  // ============================================================
+
   useEffect(() => {
-    if (!order) return;
+    if (!order) {
+      return;
+    }
 
     if (order.hasNewOffer && order.lastOfferSenderType === "USER") {
       const timer = setTimeout(async () => {
-        const latestOrder = await DataStore.query(Order, order.id);
+        try {
+          const latestOrder = await DataStore.query(Order, order.id);
 
-        await DataStore.save(
-          Order.copyOf(latestOrder, (updated) => {
-            updated.hasNewOffer = false;
-          }),
-        );
+          if (!latestOrder) {
+            return;
+          }
+
+          await DataStore.save(
+            Order.copyOf(latestOrder, (updated) => {
+              updated.hasNewOffer = false;
+            }),
+          );
+        } catch (error) {
+          console.error("Badge clear error:", error);
+        }
       }, 1500);
 
       return () => clearTimeout(timer);
     }
   }, [order?.id, order?.hasNewOffer]);
 
-  // ✅ Accept Offer
+  // ============================================================
+  // ACCEPT ORDER
+  // ============================================================
+
   const onAccept = async () => {
-    const freshCourier = await DataStore.query(Courier, dbCourier.id);
-
-    // If delivery prevent from accepting more orders
-    // ✅ EXPRESS BLOCK
-    if ((freshCourier.currentExpressCount || 0) > 0) {
-      alert("You must finish your express delivery first.");
-      return;
-    }
-
-    // ✅ MAXI BLOCK (PUT IT HERE)
-    if ((freshCourier.currentMaxiCount || 0) > 0) {
-      alert("You must complete your current maxi delivery first.");
-      return;
-    }
-
-    // To check total number of orders accepted
-    const total =
-      (freshCourier.currentBatchCount || 0) +
-      (freshCourier.currentExpressCount || 0);
-
-    if (total >= 10) {
-      alert("Maximum number of orders reached. Please start delivery.");
-      return;
-    }
-
-    // ⏱️ FORCE DISPATCH TIMER CHECK
-    const lastBatchTime = new Date(freshCourier.lastBatchAssignedAt || 0);
-    const now = new Date();
-
-    const THREE_HOURS = 3 * 60 * 60 * 1000;
-
-    const exceededTime = now - lastBatchTime > THREE_HOURS;
-
-    if (exceededTime && total > 0) {
-      alert("You have pending deliveries. Please start delivery.");
+    if (!dbCourier?.id || !order?.id) {
       return;
     }
 
     try {
-      // ✅ ALWAYS RECHECK ORDER
-      const latestOrder = await DataStore.query(Order, order.id);
+      // ========================================================
+      // ALWAYS REFRESH COURIER
+      // ========================================================
 
-      if (latestOrder.status === "ACCEPTED") {
-        alert("Order already taken");
+      const freshCourier = await DataStore.query(Courier, dbCourier.id);
+
+      if (!freshCourier) {
+        Alert.alert("Unavailable", "Courier information unavailable.");
+
         return;
       }
 
-      if (isMaxi) {
-        // ✅ existing bidding logic
-        let priceToAccept;
-        let offerToAccept = null;
+      // ========================================================
+      // ALWAYS REFRESH ORDER
+      // ========================================================
 
-        const freshOffers = await DataStore.query(Offer, (o) =>
-          o.orderID.eq(order.id),
+      const latestOrder = await DataStore.query(Order, order.id);
+
+      if (!latestOrder) {
+        Alert.alert("Unavailable", "Order no longer exists.");
+
+        return;
+      }
+
+      // ========================================================
+      // ALREADY ACCEPTED
+      // ========================================================
+
+      if (latestOrder.status === "ACCEPTED") {
+        Alert.alert(
+          "Order already taken",
+          "This order has already been accepted.",
         );
 
-        const latest = freshOffers.sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-        )[0];
+        return;
+      }
 
-        if (!latest || latest.senderType !== "USER") {
-          alert("You can only accept user's latest offer");
+      // ========================================================
+      // MICRO / MOTO
+      // ========================================================
+
+      if (!isMaxi) {
+        // ------------------------------------------------------
+        // Check current assignment
+        // ------------------------------------------------------
+
+        const assignedToMe = latestOrder.assignedCourierId === dbCourier.id;
+
+        const assignedElsewhere =
+          !!latestOrder.assignedCourierId &&
+          latestOrder.assignedCourierId !== dbCourier.id;
+
+        if (assignedElsewhere) {
+          Alert.alert(
+            "Order unavailable",
+            "This order has already been offered to another courier.",
+          );
+
           return;
         }
 
-        priceToAccept = latest.amount;
-        offerToAccept = latest;
+        // ------------------------------------------------------
+        // Must currently be assigned to me
+        // ------------------------------------------------------
 
-        // ✅ 1. Update Order
+        if (!assignedToMe) {
+          Alert.alert(
+            "Order unavailable",
+            "This order is no longer assigned to you.",
+          );
+
+          return;
+        }
+
+        // ------------------------------------------------------
+        // Must still be OFFERED
+        // ------------------------------------------------------
+
+        if (latestOrder.assignmentStatus !== "OFFERED") {
+          Alert.alert(
+            "Offer expired",
+            "This delivery offer is no longer active.",
+          );
+
+          return;
+        }
+
+        // ------------------------------------------------------
+        // EXPRESS CAPACITY
+        //
+        // If this exact order is assigned to this courier,
+        // the count may already be 1 because assignOrder
+        // reserved the slot.
+        // ------------------------------------------------------
+
+        const freshExpressCount = Number(freshCourier.currentExpressCount || 0);
+
+        if (isExpress && freshExpressCount > 0 && !assignedToMe) {
+          Alert.alert(
+            "Express capacity",
+            "You must finish your current Express delivery first.",
+          );
+
+          return;
+        }
+
+        // ------------------------------------------------------
+        // TOTAL CAPACITY
+        // ------------------------------------------------------
+
+        const freshTotal =
+          Number(freshCourier.currentBatchCount || 0) +
+          Number(freshCourier.currentExpressCount || 0);
+
+        if (freshTotal >= MAX_ACTIVE_ORDERS && !assignedToMe) {
+          Alert.alert(
+            "Maximum capacity",
+            "You have reached your maximum number of active orders.",
+          );
+
+          return;
+        }
+
+        // ------------------------------------------------------
+        // FORCE DISPATCH TIMER
+        // ------------------------------------------------------
+
+        const lastBatchTime = freshCourier.lastBatchAssignedAt
+          ? new Date(freshCourier.lastBatchAssignedAt)
+          : null;
+
+        const exceededForceTime =
+          lastBatchTime && Date.now() - lastBatchTime.getTime() > THREE_HOURS;
+
+        if (exceededForceTime && freshTotal > 0 && !assignedToMe) {
+          Alert.alert(
+            "Start delivery",
+            "Please start your current deliveries before accepting another order.",
+          );
+
+          return;
+        }
+
+        // ======================================================
+        // ACCEPT MICRO / MOTO
+        // ======================================================
+
         await DataStore.save(
           Order.copyOf(latestOrder, (updated) => {
             updated.status = "ACCEPTED";
+
             updated.acceptedAt = new Date().toISOString();
-            updated.totalPrice = priceToAccept;
-            updated.acceptedOfferID = offerToAccept?.id;
+
             updated.assignedCourierId = dbCourier.id;
+
+            updated.assignmentStatus = "ACCEPTED";
+
             updated.hasNewOffer = false;
           }),
         );
 
-        // ✅ 2. Update Offer
-        if (offerToAccept) {
-          await DataStore.save(
-            Offer.copyOf(offerToAccept, (updated) => {
-              updated.status = "ACCEPTED";
-            }),
-          );
-        }
+        // ======================================================
+        // DO NOT INCREMENT COURIER COUNTS HERE
+        // ======================================================
+        //
+        // assignOrder already reserved the capacity.
+        //
+        // EXPRESS:
+        // currentExpressCount + 1
+        //
+        // BATCH:
+        // currentBatchCount + 1
+        //
+        // Incrementing again here would double-count.
+        //
+        // ======================================================
 
-        // ✅ 3. Update Courier Maxi Count
-        await DataStore.save(
-          Courier.copyOf(freshCourier, (updated) => {
-            updated.currentMaxiCount = (updated.currentMaxiCount || 0) + 1;
-          }),
-        );
-      } else {
-        // ✅ MICRO / MOTO simple accept
-        await DataStore.save(
-          Order.copyOf(latestOrder, (updated) => {
-            updated.status = "ACCEPTED";
-            updated.acceptedAt = new Date().toISOString();
-            updated.assignedCourierId = dbCourier.id;
-          }),
-        );
+        router.replace("/deliveryhistory");
 
-        await DataStore.save(
-          Courier.copyOf(freshCourier, (updated) => {
-            if (!updated.lastBatchAssignedAt) {
-              updated.lastBatchAssignedAt = new Date().toISOString();
-            }
-
-            if (order.transportationType.includes("EXPRESS")) {
-              updated.currentExpressCount =
-                (updated.currentExpressCount || 0) + 1;
-            } else {
-              updated.currentBatchCount = (updated.currentBatchCount || 0) + 1;
-            }
-          }),
-        );
+        return;
       }
+
+      // ========================================================
+      // MAXI
+      // ========================================================
+      //
+      // MAXI remains completely separate from automatic
+      // MICRO/MOTO dispatch.
+      //
+      // MAXI uses the Offer model.
+      //
+      // ========================================================
+
+      // --------------------------------------------------------
+      // MAXI CAPACITY
+      // --------------------------------------------------------
+
+      if (Number(freshCourier.currentMaxiCount || 0) > 0) {
+        Alert.alert(
+          "Current Maxi delivery",
+          "You must complete your current Maxi delivery first.",
+        );
+
+        return;
+      }
+
+      // --------------------------------------------------------
+      // GET FRESH MAXI OFFERS
+      // --------------------------------------------------------
+
+      const freshOffers = await DataStore.query(Offer, (item) =>
+        item.orderID.eq(latestOrder.id),
+      );
+
+      const latest = [...freshOffers].sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+      )[0];
+
+      // --------------------------------------------------------
+      // USER MUST HAVE THE CURRENT OFFER
+      // --------------------------------------------------------
+
+      if (!latest || latest.senderType !== "USER") {
+        Alert.alert(
+          "Offer unavailable",
+          "You can only accept the user's latest offer.",
+        );
+
+        return;
+      }
+
+      const priceToAccept = latest.amount;
+
+      // --------------------------------------------------------
+      // ACCEPT MAXI ORDER
+      // --------------------------------------------------------
+
+      await DataStore.save(
+        Order.copyOf(latestOrder, (updated) => {
+          updated.status = "ACCEPTED";
+
+          updated.acceptedAt = new Date().toISOString();
+
+          updated.totalPrice = priceToAccept;
+
+          updated.acceptedOfferID = latest.id;
+
+          updated.assignedCourierId = dbCourier.id;
+
+          updated.hasNewOffer = false;
+        }),
+      );
+
+      // --------------------------------------------------------
+      // ACCEPT MAXI OFFER
+      // --------------------------------------------------------
+
+      await DataStore.save(
+        Offer.copyOf(latest, (updated) => {
+          updated.status = "ACCEPTED";
+        }),
+      );
+
+      // --------------------------------------------------------
+      // MAXI COUNT
+      //
+      // MAXI is not using the automatic dispatch
+      // reservation system.
+      //
+      // Therefore MAXI still increments when accepted.
+      // --------------------------------------------------------
+
+      await DataStore.save(
+        Courier.copyOf(freshCourier, (updated) => {
+          updated.currentMaxiCount = Number(updated.currentMaxiCount || 0) + 1;
+        }),
+      );
+
       router.replace("/deliveryhistory");
-    } catch (e) {
-      alert("Error accepting order");
+    } catch (error) {
+      console.error("Error accepting order:", error);
+
+      Alert.alert("Error", "Error accepting order. Please try again.");
     }
   };
 
-  // useEffect for Media
+  // ============================================================
+  // RESOLVE MEDIA
+  // ============================================================
+
   useEffect(() => {
-    if (!order) return;
+    if (!order) {
+      return;
+    }
+
+    let mounted = true;
 
     const resolveMedia = async () => {
       try {
@@ -398,101 +855,166 @@ const OrderSummary = ({ orderId }) => {
           (order.senderPreTransferPhotos || []).map(async (key) => {
             const { url } = await getUrl({
               path: key,
-              options: { validateObjectExistence: true },
+              options: {
+                validateObjectExistence: true,
+              },
             });
-            return { uri: url.toString(), type: "photo" };
+
+            return {
+              uri: url.toString(),
+              type: "photo",
+            };
           }),
         );
 
         let video = [];
 
         if (order.senderPreTransferVideo) {
-          const v = order.senderPreTransferVideo;
+          const value = order.senderPreTransferVideo;
 
-          if (v.startsWith("http")) {
-            video = [{ uri: v, type: "video" }];
+          if (value.startsWith("http")) {
+            video = [
+              {
+                uri: value,
+                type: "video",
+              },
+            ];
           } else {
             const { url } = await getUrl({
-              path: v,
-              options: { validateObjectExistence: true },
+              path: value,
+              options: {
+                validateObjectExistence: true,
+              },
             });
 
-            video = [{ uri: url.toString(), type: "video" }];
+            video = [
+              {
+                uri: url.toString(),
+                type: "video",
+              },
+            ];
           }
         }
 
-        setResolvedMedia([...photos, ...video]);
-      } catch (e) {
-        console.log("Media resolve error:", e);
+        if (mounted) {
+          setResolvedMedia([...photos, ...video]);
+        }
+      } catch (error) {
+        console.error("Media resolve error:", error);
       }
     };
 
     resolveMedia();
+
+    return () => {
+      mounted = false;
+    };
   }, [order]);
 
+  // ============================================================
+  // LOADING
+  // ============================================================
+
   if (loading || !order) {
-    return <ActivityIndicator style={{ marginTop: 100 }} size="large" />;
+    return (
+      <ActivityIndicator
+        style={{
+          marginTop: 100,
+        }}
+        size="large"
+      />
+    );
   }
+
+  // ============================================================
+  // UI
+  // ============================================================
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1 }}
-      keyboardVerticalOffset={80} // tweak if needed
+      style={{
+        flex: 1,
+      }}
+      keyboardVerticalOffset={80}
     >
       <SafeAreaView style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false}>
-          {/* 🔥 PRICE HEADER */}
+          {/* ================================================== */}
+          {/* PRICE HEADER */}
+          {/* ================================================== */}
+
           <View
             style={[
               styles.priceCard,
-              order?.status === "ACCEPTED" && styles.priceCardAccepted,
+              order.status === "ACCEPTED" && styles.priceCardAccepted,
             ]}
           >
             <Text
               style={[
                 styles.label,
-                order?.status === "ACCEPTED" && styles.labelAccepted,
+                order.status === "ACCEPTED" && styles.labelAccepted,
               ]}
             >
-              <Text
-                style={[
-                  styles.label,
-                  order?.status === "ACCEPTED" && styles.labelAccepted,
-                ]}
-              >
-                {order?.status === "ACCEPTED"
-                  ? "Final Price"
-                  : isMaxi
-                    ? "Current Offer"
-                    : "Price"}
-              </Text>
+              {order.status === "ACCEPTED"
+                ? "Final Price"
+                : isMaxi
+                  ? "Current Offer"
+                  : "Price"}
             </Text>
 
             <View style={styles.priceRow}>
               <Text
                 style={[
                   styles.price,
-                  order?.status === "ACCEPTED" && styles.acceptedPrice,
+                  order.status === "ACCEPTED" && styles.acceptedPrice,
                 ]}
               >
-                ₦{displayPrice?.toLocaleString() || "---"}
+                ₦{displayPrice ? Number(displayPrice).toLocaleString() : "---"}
               </Text>
 
-              {order?.status === "ACCEPTED" && (
+              {order.status === "ACCEPTED" && (
                 <View style={styles.lockBadge}>
                   <Text style={styles.lockBadgeText}>LOCKED</Text>
                 </View>
               )}
             </View>
-
-            {/* <Text style={styles.price}>
-              ₦{displayPrice?.toLocaleString() || "---"}
-            </Text> */}
           </View>
 
-          {/* Show if Order is Accepted */}
-          {order?.status === "ACCEPTED" && (
+          {/* ================================================== */}
+          {/* MICRO / MOTO OFFER STATUS */}
+          {/* ================================================== */}
+
+          {isMicroOrMoto &&
+            isCurrentlyOfferedToMe &&
+            order.status !== "ACCEPTED" && (
+              <View
+                style={[
+                  styles.acceptedBanner,
+                  {
+                    marginBottom: 12,
+                  },
+                ]}
+              >
+                <View style={styles.acceptedBadge}>
+                  <Text style={styles.acceptedIcon}>!</Text>
+                </View>
+
+                <View>
+                  <Text style={styles.acceptedTitle}>Delivery Offer</Text>
+
+                  <Text style={styles.acceptedSubtitle}>
+                    This delivery is currently offered to you.
+                  </Text>
+                </View>
+              </View>
+            )}
+
+          {/* ================================================== */}
+          {/* ORDER ACCEPTED */}
+          {/* ================================================== */}
+
+          {order.status === "ACCEPTED" && (
             <View style={styles.acceptedBanner}>
               <View style={styles.acceptedBadge}>
                 <Text style={styles.acceptedIcon}>✓</Text>
@@ -500,6 +1022,7 @@ const OrderSummary = ({ orderId }) => {
 
               <View>
                 <Text style={styles.acceptedTitle}>Offer Accepted</Text>
+
                 <Text style={styles.acceptedSubtitle}>
                   You have secured this delivery
                 </Text>
@@ -507,18 +1030,29 @@ const OrderSummary = ({ orderId }) => {
             </View>
           )}
 
-          {/* 👤 SENDER */}
+          {/* ================================================== */}
+          {/* SENDER */}
+          {/* ================================================== */}
+
           <View style={styles.card}>
             <Text style={styles.section}>Sender</Text>
+
             <Text style={styles.text}>{user?.firstName || "Unknown"}</Text>
           </View>
 
-          {/* 📍 ROUTE */}
+          {/* ================================================== */}
+          {/* ROUTE */}
+          {/* ================================================== */}
+
           <View style={styles.card}>
             <Text style={styles.section}>Route</Text>
+
             <Text style={styles.text}>Trip Type: {order?.tripType}</Text>
+
             <Text style={styles.text}>Distance: {order?.distance}</Text>
+
             <Text style={styles.text}>Pickup: {order.originAddress}</Text>
+
             <Text style={styles.text}>Dropoff: {order.destinationAddress}</Text>
 
             <Text style={styles.text}>
@@ -526,32 +1060,70 @@ const OrderSummary = ({ orderId }) => {
             </Text>
           </View>
 
-          {/* CARGO EVIDENCE  */}
+          {/* ================================================== */}
+          {/* DISPATCH STATUS */}
+          {/* ================================================== */}
+
+          {isMicroOrMoto && order.status !== "ACCEPTED" && (
+            <View style={styles.card}>
+              <Text style={styles.section}>Dispatch</Text>
+
+              {isAssignedToMe && assignmentStatus === "OFFERED" ? (
+                <>
+                  <Text style={styles.text}>Status: Offer received</Text>
+
+                  <Text style={styles.text}>
+                    This delivery is currently reserved for you.
+                  </Text>
+                </>
+              ) : isAssignedToAnotherCourier ? (
+                <Text style={styles.text}>
+                  This delivery is currently being offered to another courier.
+                </Text>
+              ) : (
+                <Text style={styles.text}>Waiting for dispatch.</Text>
+              )}
+            </View>
+          )}
+
+          {/* ================================================== */}
+          {/* CARGO EVIDENCE */}
+          {/* ================================================== */}
+
           <View style={styles.card}>
             <Text style={styles.section}>Cargo Evidence</Text>
 
-            {order?.mediaUploadStatus === "PENDING" && (
-              <Text style={{ color: "#F59E0B", marginBottom: 10 }}>
+            {order.mediaUploadStatus === "PENDING" && (
+              <Text
+                style={{
+                  color: "#F59E0B",
+                  marginBottom: 10,
+                }}
+              >
                 Loading sender evidence...
               </Text>
             )}
 
-            {mediaList.length > 0 ? (
+            {resolvedMedia.length > 0 ? (
               <>
                 {/* PHOTOS */}
+
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {mediaList
-                    .filter((m) => m.type === "photo")
-                    .map((m, index) => (
+                  {resolvedMedia
+                    .filter((item) => item.type === "photo")
+                    .map((item, index) => (
                       <TouchableOpacity
                         key={index}
                         onPress={() => {
                           setSelectedIndex(index);
+
                           setPreviewVisible(true);
                         }}
                       >
                         <Image
-                          source={{ uri: m.uri }}
+                          source={{
+                            uri: item.uri,
+                          }}
                           style={styles.previewImage}
                         />
                       </TouchableOpacity>
@@ -559,72 +1131,117 @@ const OrderSummary = ({ orderId }) => {
                 </ScrollView>
 
                 {/* VIDEO */}
-                {mediaList.find((m) => m.type === "video") && (
+
+                {resolvedMedia.find((item) => item.type === "video") && (
                   <TouchableOpacity
                     style={styles.videoPreview}
                     onPress={() => {
-                      const videoIndex = mediaList.filter(
-                        (m) => m.type === "photo",
+                      const videoIndex = resolvedMedia.filter(
+                        (item) => item.type === "photo",
                       ).length;
 
                       setSelectedIndex(videoIndex);
+
                       setPreviewVisible(true);
                     }}
                   >
                     <VideoThumbnail
-                      uri={mediaList.find((m) => m.type === "video").uri}
+                      uri={
+                        resolvedMedia.find((item) => item.type === "video").uri
+                      }
                       style={styles.videoThumbnail}
                     />
+
                     <View style={styles.playOverlay}>
-                      <Text style={{ color: "#FFF", fontSize: 20 }}>▶</Text>
+                      <Text
+                        style={{
+                          color: "#FFF",
+                          fontSize: 20,
+                        }}
+                      >
+                        ▶
+                      </Text>
                     </View>
                   </TouchableOpacity>
                 )}
               </>
             ) : (
-              order?.mediaUploadStatus !== "PENDING" && (
-                <Text style={{ color: "#6B7280" }}>
+              order.mediaUploadStatus !== "PENDING" && (
+                <Text
+                  style={{
+                    color: "#6B7280",
+                  }}
+                >
                   No sender evidence provided
                 </Text>
               )
             )}
           </View>
 
-          {/* 📦 CARGO */}
+          {/* ================================================== */}
+          {/* CARGO */}
+          {/* ================================================== */}
+
           <View style={styles.card}>
             <Text style={styles.section}>Cargo</Text>
+
             <Text style={styles.text}>Description: {order.orderDetails}</Text>
+
             <Text style={styles.text}>
               Weight: {order?.declaredWeightBracket}
             </Text>
+
             <Text style={styles.text}>
               Pickup Floor: {order?.pickupFloorLevel}
             </Text>
+
             <Text style={styles.text}>
               Pickup Responsibility:{" "}
               {formatResponsibility(order?.pickupLoadingResponsibility)}
             </Text>
+
             <Text style={styles.text}>
               Dropoff Floor: {order?.dropoffFloorLevel}
             </Text>
+
             <Text style={styles.text}>
               Dropoff Responsibility:{" "}
               {formatResponsibility(order?.dropoffUnloadingResponsibility)}
             </Text>
           </View>
 
-          {/* 💰 FEES */}
+          {/* ================================================== */}
+          {/* FEES */}
+          {/* ================================================== */}
+
           <View style={styles.card}>
             <Text style={styles.section}>Fees</Text>
+
             <Text style={styles.text}>
-              Loading: ₦{order.loadingFee?.toLocaleString()}
+              Loading: ₦{Number(order.loadingFee || 0).toLocaleString()}
             </Text>
+
             <Text style={styles.text}>
-              Unloading: ₦{order.unloadingFee?.toLocaleString()}
+              Unloading: ₦{Number(order.unloadingFee || 0).toLocaleString()}
             </Text>
           </View>
 
-          {/* 💸 OFFER SECTION */}
+          {/* ================================================== */}
+          {/* MAXI OFFER */}
+          {/* ================================================== */}
+          {/*
+            IMPORTANT:
+            This entire section is ONLY for MAXI.
+
+            MAXI is a marketplace/bidding flow.
+
+            MAXI does NOT use assignmentStatus
+            to determine whether the courier can
+            counter or accept an offer.
+
+            MAXI uses the existing Offer model.
+          */}
+
           {isMaxi && (
             <View style={styles.offerBox}>
               <Text style={styles.section}>Your Offer</Text>
@@ -633,8 +1250,9 @@ const OrderSummary = ({ orderId }) => {
                 <TouchableOpacity
                   style={styles.adjustBtn}
                   onPress={() =>
-                    setOffer((prev) => {
-                      const value = Number(prev) || minPrice;
+                    setOffer((previous) => {
+                      const value = Number(previous) || minPrice;
+
                       return Math.max(minPrice, value - 1000).toString();
                     })
                   }
@@ -649,22 +1267,22 @@ const OrderSummary = ({ orderId }) => {
                   onFocus={() => setIsEditing(true)}
                   onBlur={() => setIsEditing(false)}
                   onChangeText={(value) => {
-                    const num = Number(value);
-
                     if (value === "") {
                       setOffer("");
+
                       return;
                     }
 
-                    setOffer(num.toString());
+                    setOffer(Number(value).toString());
                   }}
                 />
 
                 <TouchableOpacity
                   style={styles.adjustBtn}
                   onPress={() =>
-                    setOffer((prev) => {
-                      const value = Number(prev) || minPrice;
+                    setOffer((previous) => {
+                      const value = Number(previous) || minPrice;
+
                       return Math.min(maxPrice, value + 1000).toString();
                     })
                   }
@@ -673,11 +1291,11 @@ const OrderSummary = ({ orderId }) => {
                 </TouchableOpacity>
               </View>
 
-              {/* Feeback */}
               {numericOffer < minPrice || numericOffer > maxPrice ? (
                 <Text style={styles.feedBack}>
-                  Offer must be between ₦{minPrice?.toLocaleString()} and ₦
-                  {maxPrice?.toLocaleString()}
+                  Offer must be between ₦
+                  {Number(minPrice || 0).toLocaleString()} and ₦
+                  {Number(maxPrice || 0).toLocaleString()}
                 </Text>
               ) : null}
 
@@ -689,7 +1307,9 @@ const OrderSummary = ({ orderId }) => {
                   ]}
                   onPress={() => {
                     Keyboard.dismiss();
+
                     setIsEditing(false);
+
                     onSendOffer(Number(offer));
                   }}
                   disabled={isCounterDisabled}
@@ -697,57 +1317,61 @@ const OrderSummary = ({ orderId }) => {
                   <Text style={styles.btnText}>Counter</Text>
                 </TouchableOpacity>
 
-                {/* if offer price isn't what was offered by user, disable Accept button, to prevent courier from increasing or reducing price and then accepting. Make sure to do same with user app */}
                 <TouchableOpacity
                   style={[
                     styles.acceptBtn,
-                    (isAcceptDisabled || isBlocked) && styles.buttonDisabled,
+                    isAcceptDisabled && styles.buttonDisabled,
                   ]}
                   onPress={onAccept}
-                  disabled={isAcceptDisabled || isBlocked}
+                  disabled={isAcceptDisabled}
                 >
-                  <Text
-                    style={[
-                      styles.btnText,
-                      isAcceptDisabled && styles.buttonDisabledText,
-                    ]}
-                  >
-                    {isBlocked
-                      ? "Complete deliveries first"
-                      : isAcceptDisabled
-                        ? "Accept (disabled)"
-                        : "Accept"}
+                  <Text style={styles.btnText}>
+                    {isAcceptDisabled ? "Accept (disabled)" : "Accept"}
                   </Text>
                 </TouchableOpacity>
               </View>
             </View>
           )}
 
-          {!isMaxi && order.status !== "ACCEPTED" && (
+          {/* ================================================== */}
+          {/* MICRO / MOTO ACCEPT */}
+          {/* ================================================== */}
+
+          {isMicroOrMoto && order.status !== "ACCEPTED" && (
             <View style={styles.row}>
               <TouchableOpacity
                 style={[
                   styles.acceptBtn,
-                  (isAcceptDisabled || isBlocked) && styles.buttonDisabled,
+                  isAcceptDisabled && styles.buttonDisabled,
                 ]}
                 onPress={onAccept}
-                disabled={isAcceptDisabled || isBlocked}
+                disabled={isAcceptDisabled}
               >
                 <Text style={styles.btnText}>
-                  {hasActiveExpressOrder
-                    ? "Finish express delivery first"
-                    : isBlocked
-                      ? "Complete deliveries first"
-                      : "Accept"}
+                  {!isAssignedToMe
+                    ? "Not assigned"
+                    : assignmentStatus !== "OFFERED"
+                      ? "Offer expired"
+                      : hasOtherExpressOrder
+                        ? "Finish express delivery first"
+                        : capacityBlocksThisOrder
+                          ? "Complete deliveries first"
+                          : forceDispatchBlocksThisOrder
+                            ? "Start delivery first"
+                            : "Accept"}
                 </Text>
               </TouchableOpacity>
             </View>
           )}
         </ScrollView>
 
+        {/* ================================================== */}
+        {/* MEDIA MODAL */}
+        {/* ================================================== */}
+
         <MediaPreviewModal
           visible={previewVisible}
-          mediaList={mediaList}
+          mediaList={resolvedMedia}
           initialIndex={selectedIndex}
           onClose={() => setPreviewVisible(false)}
         />

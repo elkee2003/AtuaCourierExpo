@@ -214,6 +214,42 @@ const AuthProvider = ({ children }) => {
     return () => deleteSubscription.unsubscribe();
   }, [dbCourier]);
 
+  // ============================================================
+  // TEMPORARY DATASTORE RESET — DEVELOPMENT ONLY
+  // ============================================================
+  // ⚠️ RUN THIS ONCE TO CLEAR THE LOCAL DATASTORE ON THE DEVICE.
+  // ⚠️ COMMENT OUT THIS ENTIRE useEffect AFTER IT RUNS.
+  //
+  // This clears LOCAL DataStore data only.
+  // It does NOT delete records from AWS/Data Manager.
+  // ============================================================
+
+  // useEffect(() => {
+  //   const clearLocalDataStore = async () => {
+  //     try {
+  //       console.log("==========================================");
+  //       console.log("🧹 TEMPORARY LOCAL DATASTORE RESET STARTED");
+  //       console.log("==========================================");
+
+  //       await DataStore.clear();
+
+  //       console.log("✅ LOCAL DATASTORE CLEARED SUCCESSFULLY");
+
+  //       await DataStore.start();
+
+  //       console.log("✅ DATASTORE RESTARTED");
+
+  //       console.log("==========================================");
+  //       console.log("🧹 LOCAL DATASTORE RESET COMPLETE");
+  //       console.log("==========================================");
+  //     } catch (error) {
+  //       console.error("❌ LOCAL DATASTORE RESET FAILED:", error);
+  //     }
+  //   };
+
+  //   clearLocalDataStore();
+  // }, []);
+
   return (
     <AuthContext.Provider
       value={{
