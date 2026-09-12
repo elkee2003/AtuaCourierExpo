@@ -10,6 +10,7 @@ const ProfileProvider = ({ children }) => {
   const { dbCourier } = useAuthContext();
 
   const [isOnline, setIsOnline] = useState(false);
+  const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
   const [profilePic, setProfilePic] = useState(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -62,12 +63,12 @@ const ProfileProvider = ({ children }) => {
       setErrorMessage("Transportation type is required");
       return false;
     }
-    if (!address) {
-      setErrorMessage("Address is required");
-      return false;
-    }
     if (phoneNumber.length < 10) {
       setErrorMessage("Kindly fill in Phone Number");
+      return false;
+    }
+    if (!address) {
+      setErrorMessage("Address is required");
       return false;
     }
     if (courierNIN.length < 9) {
@@ -182,7 +183,11 @@ const ProfileProvider = ({ children }) => {
       setErrorMessage("Guarantor NIN is required");
       return false;
     }
-    if (!guarantorRelationship) {
+    if (!guarantorNINImage) {
+      setErrorMessage("Guarantor NIN Image is required");
+      return false;
+    }
+    if (!guarantorRelationship?.trim()) {
       setErrorMessage("Relationship with Guarantor is required");
       return false;
     }
@@ -215,7 +220,8 @@ const ProfileProvider = ({ children }) => {
   // useEffect for setting dbCourier
   useEffect(() => {
     if (dbCourier) {
-      setIsOnline(dbCourier?.isOnline || false);
+      setIsOnline(dbCourier?.isOnline ?? false);
+      setIsOnboardingComplete(dbCourier?.isOnboardingComplete ?? false);
       setProfilePic(dbCourier?.profilePic);
       setFirstName(dbCourier?.firstName || "");
       setLastName(dbCourier?.lastName || "");
@@ -255,6 +261,8 @@ const ProfileProvider = ({ children }) => {
       value={{
         isOnline,
         setIsOnline,
+        isOnboardingComplete,
+        setIsOnboardingComplete,
         firstName,
         setFirstName,
         lastName,

@@ -2553,6 +2553,13 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
+                "isOnboardingComplete": {
+                    "name": "isOnboardingComplete",
+                    "isArray": false,
+                    "type": "Boolean",
+                    "isRequired": false,
+                    "attributes": []
+                },
                 "push_token": {
                     "name": "push_token",
                     "isArray": false,
@@ -3225,5 +3232,5 @@ export const schema = {
         }
     },
     "codegenVersion": "3.4.4",
-    "version": "8e3897fbca4c314b94125617510f78f8"
+    "version": "612631a4461c232978883b67727af8d7"
 };

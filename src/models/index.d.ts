@@ -860,6 +860,7 @@ type EagerCourier = {
   readonly lat?: number | null;
   readonly lng?: number | null;
   readonly heading?: number | null;
+  readonly isOnboardingComplete?: boolean | null;
   readonly push_token?: string | null;
   readonly isApproved?: boolean | null;
   readonly approvedById?: string | null;
@@ -922,6 +923,7 @@ type LazyCourier = {
   readonly lat?: number | null;
   readonly lng?: number | null;
   readonly heading?: number | null;
+  readonly isOnboardingComplete?: boolean | null;
   readonly push_token?: string | null;
   readonly isApproved?: boolean | null;
   readonly approvedById?: string | null;

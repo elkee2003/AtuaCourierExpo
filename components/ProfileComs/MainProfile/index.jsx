@@ -30,6 +30,7 @@ const MainProfile = ({ onRefresh, refreshing }) => {
     profilePic,
     setProfilePic,
     maxiDescription,
+    isOnboardingComplete,
   } = useProfileContext();
 
   const { dbCourier } = useAuthContext();
@@ -117,6 +118,35 @@ const MainProfile = ({ onRefresh, refreshing }) => {
         </View>
       </View>
 
+      {/* Incomplete profile notice */}
+      {!isOnboardingComplete && (
+        <View style={styles.incompleteCard}>
+          <View style={styles.incompleteIcon}>
+            <Ionicons name="alert-circle-outline" size={24} color="#B45309" />
+          </View>
+
+          <View style={styles.incompleteContent}>
+            <Text style={styles.incompleteTitle}>
+              Complete your courier profile
+            </Text>
+
+            <Text style={styles.incompleteMessage}>
+              Your profile is not complete yet. Please provide the remaining
+              information to finish your registration.
+            </Text>
+
+            <TouchableOpacity
+              style={styles.completeButton}
+              onPress={() => router.push("/profile/editprofile")}
+            >
+              <Text style={styles.completeButtonText}>Complete Profile</Text>
+
+              <Ionicons name="arrow-forward" size={16} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
       {/* Info Card */}
       <View style={styles.card}>
         <InfoRow
@@ -132,7 +162,7 @@ const MainProfile = ({ onRefresh, refreshing }) => {
         />
 
         {/* SHOW ONLY IF MAXI */}
-        {transportationType === "Maxi" && (
+        {transportationType === "MAXI" && (
           <InfoRow
             icon={
               <Ionicons

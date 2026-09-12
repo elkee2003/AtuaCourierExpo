@@ -83,7 +83,7 @@ const API_BASE_URL =
  *
  * The parent screen is responsible for safe-area handling.
  */
-const BankDetailsScreen = () => {
+const BankDetailsScreen = ({ onBankDetailsChanged }) => {
   /* ============================================================
      THEME
      ============================================================ */
@@ -385,6 +385,14 @@ const BankDetailsScreen = () => {
     }
 
     setAccountNumber(text);
+
+    /*
+     * Clear the parent screen's bank validation error as soon
+     * as the user starts correcting the account number.
+     */
+    if (onBankDetailsChanged) {
+      onBankDetailsChanged();
+    }
 
     /*
      * Clear the previous verification error as soon as the

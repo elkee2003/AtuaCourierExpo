@@ -385,7 +385,7 @@ const NextEditProfile = () => {
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardContainer}
-        keyboardVerticalOffset={80}
+        keyboardVerticalOffset={20}
       >
         <View style={styles.container}>
           {/* ========================================================

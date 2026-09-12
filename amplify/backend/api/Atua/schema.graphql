@@ -501,6 +501,7 @@ type Courier @model @auth(rules: [{ allow: public }]) {
   lat: Float
   lng: Float
   heading: Float
+  isOnboardingComplete: Boolean
   push_token: String
   isApproved: Boolean
   approvedById: String

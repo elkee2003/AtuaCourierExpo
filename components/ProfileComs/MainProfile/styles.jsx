@@ -82,6 +82,66 @@ export default StyleSheet.create({
     backgroundColor: "#DC2626",
   },
 
+  /* Incomplete profile notice */
+
+  incompleteCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: "#FFFBEB",
+    marginHorizontal: 16,
+    marginTop: 20,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#FDE68A",
+  },
+
+  incompleteIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FEF3C7",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+
+  incompleteContent: {
+    flex: 1,
+  },
+
+  incompleteTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#92400E",
+    marginBottom: 6,
+  },
+
+  incompleteMessage: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: "#92400E",
+    marginBottom: 12,
+  },
+
+  completeButton: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#D97706",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+
+  completeButtonText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "700",
+    marginRight: 8,
+  },
+
   /* Cards */
   card: {
     backgroundColor: "#fff",

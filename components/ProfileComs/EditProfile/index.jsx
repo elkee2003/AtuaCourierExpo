@@ -3,7 +3,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { signOut } from "aws-amplify/auth";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Alert,
   Image,
@@ -128,6 +128,12 @@ const EditProfile = ({ onRefresh, refreshing }) => {
     [isDark],
   );
 
+  /*
+   * Bank verification error shown when the user tries to continue
+   * before their bank account has been successfully verified.
+   */
+  const [bankError, setBankError] = useState("");
+
   /* ============================================================
      PROFILE CONTEXT
      ============================================================ */
@@ -157,6 +163,7 @@ const EditProfile = ({ onRefresh, refreshing }) => {
     courierNINImage,
     setCourierNINImage,
 
+    bankCode,
     bankName,
     accountName,
     accountNumber,
@@ -328,6 +335,40 @@ const EditProfile = ({ onRefresh, refreshing }) => {
    * If validation succeeds, move to the courier review screen.
    */
   const handleNextPage = () => {
+    setBankError("");
+
+    const trimmedBankName = bankName?.trim() || "";
+    const trimmedBankCode = bankCode?.trim() || "";
+    const trimmedAccountNumber = accountNumber?.trim() || "";
+    const trimmedAccountName = accountName?.trim() || "";
+
+    /*
+     * Check whether the bank details have been verified.
+     *
+     * An account name is required because BankDetails only sets
+     * accountName after the API successfully resolves the account.
+     */
+    const isBankVerified =
+      trimmedBankCode.length > 0 &&
+      trimmedBankName.length > 0 &&
+      /^\d{10}$/.test(trimmedAccountNumber) &&
+      trimmedAccountName.length > 0;
+
+    /*
+     * Stop navigation if bank verification has not completed.
+     */
+    if (!isBankVerified) {
+      setBankError(
+        "Please select your bank, enter a valid 10-digit account number, and wait for your account name to be verified before continuing.",
+      );
+
+      return;
+    }
+
+    /*
+     * Continue with the other courier profile validations.
+     */
+
     if (onValidateCourierInput()) {
       router.push("/profile/reviewprofile/reviewcourier");
     }
@@ -422,7 +463,7 @@ const EditProfile = ({ onRefresh, refreshing }) => {
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardContainer}
-        keyboardVerticalOffset={80}
+        keyboardVerticalOffset={10}
       >
         <View style={styles.container}>
           {/* ====================================================
@@ -824,7 +865,7 @@ const EditProfile = ({ onRefresh, refreshing }) => {
               />
 
               <View style={styles.formCard}>
-                <BankDetails />
+                <BankDetails onBankDetailsChanged={() => setBankError("")} />
               </View>
             </View>
 
@@ -870,23 +911,20 @@ const EditProfile = ({ onRefresh, refreshing }) => {
               - The stylesheet controls the exact appearance.
           ====================================================== */}
 
-          {/* ======================================================
-              FIXED VALIDATION ERROR
-          ======================================================
+          {/* ============================================================
+    FIXED VALIDATION ERROR
+    ============================================================
 
-              IMPORTANT:
-              ------------------------------------------------------
-              The error is rendered outside the ScrollView and is
-              positioned immediately above the fixed Continue button.
+    This displays either:
 
-              This guarantees that:
-              - the error remains visible after validation fails
-              - the error is not hidden behind the Continue button
-              - long error messages can wrap correctly
-              - the error works in both light and dark mode
-          ====================================================== */}
+    1. The bank verification error from this screen.
+    2. The general courier profile validation error from
+       ProfileProvider.
 
-          {!!errorMessage?.trim() && (
+    The bank error takes priority when it exists.
+============================================================ */}
+
+          {!!(bankError?.trim() || errorMessage?.trim()) && (
             <View style={styles.fixedErrorArea} pointerEvents="none">
               <View style={styles.errorContainer}>
                 {/* Error icon */}
@@ -900,10 +938,10 @@ const EditProfile = ({ onRefresh, refreshing }) => {
                 {/* Actual validation message */}
                 <Text
                   style={styles.error}
-                  numberOfLines={4}
+                  numberOfLines={5}
                   ellipsizeMode="tail"
                 >
-                  {errorMessage}
+                  {errorMessage || bankError}
                 </Text>
               </View>
             </View>
