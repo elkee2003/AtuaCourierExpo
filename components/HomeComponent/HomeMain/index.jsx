@@ -6,6 +6,11 @@ import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 
 import { DataStore } from "aws-amplify/datastore";
 
+import {
+  startCourierLocationTracking,
+  stopCourierLocationTracking,
+} from "@/src/location/courierLocationService";
+
 import { Audio } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
@@ -302,20 +307,34 @@ const HomeComponent = () => {
   GO ONLINE / OFFLINE
   ==========================================================
   */
-
   const onGoPress = useCallback(async () => {
-    if (!location || !dbCourier?.id) {
+    /*
+  ----------------------------------------------------------
+  BASIC COURIER CHECK
+  ----------------------------------------------------------
+  */
+
+    if (!dbCourier?.id) {
       return;
     }
 
     /*
-    --------------------------------------------------------
-    BLOCKED
-    --------------------------------------------------------
-    */
+      ----------------------------------------------------------
+      BLOCKED CHECK
+      ----------------------------------------------------------
+      */
 
     if (dbCourier.isBlocked) {
       setIsOnline(false);
+
+      /*
+    Always stop background tracking for blocked couriers.
+    */
+      try {
+        await stopCourierLocationTracking();
+      } catch (error) {
+        console.log("Unable to stop tracking for blocked courier:", error);
+      }
 
       Alert.alert(
         "Account Blocked",
@@ -326,13 +345,22 @@ const HomeComponent = () => {
     }
 
     /*
-    --------------------------------------------------------
-    NOT APPROVED
-    --------------------------------------------------------
-    */
+  ----------------------------------------------------------
+  APPROVAL CHECK
+  ----------------------------------------------------------
+  */
 
     if (!dbCourier.isApproved) {
       setIsOnline(false);
+
+      /*
+    Always stop background tracking for unapproved couriers.
+    */
+      try {
+        await stopCourierLocationTracking();
+      } catch (error) {
+        console.log("Unable to stop tracking for unapproved courier:", error);
+      }
 
       Alert.alert(
         "Account Not Approved",
@@ -343,19 +371,31 @@ const HomeComponent = () => {
     }
 
     try {
+      /*
+    --------------------------------------------------------
+    GET THE FRESHEST COURIER RECORD
+    --------------------------------------------------------
+    */
+
       const freshCourier = await DataStore.query(Courier, dbCourier.id);
 
       if (!freshCourier) {
+        Alert.alert("Error", "Unable to find your courier account.");
+
         return;
       }
 
       /*
-      ------------------------------------------------------
-      CHECK BLOCK AGAIN
-      ------------------------------------------------------
-      */
+    --------------------------------------------------------
+    CHECK BLOCK STATUS AGAIN
+    --------------------------------------------------------
+    */
 
       if (freshCourier.isBlocked) {
+        setIsOnline(false);
+
+        await stopCourierLocationTracking();
+
         if (freshCourier.isOnline) {
           await DataStore.save(
             Courier.copyOf(freshCourier, (updated) => {
@@ -365,7 +405,6 @@ const HomeComponent = () => {
           );
         }
 
-        setIsOnline(false);
         setOrders([]);
         setStatsOrders([]);
 
@@ -378,12 +417,16 @@ const HomeComponent = () => {
       }
 
       /*
-      ------------------------------------------------------
-      CHECK APPROVAL AGAIN
-      ------------------------------------------------------
-      */
+    --------------------------------------------------------
+    CHECK APPROVAL STATUS AGAIN
+    --------------------------------------------------------
+    */
 
       if (!freshCourier.isApproved) {
+        setIsOnline(false);
+
+        await stopCourierLocationTracking();
+
         if (freshCourier.isOnline) {
           await DataStore.save(
             Courier.copyOf(freshCourier, (updated) => {
@@ -393,7 +436,6 @@ const HomeComponent = () => {
           );
         }
 
-        setIsOnline(false);
         setOrders([]);
         setStatsOrders([]);
 
@@ -406,50 +448,91 @@ const HomeComponent = () => {
       }
 
       /*
-      ------------------------------------------------------
-      TOGGLE ONLINE STATUS
-      ------------------------------------------------------
-      */
+    --------------------------------------------------------
+    CALCULATE THE NEW ONLINE STATUS
+    --------------------------------------------------------
+    */
 
       const newStatus = !Boolean(freshCourier.isOnline);
+
+      /*
+    --------------------------------------------------------
+    START OR STOP BACKGROUND LOCATION TRACKING
+    --------------------------------------------------------
+
+    Tracking is started before the courier is marked online.
+    This prevents the courier from appearing online if
+    location permissions or background tracking fail.
+    */
+
+      if (newStatus) {
+        /*
+      Courier is going online.
+      */
+        await startCourierLocationTracking(freshCourier.id);
+      } else {
+        /*
+      Courier is going offline.
+      */
+        await stopCourierLocationTracking();
+      }
+
+      /*
+    --------------------------------------------------------
+    SAVE ONLINE STATUS
+    --------------------------------------------------------
+    */
 
       await DataStore.save(
         Courier.copyOf(freshCourier, (updated) => {
           updated.isOnline = newStatus;
-
           updated.statusKey = newStatus
             ? "ONLINE#APPROVED"
             : "OFFLINE#APPROVED";
         }),
       );
 
+      /*
+    --------------------------------------------------------
+    UPDATE LOCAL ONLINE STATE
+    --------------------------------------------------------
+    */
+
       setIsOnline(newStatus);
 
       /*
-      ------------------------------------------------------
-      CLEAR JOBS WHEN GOING OFFLINE
-      ------------------------------------------------------
-      */
+    --------------------------------------------------------
+    CLEAR ORDERS WHEN GOING OFFLINE
+    --------------------------------------------------------
+    */
 
       if (!newStatus) {
         setOrders([]);
         setStatsOrders([]);
       }
     } catch (error) {
-      console.log("Online status error:", error);
+      console.log("Online/offline error:", error);
+
+      /*
+      If anything fails, keep the courier offline locally.
+      */
+      setIsOnline(false);
+
+      try {
+        await stopCourierLocationTracking();
+      } catch (trackingError) {
+        console.log(
+          "Unable to stop tracking after online status failure:",
+          trackingError,
+        );
+      }
 
       Alert.alert(
         "Error",
         error?.message || "Unable to update your online status.",
       );
     }
-  }, [
-    dbCourier?.id,
-    dbCourier?.isApproved,
-    dbCourier?.isBlocked,
-    location,
-    setIsOnline,
-  ]);
+  }, [dbCourier?.id, dbCourier?.isApproved, dbCourier?.isBlocked, setIsOnline]);
 
   /*
   ==========================================================
@@ -840,6 +923,8 @@ const HomeComponent = () => {
 
       if (dbCourier.isApproved === false && dbCourier.isOnline) {
         try {
+          await stopCourierLocationTracking();
+
           const freshCourier = await DataStore.query(Courier, dbCourier.id);
 
           if (!freshCourier) {
@@ -885,6 +970,8 @@ const HomeComponent = () => {
 
       if (dbCourier.isBlocked === true) {
         try {
+          await stopCourierLocationTracking();
+
           const freshCourier = await DataStore.query(Courier, dbCourier.id);
 
           if (!freshCourier) {

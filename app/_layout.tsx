@@ -1,6 +1,7 @@
 import AuthProvider, { useAuthContext } from "@/providers/AuthProvider";
 import OrderProvider from "@/providers/OrderProvider";
 import ProfileProvider from "@/providers/ProfileProvider";
+import "@/src/location/backgroundLocationTask";
 import { resumeCourierPendingUploads } from "@/utils/resumeCourierPendingUploads";
 import { Amplify } from "aws-amplify";
 import { Stack } from "expo-router";

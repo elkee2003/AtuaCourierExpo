@@ -8,9 +8,17 @@
     "scheme": "atuacourier",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Atua Courier uses your location to show your position on the map and help manage deliveries.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Atua Courier uses your location in the background while you are online so customers and Atua can track your delivery availability.",
+        "UIBackgroundModes": ["location"]
+      }
     },
+
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -18,21 +26,34 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.atuainc.atuacourier",
+
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION"
+      ],
+
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyDzVvRkaOM0EzKJDQQ0fztKaTlA8tgjdzY"
         }
       }
     },
+
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
+
     "plugins": [
       "expo-router",
+
       [
         "expo-splash-screen",
         {
@@ -45,19 +66,32 @@
           }
         }
       ],
-      "expo-video"
+
+      "expo-video",
+
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Atua Courier uses your location in the background while you are online so customers and Atua can track your availability."
+        }
+      ]
     ],
+
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
     },
+
     "extra": {
       "API_BASE_URL": "https://opusama-web.vercel.app/api",
+
       "eas": {
         "projectId": "3856e224-1531-41c1-adc9-7c6fae25a7cb"
       },
+
       "router": {}
     },
+
     "owner": "atuainc"
   }
 }
