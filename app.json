@@ -72,7 +72,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Atua Courier uses your location in the background while you are online so customers and Atua can track your availability."
+          "locationAlwaysAndWhenInUsePermission": "Atua Courier needs your location in the background to receive and manage delivery requests."
         }
       ]
     ],

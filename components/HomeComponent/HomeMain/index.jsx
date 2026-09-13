@@ -7,6 +7,11 @@ import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { DataStore } from "aws-amplify/datastore";
 
 import {
+  hasRequiredLocationPermissions,
+  requestLocationPermissions,
+} from "@/src/location/locationPermissions";
+
+import {
   startCourierLocationTracking,
   stopCourierLocationTracking,
 } from "@/src/location/courierLocationService";
@@ -23,7 +28,7 @@ import React, {
   useState,
 } from "react";
 
-import { ActivityIndicator, Alert, Text } from "react-native";
+import { ActivityIndicator, Alert, Linking, Text } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -307,22 +312,44 @@ const HomeComponent = () => {
   GO ONLINE / OFFLINE
   ==========================================================
   */
+
+  const showBackgroundLocationAlert = useCallback(() => {
+    Alert.alert(
+      "Background location required",
+      "Atua Courier requires 'Allow all the time' location permission. " +
+        "This allows your location to update when your phone is locked " +
+        "or when Atua Courier is running in the background.",
+      [
+        {
+          text: "Open Settings",
+          onPress: () => {
+            Linking.openSettings();
+          },
+        },
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+      ],
+    );
+  }, []);
+
   const onGoPress = useCallback(async () => {
     /*
-  ----------------------------------------------------------
-  BASIC COURIER CHECK
-  ----------------------------------------------------------
-  */
+    ----------------------------------------------------------
+    BASIC COURIER CHECK
+    ----------------------------------------------------------
+    */
 
     if (!dbCourier?.id) {
       return;
     }
 
     /*
-      ----------------------------------------------------------
-      BLOCKED CHECK
-      ----------------------------------------------------------
-      */
+  ----------------------------------------------------------
+  BLOCKED CHECK
+  ----------------------------------------------------------
+  */
 
     if (dbCourier.isBlocked) {
       setIsOnline(false);
@@ -394,7 +421,11 @@ const HomeComponent = () => {
       if (freshCourier.isBlocked) {
         setIsOnline(false);
 
-        await stopCourierLocationTracking();
+        try {
+          await stopCourierLocationTracking();
+        } catch (error) {
+          console.log("Unable to stop tracking for blocked courier:", error);
+        }
 
         if (freshCourier.isOnline) {
           await DataStore.save(
@@ -425,7 +456,11 @@ const HomeComponent = () => {
       if (!freshCourier.isApproved) {
         setIsOnline(false);
 
-        await stopCourierLocationTracking();
+        try {
+          await stopCourierLocationTracking();
+        } catch (error) {
+          console.log("Unable to stop tracking for unapproved courier:", error);
+        }
 
         if (freshCourier.isOnline) {
           await DataStore.save(
@@ -457,25 +492,81 @@ const HomeComponent = () => {
 
       /*
     --------------------------------------------------------
-    START OR STOP BACKGROUND LOCATION TRACKING
+    GOING OFFLINE
     --------------------------------------------------------
-
-    Tracking is started before the courier is marked online.
-    This prevents the courier from appearing online if
-    location permissions or background tracking fail.
     */
 
-      if (newStatus) {
+      if (!newStatus) {
         /*
-      Courier is going online.
-      */
-        await startCourierLocationTracking(freshCourier.id);
-      } else {
-        /*
-      Courier is going offline.
+      Stop tracking before saving the courier as offline.
       */
         await stopCourierLocationTracking();
+
+        await DataStore.save(
+          Courier.copyOf(freshCourier, (updated) => {
+            updated.isOnline = false;
+            updated.statusKey = "OFFLINE#APPROVED";
+          }),
+        );
+
+        setIsOnline(false);
+
+        setOrders([]);
+        setStatsOrders([]);
+
+        return;
       }
+
+      /*
+    --------------------------------------------------------
+    GOING ONLINE:
+    CHECK EXISTING PERMISSIONS FIRST
+    --------------------------------------------------------
+    */
+
+      const alreadyHasRequiredPermissions =
+        await hasRequiredLocationPermissions();
+
+      /*
+    --------------------------------------------------------
+    REQUEST PERMISSIONS IF NOT ALREADY GRANTED
+    --------------------------------------------------------
+    */
+
+      if (!alreadyHasRequiredPermissions) {
+        const permissionResult = await requestLocationPermissions();
+
+        if (!permissionResult.granted) {
+          /*
+        Do not start tracking.
+        Do not update the backend to online.
+        Do not update the local state to online.
+        */
+          setIsOnline(false);
+
+          if (permissionResult.foregroundGranted === false) {
+            Alert.alert(
+              "Location permission required",
+              "Atua Courier needs location permission to receive and manage delivery requests.",
+            );
+          } else {
+            showBackgroundLocationAlert();
+          }
+
+          return;
+        }
+      }
+
+      /*
+    --------------------------------------------------------
+    START BACKGROUND LOCATION TRACKING
+    --------------------------------------------------------
+
+    Tracking must start successfully before the courier
+    is saved as online.
+    */
+
+      await startCourierLocationTracking(freshCourier.id);
 
       /*
     --------------------------------------------------------
@@ -485,10 +576,8 @@ const HomeComponent = () => {
 
       await DataStore.save(
         Courier.copyOf(freshCourier, (updated) => {
-          updated.isOnline = newStatus;
-          updated.statusKey = newStatus
-            ? "ONLINE#APPROVED"
-            : "OFFLINE#APPROVED";
+          updated.isOnline = true;
+          updated.statusKey = "ONLINE#APPROVED";
         }),
       );
 
@@ -498,26 +587,18 @@ const HomeComponent = () => {
     --------------------------------------------------------
     */
 
-      setIsOnline(newStatus);
-
-      /*
-    --------------------------------------------------------
-    CLEAR ORDERS WHEN GOING OFFLINE
-    --------------------------------------------------------
-    */
-
-      if (!newStatus) {
-        setOrders([]);
-        setStatsOrders([]);
-      }
+      setIsOnline(true);
     } catch (error) {
       console.log("Online/offline error:", error);
 
       /*
-      If anything fails, keep the courier offline locally.
-      */
+    If anything fails, keep the courier offline locally.
+    */
       setIsOnline(false);
 
+      /*
+    Stop tracking as a safety fallback.
+    */
       try {
         await stopCourierLocationTracking();
       } catch (trackingError) {
@@ -532,7 +613,13 @@ const HomeComponent = () => {
         error?.message || "Unable to update your online status.",
       );
     }
-  }, [dbCourier?.id, dbCourier?.isApproved, dbCourier?.isBlocked, setIsOnline]);
+  }, [
+    dbCourier?.id,
+    dbCourier?.isApproved,
+    dbCourier?.isBlocked,
+    setIsOnline,
+    showBackgroundLocationAlert,
+  ]);
 
   /*
   ==========================================================

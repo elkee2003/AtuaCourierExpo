@@ -537,12 +537,27 @@ const OrderProvider = ({ children }) => {
             u.tripStartedAt = now;
           }
 
+          /**
+           * Live courier tracking starts when the courier
+           * begins travelling with the package.
+           *
+           * PICKED_UP -> IN_TRANSIT
+           */
+
+          if (newStatus === "IN_TRANSIT") {
+            u.trackingStartedAt = now;
+          }
+
           if (newStatus === "ARRIVED_DROPOFF") {
             u.arrivedDropoffAt = now;
           }
 
           if (newStatus === "DELIVERED") {
             u.unloadingCompletedAt = now;
+
+            // Safety fallback in case completion happens
+            // through updateOrderStatus instead of completeOrder.
+            u.trackingEndedAt = now;
           }
         }),
       );
@@ -662,6 +677,11 @@ const OrderProvider = ({ children }) => {
         Order.copyOf(current, (u) => {
           u.status = lastStep;
           u.unloadingCompletedAt = now;
+
+          /**
+           * Stop live tracking when the order is completed.
+           */
+          u.trackingEndedAt = now;
         }),
       );
 

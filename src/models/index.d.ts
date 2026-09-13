@@ -588,6 +588,8 @@ type EagerOrder = {
   readonly lastAssignedAt?: string | null;
   readonly rejectedCourierIds?: (string | null)[] | null;
   readonly assignmentStatus?: string | null;
+  readonly trackingStartedAt?: string | null;
+  readonly trackingEndedAt?: string | null;
   readonly userID: string;
   readonly reviews?: (CourierReview | null)[] | null;
   readonly reports?: (CourierReport | null)[] | null;
@@ -711,6 +713,8 @@ type LazyOrder = {
   readonly lastAssignedAt?: string | null;
   readonly rejectedCourierIds?: (string | null)[] | null;
   readonly assignmentStatus?: string | null;
+  readonly trackingStartedAt?: string | null;
+  readonly trackingEndedAt?: string | null;
   readonly userID: string;
   readonly reviews: AsyncCollection<CourierReview>;
   readonly reports: AsyncCollection<CourierReport>;
@@ -819,6 +823,54 @@ export declare const CourierReview: (new (init: ModelInit<CourierReview>) => Cou
   copyOf(source: CourierReview, mutator: (draft: MutableModel<CourierReview>) => MutableModel<CourierReview> | void): CourierReview;
 }
 
+type EagerCourierLiveLocation = {
+  readonly [__modelMeta__]: {
+    identifier: ManagedIdentifier<CourierLiveLocation, 'id'>;
+    readOnlyFields: 'createdAt' | 'updatedAt';
+  };
+  readonly id: string;
+  readonly courierID: string;
+  readonly courier?: Courier | null;
+  readonly latitude: number;
+  readonly longitude: number;
+  readonly heading?: number | null;
+  readonly speed?: number | null;
+  readonly accuracy?: number | null;
+  readonly altitude?: number | null;
+  readonly isTracking?: boolean | null;
+  readonly trackingSource?: string | null;
+  readonly lastSeenAt: string;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+type LazyCourierLiveLocation = {
+  readonly [__modelMeta__]: {
+    identifier: ManagedIdentifier<CourierLiveLocation, 'id'>;
+    readOnlyFields: 'createdAt' | 'updatedAt';
+  };
+  readonly id: string;
+  readonly courierID: string;
+  readonly courier: AsyncItem<Courier | undefined>;
+  readonly latitude: number;
+  readonly longitude: number;
+  readonly heading?: number | null;
+  readonly speed?: number | null;
+  readonly accuracy?: number | null;
+  readonly altitude?: number | null;
+  readonly isTracking?: boolean | null;
+  readonly trackingSource?: string | null;
+  readonly lastSeenAt: string;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+}
+
+export declare type CourierLiveLocation = LazyLoading extends LazyLoadingDisabled ? EagerCourierLiveLocation : LazyCourierLiveLocation
+
+export declare const CourierLiveLocation: (new (init: ModelInit<CourierLiveLocation>) => CourierLiveLocation) & {
+  copyOf(source: CourierLiveLocation, mutator: (draft: MutableModel<CourierLiveLocation>) => MutableModel<CourierLiveLocation> | void): CourierLiveLocation;
+}
+
 type EagerCourier = {
   readonly [__modelMeta__]: {
     identifier: ManagedIdentifier<Courier, 'id'>;
@@ -860,6 +912,8 @@ type EagerCourier = {
   readonly lat?: number | null;
   readonly lng?: number | null;
   readonly heading?: number | null;
+  readonly liveLocationID?: string | null;
+  readonly liveLocation?: CourierLiveLocation | null;
   readonly isOnboardingComplete?: boolean | null;
   readonly push_token?: string | null;
   readonly isApproved?: boolean | null;
@@ -923,6 +977,8 @@ type LazyCourier = {
   readonly lat?: number | null;
   readonly lng?: number | null;
   readonly heading?: number | null;
+  readonly liveLocationID?: string | null;
+  readonly liveLocation: AsyncItem<CourierLiveLocation | undefined>;
   readonly isOnboardingComplete?: boolean | null;
   readonly push_token?: string | null;
   readonly isApproved?: boolean | null;

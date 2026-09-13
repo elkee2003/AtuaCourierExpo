@@ -41,107 +41,260 @@ const getDistanceInMeters = (latitude1, longitude1, latitude2, longitude2) => {
 };
 
 /**
- * Define the task at the top level of the file.
+ * Register the background task only once.
  *
- * This is important. Do not define TaskManager.defineTask()
- * inside a React component or inside a function.
+ * This prevents duplicate task-registration warnings during
+ * Expo Fast Refresh or when this file is imported more than once.
  */
-TaskManager.defineTask(COURIER_LOCATION_TASK, async ({ data, error }) => {
-  try {
-    if (error) {
-      console.log("[Atua Background Location] Task error:", error);
+if (!TaskManager.isTaskDefined(COURIER_LOCATION_TASK)) {
+  TaskManager.defineTask(COURIER_LOCATION_TASK, async ({ data, error }) => {
+    try {
+      console.log("[Atua Background Location] Task triggered.");
 
-      return;
-    }
+      /**
+       * Handle any error supplied by Expo Location/TaskManager.
+       */
+      if (error) {
+        console.error("[Atua Background Location] Task error:", error);
 
-    // Expo sends the latest location updates in data.locations.
-    const locations = data?.locations;
+        return;
+      }
 
-    if (!locations || locations.length === 0) {
-      return;
-    }
+      /**
+       * Expo sends location updates through data.locations.
+       */
+      const locations = data?.locations;
 
-    // We only need the newest location from this batch.
-    const latestLocation = locations[locations.length - 1];
+      if (!Array.isArray(locations) || locations.length === 0) {
+        console.log("[Atua Background Location] No location updates received.");
 
-    const coordinates = latestLocation?.coords;
+        return;
+      }
 
-    if (!coordinates) {
-      return;
-    }
+      /**
+       * Use the newest location from the received batch.
+       */
+      const latestLocation = locations[locations.length - 1];
 
-    const { latitude, longitude, heading, speed, accuracy, altitude } =
-      coordinates;
+      const coordinates = latestLocation?.coords;
 
-    if (typeof latitude !== "number" || typeof longitude !== "number") {
-      return;
-    }
+      if (!coordinates) {
+        console.log(
+          "[Atua Background Location] Location coordinates are missing.",
+        );
 
-    // Read the courier ID from persistent local storage.
-    const courierId = await AsyncStorage.getItem(ACTIVE_COURIER_ID_KEY);
+        return;
+      }
 
-    if (!courierId) {
-      console.log("[Atua Background Location] No active courier ID found.");
+      const { latitude, longitude, heading, speed, accuracy, altitude } =
+        coordinates;
 
-      return;
-    }
+      /**
+       * Validate the required GPS coordinates.
+       */
+      if (
+        typeof latitude !== "number" ||
+        typeof longitude !== "number" ||
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude)
+      ) {
+        console.log("[Atua Background Location] Invalid GPS coordinates.");
 
-    // Retrieve the latest Courier record.
-    const courier = await DataStore.query(Courier, courierId);
+        return;
+      }
 
-    if (!courier) {
-      console.log("[Atua Background Location] Courier not found:", courierId);
+      /**
+       * Read the active courier ID from persistent storage.
+       */
+      const courierId = await AsyncStorage.getItem(ACTIVE_COURIER_ID_KEY);
 
-      return;
-    }
+      if (!courierId) {
+        console.log("[Atua Background Location] No active courier ID found.");
 
-    // Do not continue tracking a blocked or unapproved courier.
-    if (courier.isBlocked === true || courier.isApproved === false) {
-      console.log(
-        "[Atua Background Location] Courier is blocked or unapproved.",
-      );
+        return;
+      }
 
-      return;
-    }
+      console.log("[Atua Background Location] Processing courier:", courierId);
 
-    const now = new Date();
-    const nowIso = now.toISOString();
+      /**
+       * Retrieve the latest Courier record from DataStore.
+       */
+      const courier = await DataStore.query(Courier, courierId);
 
-    let liveLocation = null;
+      if (!courier) {
+        console.log("[Atua Background Location] Courier not found:", courierId);
 
-    // Reuse the courier's existing live-location record.
-    if (courier.liveLocationID) {
-      liveLocation = await DataStore.query(
-        CourierLiveLocation,
-        courier.liveLocationID,
-      );
-    }
+        return;
+      }
 
-    /**
-     * If the courier does not have a live-location record yet,
-     * create one and connect it to the Courier record.
-     */
-    if (!liveLocation) {
-      liveLocation = await DataStore.save(
-        new CourierLiveLocation({
-          courierID: courier.id,
-          latitude,
-          longitude,
-          heading: typeof heading === "number" ? heading : null,
-          speed: typeof speed === "number" ? speed : null,
-          accuracy: typeof accuracy === "number" ? accuracy : null,
-          altitude: typeof altitude === "number" ? altitude : null,
-          isTracking: true,
-          trackingSource: "BACKGROUND",
-          lastSeenAt: nowIso,
+      /**
+       * Do not update the location of a blocked or unapproved courier.
+       */
+      if (courier.isBlocked === true || courier.isApproved === false) {
+        console.log(
+          "[Atua Background Location] Courier is blocked or unapproved.",
+        );
+
+        return;
+      }
+
+      const now = new Date();
+      const nowIso = now.toISOString();
+
+      let liveLocation = null;
+
+      /**
+       * Reuse the existing live-location record when the Courier
+       * already has a liveLocationID.
+       */
+      if (courier.liveLocationID) {
+        liveLocation = await DataStore.query(
+          CourierLiveLocation,
+          courier.liveLocationID,
+        );
+      }
+
+      /**
+       * If the Courier has a liveLocationID but the related record
+       * no longer exists, a new live-location record will be created.
+       */
+      if (!liveLocation) {
+        console.log(
+          "[Atua Background Location] Creating live location record.",
+        );
+
+        liveLocation = await DataStore.save(
+          new CourierLiveLocation({
+            courierID: courier.id,
+            latitude,
+            longitude,
+            heading: typeof heading === "number" ? heading : null,
+            speed: typeof speed === "number" ? speed : null,
+            accuracy: typeof accuracy === "number" ? accuracy : null,
+            altitude: typeof altitude === "number" ? altitude : null,
+            isTracking: true,
+            trackingSource: "BACKGROUND",
+            lastSeenAt: nowIso,
+          }),
+        );
+
+        /**
+         * Save the new live-location ID on the Courier record.
+         * Also update the legacy Courier coordinates.
+         */
+        await DataStore.save(
+          Courier.copyOf(courier, (updatedCourier) => {
+            updatedCourier.liveLocationID = liveLocation.id;
+
+            updatedCourier.lat = latitude;
+            updatedCourier.lng = longitude;
+
+            if (typeof heading === "number") {
+              updatedCourier.heading = heading;
+            }
+          }),
+        );
+
+        console.log(
+          "[Atua Background Location] Created live location:",
+          liveLocation.id,
+        );
+
+        return;
+      }
+
+      /**
+       * Read the previous coordinates from the live-location record.
+       */
+      const previousLatitude = liveLocation.latitude;
+      const previousLongitude = liveLocation.longitude;
+
+      /**
+       * Validate the previous coordinates before calculating distance.
+       *
+       * If the previous coordinates are missing, force an update.
+       */
+      const hasPreviousCoordinates =
+        typeof previousLatitude === "number" &&
+        typeof previousLongitude === "number" &&
+        Number.isFinite(previousLatitude) &&
+        Number.isFinite(previousLongitude);
+
+      const distanceMoved = hasPreviousCoordinates
+        ? getDistanceInMeters(
+            previousLatitude,
+            previousLongitude,
+            latitude,
+            longitude,
+          )
+        : Number.POSITIVE_INFINITY;
+
+      /**
+       * Calculate how long it has been since the last update.
+       */
+      const previousTimestamp = liveLocation.lastSeenAt
+        ? new Date(liveLocation.lastSeenAt).getTime()
+        : 0;
+
+      const timeSinceLastUpdate =
+        previousTimestamp > 0
+          ? Date.now() - previousTimestamp
+          : Number.POSITIVE_INFINITY;
+
+      /**
+       * Only write to DataStore when:
+       *
+       * 1. The courier has moved at least 20 meters, or
+       * 2. At least 30 seconds have passed since the last update.
+       */
+      const shouldUpdate =
+        distanceMoved >= MIN_DISTANCE_METERS ||
+        timeSinceLastUpdate >= HEARTBEAT_INTERVAL_MS;
+
+      if (!shouldUpdate) {
+        console.log("[Atua Background Location] Update skipped.", {
+          distanceMoved,
+          timeSinceLastUpdate,
+        });
+
+        return;
+      }
+
+      /**
+       * Update the existing CourierLiveLocation record.
+       */
+      await DataStore.save(
+        CourierLiveLocation.copyOf(liveLocation, (updatedLocation) => {
+          updatedLocation.latitude = latitude;
+          updatedLocation.longitude = longitude;
+
+          if (typeof heading === "number") {
+            updatedLocation.heading = heading;
+          }
+
+          if (typeof speed === "number") {
+            updatedLocation.speed = speed;
+          }
+
+          if (typeof accuracy === "number") {
+            updatedLocation.accuracy = accuracy;
+          }
+
+          if (typeof altitude === "number") {
+            updatedLocation.altitude = altitude;
+          }
+
+          updatedLocation.isTracking = true;
+          updatedLocation.trackingSource = "BACKGROUND";
+          updatedLocation.lastSeenAt = nowIso;
         }),
       );
 
-      // Save the live-location ID on the courier.
+      /**
+       * Keep the legacy Courier location fields updated as well.
+       */
       await DataStore.save(
         Courier.copyOf(courier, (updatedCourier) => {
-          updatedCourier.liveLocationID = liveLocation.id;
-
           updatedCourier.lat = latitude;
           updatedCourier.lng = longitude;
 
@@ -151,84 +304,36 @@ TaskManager.defineTask(COURIER_LOCATION_TASK, async ({ data, error }) => {
         }),
       );
 
-      console.log("[Atua Background Location] Created live location.");
+      console.log("[Atua Background Location] Location updated successfully:", {
+        latitude,
+        longitude,
+        heading,
+        speed,
+        accuracy,
+        altitude,
+        distanceMoved,
+        timeSinceLastUpdate,
+      });
+    } catch (taskError) {
+      /**
+       * Background tasks can fail silently if errors are not logged
+       * clearly. Include both the error message and stack trace.
+       */
+      console.error(
+        "[Atua Background Location] Unexpected error:",
+        taskError?.message || taskError,
+      );
 
-      return;
+      if (taskError?.stack) {
+        console.error(
+          "[Atua Background Location] Stack trace:",
+          taskError.stack,
+        );
+      }
     }
-
-    /**
-     * Avoid writing every GPS event to DataStore.
-     *
-     * We update when:
-     * - The courier has moved at least 20 meters, or
-     * - The previous update was at least 30 seconds ago.
-     */
-    const previousLatitude = liveLocation.latitude;
-    const previousLongitude = liveLocation.longitude;
-
-    const previousTimestamp = liveLocation.lastSeenAt
-      ? new Date(liveLocation.lastSeenAt).getTime()
-      : 0;
-
-    const distanceMoved = getDistanceInMeters(
-      previousLatitude,
-      previousLongitude,
-      latitude,
-      longitude,
-    );
-
-    const timeSinceLastUpdate = Date.now() - previousTimestamp;
-
-    const shouldUpdate =
-      distanceMoved >= MIN_DISTANCE_METERS ||
-      timeSinceLastUpdate >= HEARTBEAT_INTERVAL_MS;
-
-    if (!shouldUpdate) {
-      return;
-    }
-
-    // Update the existing live-location record.
-    await DataStore.save(
-      CourierLiveLocation.copyOf(liveLocation, (updatedLocation) => {
-        updatedLocation.latitude = latitude;
-        updatedLocation.longitude = longitude;
-
-        updatedLocation.heading =
-          typeof heading === "number" ? heading : updatedLocation.heading;
-
-        updatedLocation.speed =
-          typeof speed === "number" ? speed : updatedLocation.speed;
-
-        updatedLocation.accuracy =
-          typeof accuracy === "number" ? accuracy : updatedLocation.accuracy;
-
-        updatedLocation.altitude =
-          typeof altitude === "number" ? altitude : updatedLocation.altitude;
-
-        updatedLocation.isTracking = true;
-        updatedLocation.trackingSource = "BACKGROUND";
-        updatedLocation.lastSeenAt = nowIso;
-      }),
-    );
-
-    // Keep the legacy Courier coordinates updated too.
-    await DataStore.save(
-      Courier.copyOf(courier, (updatedCourier) => {
-        updatedCourier.lat = latitude;
-        updatedCourier.lng = longitude;
-
-        if (typeof heading === "number") {
-          updatedCourier.heading = heading;
-        }
-      }),
-    );
-
-    console.log(
-      "[Atua Background Location] Location updated:",
-      latitude,
-      longitude,
-    );
-  } catch (taskError) {
-    console.log("[Atua Background Location] Unexpected error:", taskError);
-  }
-});
+  });
+} else {
+  console.log(
+    `[Atua Background Location] Task already defined: ${COURIER_LOCATION_TASK}`,
+  );
+}
