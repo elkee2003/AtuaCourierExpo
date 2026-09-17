@@ -553,11 +553,17 @@ const OrderProvider = ({ children }) => {
           }
 
           if (newStatus === "DELIVERED") {
+            // Record delivery completion.
             u.unloadingCompletedAt = now;
 
-            // Safety fallback in case completion happens
-            // through updateOrderStatus instead of completeOrder.
+            // Stop live courier tracking.
             u.trackingEndedAt = now;
+
+            // Disable recipient public tracking after delivery.
+            u.recipientTrackingEnabled = false;
+
+            // Record when recipient tracking was revoked.
+            u.recipientTrackingRevokedAt = now;
           }
         }),
       );
@@ -675,13 +681,20 @@ const OrderProvider = ({ children }) => {
 
       const updated = await DataStore.save(
         Order.copyOf(current, (u) => {
+          // Mark the order as delivered.
           u.status = lastStep;
+
+          // Record when unloading/completion finished.
           u.unloadingCompletedAt = now;
 
-          /**
-           * Stop live tracking when the order is completed.
-           */
+          // Stop live courier tracking.
           u.trackingEndedAt = now;
+
+          // Disable recipient public tracking after delivery.
+          u.recipientTrackingEnabled = false;
+
+          // Record when recipient tracking was revoked.
+          u.recipientTrackingRevokedAt = now;
         }),
       );
 

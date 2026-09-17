@@ -506,6 +506,11 @@ export const onCreatePayment = /* GraphQL */ `
         lastAssignedAt
         rejectedCourierIds
         assignmentStatus
+        trackingStartedAt
+        trackingEndedAt
+        recipientTrackingToken
+        recipientTrackingEnabled
+        recipientTrackingRevokedAt
         userID
         createdAt
         updatedAt
@@ -665,6 +670,11 @@ export const onUpdatePayment = /* GraphQL */ `
         lastAssignedAt
         rejectedCourierIds
         assignmentStatus
+        trackingStartedAt
+        trackingEndedAt
+        recipientTrackingToken
+        recipientTrackingEnabled
+        recipientTrackingRevokedAt
         userID
         createdAt
         updatedAt
@@ -824,6 +834,11 @@ export const onDeletePayment = /* GraphQL */ `
         lastAssignedAt
         rejectedCourierIds
         assignmentStatus
+        trackingStartedAt
+        trackingEndedAt
+        recipientTrackingToken
+        recipientTrackingEnabled
+        recipientTrackingRevokedAt
         userID
         createdAt
         updatedAt
@@ -976,6 +991,11 @@ export const onCreateOffer = /* GraphQL */ `
         lastAssignedAt
         rejectedCourierIds
         assignmentStatus
+        trackingStartedAt
+        trackingEndedAt
+        recipientTrackingToken
+        recipientTrackingEnabled
+        recipientTrackingRevokedAt
         userID
         createdAt
         updatedAt
@@ -989,6 +1009,7 @@ export const onCreateOffer = /* GraphQL */ `
         id
         sub
         isOnline
+        isBlocked
         firstName
         lastName
         profilePic
@@ -1021,9 +1042,10 @@ export const onCreateOffer = /* GraphQL */ `
         lat
         lng
         heading
+        liveLocationID
+        isOnboardingComplete
         push_token
         isApproved
-        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -1167,6 +1189,11 @@ export const onUpdateOffer = /* GraphQL */ `
         lastAssignedAt
         rejectedCourierIds
         assignmentStatus
+        trackingStartedAt
+        trackingEndedAt
+        recipientTrackingToken
+        recipientTrackingEnabled
+        recipientTrackingRevokedAt
         userID
         createdAt
         updatedAt
@@ -1180,6 +1207,7 @@ export const onUpdateOffer = /* GraphQL */ `
         id
         sub
         isOnline
+        isBlocked
         firstName
         lastName
         profilePic
@@ -1212,9 +1240,10 @@ export const onUpdateOffer = /* GraphQL */ `
         lat
         lng
         heading
+        liveLocationID
+        isOnboardingComplete
         push_token
         isApproved
-        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -1358,6 +1387,11 @@ export const onDeleteOffer = /* GraphQL */ `
         lastAssignedAt
         rejectedCourierIds
         assignmentStatus
+        trackingStartedAt
+        trackingEndedAt
+        recipientTrackingToken
+        recipientTrackingEnabled
+        recipientTrackingRevokedAt
         userID
         createdAt
         updatedAt
@@ -1371,6 +1405,7 @@ export const onDeleteOffer = /* GraphQL */ `
         id
         sub
         isOnline
+        isBlocked
         firstName
         lastName
         profilePic
@@ -1403,9 +1438,10 @@ export const onDeleteOffer = /* GraphQL */ `
         lat
         lng
         heading
+        liveLocationID
+        isOnboardingComplete
         push_token
         isApproved
-        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -1546,6 +1582,11 @@ export const onCreateOrder = /* GraphQL */ `
       lastAssignedAt
       rejectedCourierIds
       assignmentStatus
+      trackingStartedAt
+      trackingEndedAt
+      recipientTrackingToken
+      recipientTrackingEnabled
+      recipientTrackingRevokedAt
       userID
       reviews {
         nextToken
@@ -1566,6 +1607,7 @@ export const onCreateOrder = /* GraphQL */ `
         id
         sub
         isOnline
+        isBlocked
         firstName
         lastName
         profilePic
@@ -1598,9 +1640,10 @@ export const onCreateOrder = /* GraphQL */ `
         lat
         lng
         heading
+        liveLocationID
+        isOnboardingComplete
         push_token
         isApproved
-        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -1743,6 +1786,11 @@ export const onUpdateOrder = /* GraphQL */ `
       lastAssignedAt
       rejectedCourierIds
       assignmentStatus
+      trackingStartedAt
+      trackingEndedAt
+      recipientTrackingToken
+      recipientTrackingEnabled
+      recipientTrackingRevokedAt
       userID
       reviews {
         nextToken
@@ -1763,6 +1811,7 @@ export const onUpdateOrder = /* GraphQL */ `
         id
         sub
         isOnline
+        isBlocked
         firstName
         lastName
         profilePic
@@ -1795,9 +1844,10 @@ export const onUpdateOrder = /* GraphQL */ `
         lat
         lng
         heading
+        liveLocationID
+        isOnboardingComplete
         push_token
         isApproved
-        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -1940,6 +1990,11 @@ export const onDeleteOrder = /* GraphQL */ `
       lastAssignedAt
       rejectedCourierIds
       assignmentStatus
+      trackingStartedAt
+      trackingEndedAt
+      recipientTrackingToken
+      recipientTrackingEnabled
+      recipientTrackingRevokedAt
       userID
       reviews {
         nextToken
@@ -1960,6 +2015,7 @@ export const onDeleteOrder = /* GraphQL */ `
         id
         sub
         isOnline
+        isBlocked
         firstName
         lastName
         profilePic
@@ -1992,9 +2048,10 @@ export const onDeleteOrder = /* GraphQL */ `
         lat
         lng
         heading
+        liveLocationID
+        isOnboardingComplete
         push_token
         isApproved
-        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -2037,6 +2094,7 @@ export const onCreateCourierReport = /* GraphQL */ `
         id
         sub
         isOnline
+        isBlocked
         firstName
         lastName
         profilePic
@@ -2069,9 +2127,10 @@ export const onCreateCourierReport = /* GraphQL */ `
         lat
         lng
         heading
+        liveLocationID
+        isOnboardingComplete
         push_token
         isApproved
-        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -2221,6 +2280,11 @@ export const onCreateCourierReport = /* GraphQL */ `
         lastAssignedAt
         rejectedCourierIds
         assignmentStatus
+        trackingStartedAt
+        trackingEndedAt
+        recipientTrackingToken
+        recipientTrackingEnabled
+        recipientTrackingRevokedAt
         userID
         createdAt
         updatedAt
@@ -2255,6 +2319,7 @@ export const onUpdateCourierReport = /* GraphQL */ `
         id
         sub
         isOnline
+        isBlocked
         firstName
         lastName
         profilePic
@@ -2287,9 +2352,10 @@ export const onUpdateCourierReport = /* GraphQL */ `
         lat
         lng
         heading
+        liveLocationID
+        isOnboardingComplete
         push_token
         isApproved
-        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -2439,6 +2505,11 @@ export const onUpdateCourierReport = /* GraphQL */ `
         lastAssignedAt
         rejectedCourierIds
         assignmentStatus
+        trackingStartedAt
+        trackingEndedAt
+        recipientTrackingToken
+        recipientTrackingEnabled
+        recipientTrackingRevokedAt
         userID
         createdAt
         updatedAt
@@ -2473,6 +2544,7 @@ export const onDeleteCourierReport = /* GraphQL */ `
         id
         sub
         isOnline
+        isBlocked
         firstName
         lastName
         profilePic
@@ -2505,9 +2577,10 @@ export const onDeleteCourierReport = /* GraphQL */ `
         lat
         lng
         heading
+        liveLocationID
+        isOnboardingComplete
         push_token
         isApproved
-        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -2657,6 +2730,11 @@ export const onDeleteCourierReport = /* GraphQL */ `
         lastAssignedAt
         rejectedCourierIds
         assignmentStatus
+        trackingStartedAt
+        trackingEndedAt
+        recipientTrackingToken
+        recipientTrackingEnabled
+        recipientTrackingRevokedAt
         userID
         createdAt
         updatedAt
@@ -2691,6 +2769,7 @@ export const onCreateCourierReview = /* GraphQL */ `
         id
         sub
         isOnline
+        isBlocked
         firstName
         lastName
         profilePic
@@ -2723,9 +2802,10 @@ export const onCreateCourierReview = /* GraphQL */ `
         lat
         lng
         heading
+        liveLocationID
+        isOnboardingComplete
         push_token
         isApproved
-        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -2875,6 +2955,11 @@ export const onCreateCourierReview = /* GraphQL */ `
         lastAssignedAt
         rejectedCourierIds
         assignmentStatus
+        trackingStartedAt
+        trackingEndedAt
+        recipientTrackingToken
+        recipientTrackingEnabled
+        recipientTrackingRevokedAt
         userID
         createdAt
         updatedAt
@@ -2905,6 +2990,7 @@ export const onUpdateCourierReview = /* GraphQL */ `
         id
         sub
         isOnline
+        isBlocked
         firstName
         lastName
         profilePic
@@ -2937,9 +3023,10 @@ export const onUpdateCourierReview = /* GraphQL */ `
         lat
         lng
         heading
+        liveLocationID
+        isOnboardingComplete
         push_token
         isApproved
-        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -3089,6 +3176,11 @@ export const onUpdateCourierReview = /* GraphQL */ `
         lastAssignedAt
         rejectedCourierIds
         assignmentStatus
+        trackingStartedAt
+        trackingEndedAt
+        recipientTrackingToken
+        recipientTrackingEnabled
+        recipientTrackingRevokedAt
         userID
         createdAt
         updatedAt
@@ -3119,6 +3211,7 @@ export const onDeleteCourierReview = /* GraphQL */ `
         id
         sub
         isOnline
+        isBlocked
         firstName
         lastName
         profilePic
@@ -3151,9 +3244,10 @@ export const onDeleteCourierReview = /* GraphQL */ `
         lat
         lng
         heading
+        liveLocationID
+        isOnboardingComplete
         push_token
         isApproved
-        isBlocked
         approvedById
         currentBatchCount
         currentExpressCount
@@ -3303,6 +3397,11 @@ export const onDeleteCourierReview = /* GraphQL */ `
         lastAssignedAt
         rejectedCourierIds
         assignmentStatus
+        trackingStartedAt
+        trackingEndedAt
+        recipientTrackingToken
+        recipientTrackingEnabled
+        recipientTrackingRevokedAt
         userID
         createdAt
         updatedAt
@@ -3322,12 +3421,262 @@ export const onDeleteCourierReview = /* GraphQL */ `
     }
   }
 `;
+export const onCreateCourierLiveLocation = /* GraphQL */ `
+  subscription OnCreateCourierLiveLocation(
+    $filter: ModelSubscriptionCourierLiveLocationFilterInput
+  ) {
+    onCreateCourierLiveLocation(filter: $filter) {
+      id
+      courierID
+      courier {
+        id
+        sub
+        isOnline
+        isBlocked
+        firstName
+        lastName
+        profilePic
+        address
+        landMark
+        phoneNumber
+        email
+        courierNIN
+        courierNINImage
+        bankCode
+        bankName
+        accountName
+        accountNumber
+        transportationType
+        vehicleClass
+        model
+        vehicleColour
+        plateNumber
+        maxiImages
+        maxiDescription
+        guarantorName
+        guarantorLastName
+        guarantorProfession
+        guarantorNumber
+        guarantorRelationship
+        guarantorAddress
+        guarantorEmail
+        guarantorNIN
+        guarantorNINImage
+        lat
+        lng
+        heading
+        liveLocationID
+        isOnboardingComplete
+        push_token
+        isApproved
+        approvedById
+        currentBatchCount
+        currentExpressCount
+        currentMaxiCount
+        lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
+        statusKey
+        walletID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      latitude
+      longitude
+      heading
+      speed
+      accuracy
+      altitude
+      isTracking
+      trackingSource
+      lastSeenAt
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const onUpdateCourierLiveLocation = /* GraphQL */ `
+  subscription OnUpdateCourierLiveLocation(
+    $filter: ModelSubscriptionCourierLiveLocationFilterInput
+  ) {
+    onUpdateCourierLiveLocation(filter: $filter) {
+      id
+      courierID
+      courier {
+        id
+        sub
+        isOnline
+        isBlocked
+        firstName
+        lastName
+        profilePic
+        address
+        landMark
+        phoneNumber
+        email
+        courierNIN
+        courierNINImage
+        bankCode
+        bankName
+        accountName
+        accountNumber
+        transportationType
+        vehicleClass
+        model
+        vehicleColour
+        plateNumber
+        maxiImages
+        maxiDescription
+        guarantorName
+        guarantorLastName
+        guarantorProfession
+        guarantorNumber
+        guarantorRelationship
+        guarantorAddress
+        guarantorEmail
+        guarantorNIN
+        guarantorNINImage
+        lat
+        lng
+        heading
+        liveLocationID
+        isOnboardingComplete
+        push_token
+        isApproved
+        approvedById
+        currentBatchCount
+        currentExpressCount
+        currentMaxiCount
+        lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
+        statusKey
+        walletID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      latitude
+      longitude
+      heading
+      speed
+      accuracy
+      altitude
+      isTracking
+      trackingSource
+      lastSeenAt
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
+export const onDeleteCourierLiveLocation = /* GraphQL */ `
+  subscription OnDeleteCourierLiveLocation(
+    $filter: ModelSubscriptionCourierLiveLocationFilterInput
+  ) {
+    onDeleteCourierLiveLocation(filter: $filter) {
+      id
+      courierID
+      courier {
+        id
+        sub
+        isOnline
+        isBlocked
+        firstName
+        lastName
+        profilePic
+        address
+        landMark
+        phoneNumber
+        email
+        courierNIN
+        courierNINImage
+        bankCode
+        bankName
+        accountName
+        accountNumber
+        transportationType
+        vehicleClass
+        model
+        vehicleColour
+        plateNumber
+        maxiImages
+        maxiDescription
+        guarantorName
+        guarantorLastName
+        guarantorProfession
+        guarantorNumber
+        guarantorRelationship
+        guarantorAddress
+        guarantorEmail
+        guarantorNIN
+        guarantorNINImage
+        lat
+        lng
+        heading
+        liveLocationID
+        isOnboardingComplete
+        push_token
+        isApproved
+        approvedById
+        currentBatchCount
+        currentExpressCount
+        currentMaxiCount
+        lastBatchAssignedAt
+        averageRating
+        reviewCount
+        totalReports
+        statusKey
+        walletID
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      latitude
+      longitude
+      heading
+      speed
+      accuracy
+      altitude
+      isTracking
+      trackingSource
+      lastSeenAt
+      createdAt
+      updatedAt
+      _version
+      _deleted
+      _lastChangedAt
+      __typename
+    }
+  }
+`;
 export const onCreateCourier = /* GraphQL */ `
   subscription OnCreateCourier($filter: ModelSubscriptionCourierFilterInput) {
     onCreateCourier(filter: $filter) {
       id
       sub
       isOnline
+      isBlocked
       firstName
       lastName
       profilePic
@@ -3360,9 +3709,29 @@ export const onCreateCourier = /* GraphQL */ `
       lat
       lng
       heading
+      liveLocationID
+      liveLocation {
+        id
+        courierID
+        latitude
+        longitude
+        heading
+        speed
+        accuracy
+        altitude
+        isTracking
+        trackingSource
+        lastSeenAt
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      isOnboardingComplete
       push_token
       isApproved
-      isBlocked
       approvedById
       currentBatchCount
       currentExpressCount
@@ -3422,6 +3791,7 @@ export const onUpdateCourier = /* GraphQL */ `
       id
       sub
       isOnline
+      isBlocked
       firstName
       lastName
       profilePic
@@ -3454,9 +3824,29 @@ export const onUpdateCourier = /* GraphQL */ `
       lat
       lng
       heading
+      liveLocationID
+      liveLocation {
+        id
+        courierID
+        latitude
+        longitude
+        heading
+        speed
+        accuracy
+        altitude
+        isTracking
+        trackingSource
+        lastSeenAt
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      isOnboardingComplete
       push_token
       isApproved
-      isBlocked
       approvedById
       currentBatchCount
       currentExpressCount
@@ -3516,6 +3906,7 @@ export const onDeleteCourier = /* GraphQL */ `
       id
       sub
       isOnline
+      isBlocked
       firstName
       lastName
       profilePic
@@ -3548,9 +3939,29 @@ export const onDeleteCourier = /* GraphQL */ `
       lat
       lng
       heading
+      liveLocationID
+      liveLocation {
+        id
+        courierID
+        latitude
+        longitude
+        heading
+        speed
+        accuracy
+        altitude
+        isTracking
+        trackingSource
+        lastSeenAt
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+        __typename
+      }
+      isOnboardingComplete
       push_token
       isApproved
-      isBlocked
       approvedById
       currentBatchCount
       currentExpressCount

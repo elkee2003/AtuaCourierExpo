@@ -9,6 +9,7 @@ import {
 import { uploadCourierEvidence } from "@/utils/uploadCourierEvidence";
 import { DataStore } from "aws-amplify/datastore";
 import * as Clipboard from "expo-clipboard";
+import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -280,9 +281,14 @@ const OrderDetails = ({
 
     /**
      * =========================
-     * ✅ CONTINUE FLOW (NO WAITING)
+     * ✅ COMPLETE / CONTINUE FLOW
      * =========================
      */
+
+    if (nextStatus === "DELIVERED") {
+      router.replace("/home");
+      return;
+    }
     onButtonPressed();
   };
 
