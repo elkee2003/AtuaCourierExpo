@@ -219,17 +219,21 @@ const PendingDeliverySingle = ({ item }) => {
           <View style={styles.recipientRow}>
             <Text style={styles.label}>Recipient</Text>
 
-            <View style={styles.phoneRow}>
-              <TouchableOpacity onPress={handleCall}>
-                <Text style={styles.callIcon}>📞</Text>
-              </TouchableOpacity>
+            {!isMaxi || item?.paymentStatus === "PAID" ? (
+              <View style={styles.phoneRow}>
+                <TouchableOpacity onPress={handleCall}>
+                  <Text style={styles.callIcon}>📞</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity onLongPress={handleLongPressNumber}>
-                <Text style={styles.recipientText}>
-                  {item.recipientNumber || "N/A"}
-                </Text>
-              </TouchableOpacity>
-            </View>
+                <TouchableOpacity onLongPress={handleLongPressNumber}>
+                  <Text style={styles.recipientText}>
+                    {item.recipientNumber || "N/A"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <Text style={styles.recipientText}>Payment required</Text>
+            )}
           </View>
 
           {/* 🚀 ACTION */}

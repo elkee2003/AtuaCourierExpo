@@ -504,12 +504,7 @@ const TransactionDetails = ({ transactionId }) => {
                   style={styles.contextButton}
                   activeOpacity={0.75}
                   onPress={() => {
-                    router.push({
-                      pathname: "/orderhistory/orderdetails/[id]",
-                      params: {
-                        id: String(transaction.orderID),
-                      },
-                    });
+                    router.push(`/orders/${transaction.orderID}`);
                   }}
                 >
                   <Text style={styles.contextButtonText}>View order</Text>

@@ -43,6 +43,18 @@ import styles from "./styles";
 ============================================================
 DISTANCE
 ============================================================
+
+Calculates the distance between two latitude/longitude
+coordinates in kilometres.
+
+For Micro/Moto marketplace matching, this distance is:
+
+    COURIER LOCATION
+            ↓
+    ORDER PICKUP / ORIGIN
+
+NOT the destination.
+============================================================
 */
 
 const getDistance = (lat1, lng1, lat2, lng2) => {
@@ -91,13 +103,46 @@ const HomeComponent = () => {
   ORDERS
   ==========================================================
 
-  MICRO / MOTO:
+  MICRO / MOTO
   ----------------------------------------------------------
-  orders = ONLY OFFERED orders assigned to this courier.
+  These are now MARKETPLACE orders.
 
-  MAXI:
+  The courier does NOT need:
+
+      assignedCourierId === dbCourier.id
+
+  and does NOT need:
+
+      assignmentStatus === "OFFERED"
+
+  Instead, Micro/Moto orders are shown when they are:
+
+      READY_FOR_PICKUP
+      +
+      PAID
+      +
+      unassigned
+      +
+      correct transportation type
+      +
+      within the courier's pickup radius.
+
+  MICRO:
+      MICRO_EXPRESS
+      MICRO_BATCH
+      5km radius
+
+  MOTO:
+      MOTO_EXPRESS
+      MOTO_BATCH
+      10km radius
+
+
+  MAXI
   ----------------------------------------------------------
-  orders = MAXI orders within the 80km display radius.
+  Existing Maxi marketplace logic remains separate and
+  continues to use its existing 80km display radius and
+  vehicleClass matching.
   ==========================================================
   */
 
@@ -108,13 +153,15 @@ const HomeComponent = () => {
   STATS ORDERS
   ==========================================================
 
-  MICRO / MOTO:
-  ----------------------------------------------------------
-  statsOrders = OFFERED orders assigned to this courier.
+  For Micro/Moto:
 
-  MAXI:
-  ----------------------------------------------------------
-  statsOrders = ALL eligible MAXI marketplace orders.
+      statsOrders = currently available marketplace orders
+                    visible to this courier.
+
+  For Maxi:
+
+      statsOrders = existing eligible Maxi marketplace orders.
+
   ==========================================================
   */
 
@@ -177,16 +224,67 @@ const HomeComponent = () => {
   ==========================================================
   */
 
+  /*
+  IMPORTANT:
+
+  Courier category comes from the Courier record:
+
+      MICRO
+      MOTO
+      MAXI
+
+  The Order transportationType is different:
+
+      MICRO_EXPRESS
+      MICRO_BATCH
+      MOTO_EXPRESS
+      MOTO_BATCH
+      MAXI
+
+  ==========================================================
+  */
+
   const isMaxi = dbCourier?.transportationType === "MAXI";
+
+  const isMicro = dbCourier?.transportationType === "MICRO";
+
+  const isMoto = dbCourier?.transportationType === "MOTO";
+
+  /*
+  ==========================================================
+  MICRO / MOTO PICKUP RADII
+  ==========================================================
+
+  These are the actual marketplace visibility radii.
+
+  MICRO:
+      5km
+
+  MOTO:
+      10km
+
+  The distance is measured from the courier's current
+  location to the order's origin/pickup location.
+  ==========================================================
+  */
+
+  const MICRO_RADIUS = 5;
+
+  const MOTO_RADIUS = 10;
 
   /*
   ==========================================================
   MAXI DISPLAY RADIUS
   ==========================================================
 
-  This controls what MAXI couriers SEE.
+  IMPORTANT:
 
-  It does NOT control the MAXI job count.
+  This is existing Maxi logic.
+
+  DO NOT use the Micro/Moto radius values for Maxi.
+
+  Maxi continues to use its existing 80km marketplace
+  display radius.
   ==========================================================
   */
 
@@ -298,14 +396,190 @@ const HomeComponent = () => {
   }, [dbCourier?.walletID, getTodayRange]);
 
   /*
-  ==========================================================
-  LOAD EARNINGS
-  ==========================================================
-  */
+============================================================
+LOAD EARNINGS
+============================================================
+*/
 
   useEffect(() => {
     fetchTodayEarnings();
   }, [fetchTodayEarnings]);
+
+  /*
+============================================================
+REAL-TIME TODAY'S EARNINGS
+============================================================
+
+Today's Earnings is calculated from Transaction records.
+
+The calculation uses:
+
+    walletID === dbCourier.walletID
+    +
+    type === CREDIT
+    +
+    status === COMPLETED
+    +
+    createdAt is today
+
+This subscription watches Transaction changes in
+real time.
+
+Therefore:
+
+    NEW CREDIT TRANSACTION
+            ↓
+    Transaction INSERT event
+            ↓
+    fetchTodayEarnings()
+            ↓
+    today's earnings recalculated
+            ↓
+    TodayEarnings updates automatically
+
+
+It also handles:
+
+    UPDATE
+    DELETE
+
+This is important because a transaction could change from:
+
+    PENDING → COMPLETED
+
+or potentially be removed/reconciled.
+
+No schema change is required.
+
+No `todayEarnings` field is required on Courier.
+
+============================================================
+*/
+
+  useEffect(() => {
+    /*
+  ----------------------------------------------------------
+  BASIC CHECK
+  ----------------------------------------------------------
+
+  We cannot subscribe specifically to a wallet until we know
+  which wallet belongs to this courier.
+  ----------------------------------------------------------
+  */
+
+    if (!dbCourier?.walletID) {
+      return;
+    }
+
+    console.log("💰 TODAY_EARNINGS_REALTIME_SUBSCRIPTION_STARTED", {
+      courierId: dbCourier?.id || null,
+      walletID: dbCourier.walletID,
+    });
+
+    /*
+  ----------------------------------------------------------
+  CREATE TRANSACTION SUBSCRIPTION
+  ----------------------------------------------------------
+
+  DataStore.observe(Transaction) listens for realtime
+  DataStore/AppSync changes to Transaction records.
+
+  We filter locally because the transaction model's
+  walletID identifies the courier wallet.
+  ----------------------------------------------------------
+  */
+
+    const subscription = DataStore.observe(Transaction).subscribe(
+      ({ opType, element }) => {
+        /*
+      ========================================================
+      DEBUG
+      ========================================================
+
+      Keep this while testing.
+
+      It lets us confirm that the Courier app is actually
+      receiving realtime Transaction events.
+      ========================================================
+      */
+
+        console.log("💰 TRANSACTION_REALTIME_EVENT_RECEIVED", {
+          opType,
+          transactionId: element?.id || null,
+          walletID: element?.walletID || null,
+          courierWalletID: dbCourier?.walletID || null,
+          type: element?.type || null,
+          status: element?.status || null,
+          amount: element?.amount ?? null,
+          orderID: element?.orderID || null,
+          createdAt: element?.createdAt || null,
+        });
+
+        /*
+      ========================================================
+      IGNORE TRANSACTIONS BELONGING TO OTHER WALLETS
+      ========================================================
+      */
+
+        if (!element) {
+          return;
+        }
+
+        if (element.walletID !== dbCourier.walletID) {
+          return;
+        }
+
+        /*
+      ========================================================
+      THIS TRANSACTION BELONGS TO OUR COURIER
+      ========================================================
+
+      Recalculate Today's Earnings.
+
+      We deliberately call the existing
+      `fetchTodayEarnings()` function instead of duplicating
+      the earnings calculation here.
+
+      This means there is still only ONE source of truth for
+      Today's Earnings calculation.
+      ========================================================
+      */
+
+        fetchTodayEarnings();
+      },
+    );
+
+    /*
+  ==========================================================
+  CLEANUP
+  ==========================================================
+
+  When:
+
+      - courier changes
+      - wallet changes
+      - HomeComponent unmounts
+
+  unsubscribe from the previous Transaction subscription.
+
+  This prevents:
+
+      - duplicate listeners
+      - multiple earnings recalculations
+      - memory leaks
+      - old wallet listeners remaining active
+  ==========================================================
+  */
+
+    return () => {
+      console.log("💰 TODAY_EARNINGS_REALTIME_SUBSCRIPTION_STOPPED", {
+        courierId: dbCourier?.id || null,
+        walletID: dbCourier?.walletID || null,
+      });
+
+      subscription.unsubscribe();
+    };
+  }, [dbCourier?.id, dbCourier?.walletID, fetchTodayEarnings]);
 
   /*
   ==========================================================
@@ -346,17 +620,18 @@ const HomeComponent = () => {
     }
 
     /*
-  ----------------------------------------------------------
-  BLOCKED CHECK
-  ----------------------------------------------------------
-  */
+    ----------------------------------------------------------
+    BLOCKED CHECK
+    ----------------------------------------------------------
+    */
 
     if (dbCourier.isBlocked) {
       setIsOnline(false);
 
       /*
-    Always stop background tracking for blocked couriers.
-    */
+      Always stop background tracking for blocked couriers.
+      */
+
       try {
         await stopCourierLocationTracking();
       } catch (error) {
@@ -372,17 +647,18 @@ const HomeComponent = () => {
     }
 
     /*
-  ----------------------------------------------------------
-  APPROVAL CHECK
-  ----------------------------------------------------------
-  */
+    ----------------------------------------------------------
+    APPROVAL CHECK
+    ----------------------------------------------------------
+    */
 
     if (!dbCourier.isApproved) {
       setIsOnline(false);
 
       /*
-    Always stop background tracking for unapproved couriers.
-    */
+      Always stop background tracking for unapproved couriers.
+      */
+
       try {
         await stopCourierLocationTracking();
       } catch (error) {
@@ -399,10 +675,10 @@ const HomeComponent = () => {
 
     try {
       /*
-    --------------------------------------------------------
-    GET THE FRESHEST COURIER RECORD
-    --------------------------------------------------------
-    */
+      --------------------------------------------------------
+      GET THE FRESHEST COURIER RECORD
+      --------------------------------------------------------
+      */
 
       const freshCourier = await DataStore.query(Courier, dbCourier.id);
 
@@ -413,10 +689,10 @@ const HomeComponent = () => {
       }
 
       /*
-    --------------------------------------------------------
-    CHECK BLOCK STATUS AGAIN
-    --------------------------------------------------------
-    */
+      --------------------------------------------------------
+      CHECK BLOCK STATUS AGAIN
+      --------------------------------------------------------
+      */
 
       if (freshCourier.isBlocked) {
         setIsOnline(false);
@@ -448,10 +724,10 @@ const HomeComponent = () => {
       }
 
       /*
-    --------------------------------------------------------
-    CHECK APPROVAL STATUS AGAIN
-    --------------------------------------------------------
-    */
+      --------------------------------------------------------
+      CHECK APPROVAL STATUS AGAIN
+      --------------------------------------------------------
+      */
 
       if (!freshCourier.isApproved) {
         setIsOnline(false);
@@ -483,23 +759,24 @@ const HomeComponent = () => {
       }
 
       /*
-    --------------------------------------------------------
-    CALCULATE THE NEW ONLINE STATUS
-    --------------------------------------------------------
-    */
+      --------------------------------------------------------
+      CALCULATE THE NEW ONLINE STATUS
+      --------------------------------------------------------
+      */
 
       const newStatus = !Boolean(freshCourier.isOnline);
 
       /*
-    --------------------------------------------------------
-    GOING OFFLINE
-    --------------------------------------------------------
-    */
+      --------------------------------------------------------
+      GOING OFFLINE
+      --------------------------------------------------------
+      */
 
       if (!newStatus) {
         /*
-      Stop tracking before saving the courier as offline.
-      */
+        Stop tracking before saving the courier as offline.
+        */
+
         await stopCourierLocationTracking();
 
         await DataStore.save(
@@ -518,30 +795,31 @@ const HomeComponent = () => {
       }
 
       /*
-    --------------------------------------------------------
-    GOING ONLINE:
-    CHECK EXISTING PERMISSIONS FIRST
-    --------------------------------------------------------
-    */
+      --------------------------------------------------------
+      GOING ONLINE:
+      CHECK EXISTING PERMISSIONS FIRST
+      --------------------------------------------------------
+      */
 
       const alreadyHasRequiredPermissions =
         await hasRequiredLocationPermissions();
 
       /*
-    --------------------------------------------------------
-    REQUEST PERMISSIONS IF NOT ALREADY GRANTED
-    --------------------------------------------------------
-    */
+      --------------------------------------------------------
+      REQUEST PERMISSIONS IF NOT ALREADY GRANTED
+      --------------------------------------------------------
+      */
 
       if (!alreadyHasRequiredPermissions) {
         const permissionResult = await requestLocationPermissions();
 
         if (!permissionResult.granted) {
           /*
-        Do not start tracking.
-        Do not update the backend to online.
-        Do not update the local state to online.
-        */
+          Do not start tracking.
+          Do not update the backend to online.
+          Do not update the local state to online.
+          */
+
           setIsOnline(false);
 
           if (permissionResult.foregroundGranted === false) {
@@ -558,21 +836,21 @@ const HomeComponent = () => {
       }
 
       /*
-    --------------------------------------------------------
-    START BACKGROUND LOCATION TRACKING
-    --------------------------------------------------------
+      --------------------------------------------------------
+      START BACKGROUND LOCATION TRACKING
+      --------------------------------------------------------
 
-    Tracking must start successfully before the courier
-    is saved as online.
-    */
+      Tracking must start successfully before the courier
+      is saved as online.
+      */
 
       await startCourierLocationTracking(freshCourier.id);
 
       /*
-    --------------------------------------------------------
-    SAVE ONLINE STATUS
-    --------------------------------------------------------
-    */
+      --------------------------------------------------------
+      SAVE ONLINE STATUS
+      --------------------------------------------------------
+      */
 
       await DataStore.save(
         Courier.copyOf(freshCourier, (updated) => {
@@ -582,23 +860,25 @@ const HomeComponent = () => {
       );
 
       /*
-    --------------------------------------------------------
-    UPDATE LOCAL ONLINE STATE
-    --------------------------------------------------------
-    */
+      --------------------------------------------------------
+      UPDATE LOCAL ONLINE STATE
+      --------------------------------------------------------
+      */
 
       setIsOnline(true);
     } catch (error) {
       console.log("Online/offline error:", error);
 
       /*
-    If anything fails, keep the courier offline locally.
-    */
+      If anything fails, keep the courier offline locally.
+      */
+
       setIsOnline(false);
 
       /*
-    Stop tracking as a safety fallback.
-    */
+      Stop tracking as a safety fallback.
+      */
+
       try {
         await stopCourierLocationTracking();
       } catch (trackingError) {
@@ -646,36 +926,76 @@ const HomeComponent = () => {
   /*
   ==========================================================
   MICRO / MOTO
-  FETCH OFFERED ORDERS
+  FETCH AVAILABLE MARKETPLACE ORDERS
   ==========================================================
 
   IMPORTANT:
 
-  The dispatch Lambda does:
+  This replaces the old automatic-assignment dependency.
+
+  OLD FLOW:
 
       READY_FOR_PICKUP
               ↓
-      find eligible courier
+      assignOrder Lambda
               ↓
-      assignedCourierId = courier
+      assignedCourierId
               ↓
       assignmentStatus = OFFERED
               ↓
-      courier sees offer
+      courier sees order
 
-  The courier must therefore look for OFFERED,
-  NOT PENDING.
 
-  PENDING is NOT the state used for an active offer.
+  NEW FLOW:
+
+      READY_FOR_PICKUP
+              +
+          paymentStatus = PAID
+              +
+      assignedCourierId = empty
+              ↓
+      Courier Home finds eligible order
+              ↓
+      Distance check
+              ↓
+      Courier sees order
+
+
+  NO assignmentStatus === "OFFERED" requirement exists here.
+
   ==========================================================
   */
 
-  const fetchAssignedOrders = useCallback(async () => {
+  const fetchAvailableMicroMotoOrders = useCallback(async () => {
     if (
       !dbCourier?.id ||
       !isOnline ||
       dbCourier.isBlocked ||
-      !dbCourier.isApproved
+      !dbCourier.isApproved ||
+      (!isMicro && !isMoto)
+    ) {
+      setOrders([]);
+      setStatsOrders([]);
+      return;
+    }
+
+    /*
+    ----------------------------------------------------------
+    LOCATION IS REQUIRED
+    ----------------------------------------------------------
+
+    Micro/Moto availability depends on the distance from the
+    courier to the order pickup location.
+
+    If we do not have a current courier location, we cannot
+    safely determine which orders are within 5km / 10km.
+    ----------------------------------------------------------
+    */
+
+    if (
+      !location ||
+      typeof location.latitude !== "number" ||
+      typeof location.longitude !== "number"
     ) {
       setOrders([]);
       setStatsOrders([]);
@@ -683,61 +1003,206 @@ const HomeComponent = () => {
     }
 
     try {
-      const offeredOrders = await DataStore.query(Order, (order) =>
+      /*
+      --------------------------------------------------------
+      FETCH READY + PAID ORDERS
+      --------------------------------------------------------
+
+      We deliberately do NOT filter by assignedCourierId here.
+
+      Instead, we fetch the marketplace candidates and then
+      verify that the order is currently unassigned.
+
+      This is important because:
+
+          assignedCourierId = null
+
+      is part of the availability condition.
+      --------------------------------------------------------
+      */
+
+      const readyPaidOrders = await DataStore.query(Order, (order) =>
         order.and((o) => [
-          /*
-          ----------------------------------------------------
-          MUST BELONG TO THIS COURIER
-          ----------------------------------------------------
-          */
-
-          o.assignedCourierId.eq(dbCourier.id),
-
-          /*
-          ----------------------------------------------------
-          ACTIVE OFFER ONLY
-          ----------------------------------------------------
-
-          This is the key change.
-
-          Lambda creates:
-
-              assignmentStatus = OFFERED
-
-          so the courier app must query OFFERED.
-          */
-
-          o.assignmentStatus.eq("OFFERED"),
-
-          /*
-          ----------------------------------------------------
-          ORDER MUST STILL BE READY
-          ----------------------------------------------------
-          */
-
           o.status.eq("READY_FOR_PICKUP"),
+          o.paymentStatus.eq("PAID"),
         ]),
       );
 
-      const sortedOrders = [...offeredOrders].sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-      );
+      /*
+      --------------------------------------------------------
+      DETERMINE COURIER-SPECIFIC SETTINGS
+      --------------------------------------------------------
+      */
+
+      let allowedTransportationTypes = [];
+      let pickupRadius = 0;
+
+      if (isMicro) {
+        allowedTransportationTypes = ["MICRO_EXPRESS", "MICRO_BATCH"];
+
+        pickupRadius = MICRO_RADIUS;
+      }
+
+      if (isMoto) {
+        allowedTransportationTypes = ["MOTO_EXPRESS", "MOTO_BATCH"];
+
+        pickupRadius = MOTO_RADIUS;
+      }
+
+      /*
+      --------------------------------------------------------
+      FILTER MARKETPLACE ORDERS
+      --------------------------------------------------------
+
+      Every order must satisfy ALL of these:
+
+      1. READY_FOR_PICKUP
+      2. PAID
+      3. Not already assigned
+      4. Correct transportation category
+      5. Valid pickup coordinates
+      6. Within the courier's pickup radius
+      --------------------------------------------------------
+      */
+
+      const availableOrders = readyPaidOrders.filter((order) => {
+        /*
+          ----------------------------------------------------
+          MUST STILL BE UNASSIGNED
+          ----------------------------------------------------
+
+          Another courier may have accepted the order between
+          the time it was queried and now.
+
+          Therefore the parent screen never treats an already
+          assigned order as available.
+          ----------------------------------------------------
+          */
+
+        if (order.assignedCourierId) {
+          return false;
+        }
+
+        /*
+          ----------------------------------------------------
+          MUST BE THE CORRECT ORDER TYPE
+          ----------------------------------------------------
+          */
+
+        if (!allowedTransportationTypes.includes(order.transportationType)) {
+          return false;
+        }
+
+        /*
+          ----------------------------------------------------
+          PICKUP COORDINATES REQUIRED
+          ----------------------------------------------------
+          */
+
+        if (
+          typeof order.originLat !== "number" ||
+          typeof order.originLng !== "number"
+        ) {
+          return false;
+        }
+
+        /*
+          ----------------------------------------------------
+          CALCULATE DISTANCE
+
+          Courier:
+              location.latitude
+              location.longitude
+
+          Order pickup:
+              order.originLat
+              order.originLng
+          ----------------------------------------------------
+          */
+
+        const distance = getDistance(
+          location.latitude,
+          location.longitude,
+          order.originLat,
+          order.originLng,
+        );
+
+        /*
+          ----------------------------------------------------
+          APPLY MICRO / MOTO RADIUS
+          ----------------------------------------------------
+          */
+
+        return distance <= pickupRadius;
+      });
+
+      /*
+      --------------------------------------------------------
+      SORT BY PICKUP DISTANCE
+      --------------------------------------------------------
+
+      Closest pickup first.
+
+      This is only a display ordering.
+
+      It does NOT assign the order to the courier.
+      --------------------------------------------------------
+      */
+
+      const sortedOrders = [...availableOrders].sort((a, b) => {
+        const distanceA = getDistance(
+          location.latitude,
+          location.longitude,
+          a.originLat,
+          a.originLng,
+        );
+
+        const distanceB = getDistance(
+          location.latitude,
+          location.longitude,
+          b.originLat,
+          b.originLng,
+        );
+
+        return distanceA - distanceB;
+      });
+
+      /*
+      --------------------------------------------------------
+      SAVE AVAILABLE ORDERS
+      --------------------------------------------------------
+      */
 
       setOrders(sortedOrders);
+
       setStatsOrders(sortedOrders);
     } catch (error) {
-      console.log("Offered orders error:", error);
+      console.log("Available Micro/Moto orders error:", error);
 
       setOrders([]);
       setStatsOrders([]);
     }
-  }, [dbCourier?.id, dbCourier?.isApproved, dbCourier?.isBlocked, isOnline]);
+  }, [
+    dbCourier?.id,
+    dbCourier?.isApproved,
+    dbCourier?.isBlocked,
+    isOnline,
+    isMicro,
+    isMoto,
+    location,
+  ]);
 
   /*
   ==========================================================
   MAXI
   FETCH ALL MAXI ORDERS
   ==========================================================
+
+  IMPORTANT:
+
+  THIS IS THE EXISTING MAXI LOGIC.
+
+  It is intentionally preserved.
 
   MAXI remains a marketplace.
 
@@ -746,6 +1211,9 @@ const HomeComponent = () => {
 
   orders:
       ONLY MAXI jobs within 80km.
+
+  vehicleClass matching remains unchanged.
+
   ==========================================================
   */
 
@@ -869,6 +1337,17 @@ const HomeComponent = () => {
   ==========================================================
   FETCH ORDERS
   ==========================================================
+
+  IMPORTANT:
+
+  We branch here.
+
+  MAXI:
+      Existing Maxi function remains.
+
+  MICRO / MOTO:
+      New manual marketplace function.
+  ==========================================================
   */
 
   const fetchOrders = useCallback(async () => {
@@ -887,23 +1366,46 @@ const HomeComponent = () => {
     setLoading(true);
 
     try {
+      /*
+      --------------------------------------------------------
+      MAXI
+      --------------------------------------------------------
+
+      Existing Maxi marketplace logic is preserved.
+      --------------------------------------------------------
+      */
+
       if (isMaxi) {
         await fetchMaxiOrders();
       } else {
-        await fetchAssignedOrders();
+        /*
+        ------------------------------------------------------
+        MICRO / MOTO
+
+        NEW MANUAL MARKETPLACE LOGIC
+        ------------------------------------------------------
+        */
+
+        await fetchAvailableMicroMotoOrders();
       }
     } catch (error) {
       console.log("Fetch orders error:", error);
     } finally {
       setLoading(false);
     }
-  }, [dbCourier, isOnline, isMaxi, fetchMaxiOrders, fetchAssignedOrders]);
+  }, [
+    dbCourier,
+    isOnline,
+    isMaxi,
+    fetchMaxiOrders,
+    fetchAvailableMicroMotoOrders,
+  ]);
 
   /*
-  ==========================================================
-  LOAD SOUND
-  ==========================================================
-  */
+============================================================
+LOAD SOUND
+============================================================
+*/
 
   useEffect(() => {
     let mounted = true;
@@ -937,10 +1439,10 @@ const HomeComponent = () => {
   }, []);
 
   /*
-  ==========================================================
-  AUDIO MODE
-  ==========================================================
-  */
+============================================================
+AUDIO MODE
+============================================================
+*/
 
   useEffect(() => {
     Audio.setAudioModeAsync({
@@ -952,10 +1454,10 @@ const HomeComponent = () => {
   }, []);
 
   /*
-  ==========================================================
-  PLAY NEW ORDER SOUND
-  ==========================================================
-  */
+============================================================
+PLAY NEW ORDER SOUND
+============================================================
+*/
 
   const playNewOrderSound = useCallback(async () => {
     try {
@@ -972,10 +1474,19 @@ const HomeComponent = () => {
   }, []);
 
   /*
-  ==========================================================
-  DETECT NEW ORDERS
-  ==========================================================
-  */
+============================================================
+DETECT NEW ORDERS
+============================================================
+
+Whenever a new order enters the local `orders` array,
+play the notification sound and haptic feedback.
+
+This works for both:
+
+    Micro/Moto marketplace orders
+    Existing Maxi marketplace orders
+============================================================
+*/
 
   useEffect(() => {
     const newIds = new Set(orders.map((order) => order.id));
@@ -997,10 +1508,10 @@ const HomeComponent = () => {
   }, [orders, playNewOrderSound]);
 
   /*
-  ==========================================================
-  FORCE UNAPPROVED COURIER OFFLINE
-  ==========================================================
-  */
+============================================================
+FORCE UNAPPROVED COURIER OFFLINE
+============================================================
+*/
 
   useEffect(() => {
     const forceOfflineIfNotApproved = async () => {
@@ -1044,10 +1555,10 @@ const HomeComponent = () => {
   }, [dbCourier?.id, dbCourier?.isApproved, dbCourier?.isOnline, setIsOnline]);
 
   /*
-  ==========================================================
-  FORCE BLOCKED COURIER OFFLINE
-  ==========================================================
-  */
+============================================================
+FORCE BLOCKED COURIER OFFLINE
+============================================================
+*/
 
   useEffect(() => {
     const forceOfflineIfBlocked = async () => {
@@ -1097,10 +1608,29 @@ const HomeComponent = () => {
   }, [dbCourier?.id, dbCourier?.isBlocked, dbCourier?.isOnline, setIsOnline]);
 
   /*
-  ==========================================================
-  INITIAL / REFRESH ORDER LOAD
-  ==========================================================
-  */
+============================================================
+INITIAL / REFRESH ORDER LOAD
+============================================================
+
+When:
+
+    - courier goes online
+    - location becomes available
+    - courier approval changes
+    - courier blocking changes
+    - courier type changes
+
+we reload the appropriate marketplace.
+
+IMPORTANT:
+
+    MAXI
+        → existing fetchMaxiOrders()
+
+    MICRO / MOTO
+        → new fetchAvailableMicroMotoOrders()
+============================================================
+*/
 
   useEffect(() => {
     if (
@@ -1113,6 +1643,7 @@ const HomeComponent = () => {
       setOrders([]);
       setStatsOrders([]);
       setLoading(false);
+
       return;
     }
 
@@ -1124,15 +1655,44 @@ const HomeComponent = () => {
     dbCourier?.isApproved,
     dbCourier?.isBlocked,
     dbCourier?.vehicleClass,
-    isMaxi,
+    dbCourier?.transportationType,
     fetchOrders,
   ]);
 
   /*
-  ==========================================================
-  REAL-TIME ORDER SUBSCRIPTION
-  ==========================================================
-  */
+============================================================
+REAL-TIME ORDER SUBSCRIPTION
+============================================================
+
+This is the most important part of the new manual flow.
+
+MICRO / MOTO:
+
+The courier does NOT wait for:
+
+    assignedCourierId
+    assignmentStatus = OFFERED
+
+Instead, the app watches all Order changes and determines
+whether the order is currently available to this courier.
+
+Availability:
+
+    READY_FOR_PICKUP
+    +
+    PAID
+    +
+    unassigned
+    +
+    correct transportationType
+    +
+    within pickup radius
+
+MAXI:
+
+The existing Maxi marketplace logic remains separate.
+============================================================
+*/
 
   useEffect(() => {
     if (
@@ -1146,10 +1706,17 @@ const HomeComponent = () => {
 
     const subscription = DataStore.observe(Order).subscribe(
       ({ opType, element }) => {
-        // ==========================================================
-        // DEBUG: CONFIRM WHETHER THE COURIER APP RECEIVES THE
-        // REALTIME ORDER EVENT FROM DATASTORE
-        // ==========================================================
+        /*
+      ========================================================
+      DEBUG
+      ========================================================
+
+      Keep this logging while testing the new realtime flow.
+
+      It lets us verify that the Courier app is actually
+      receiving AppSync/DataStore events.
+      ========================================================
+      */
 
         console.log("🚨 ORDER_REALTIME_EVENT_RECEIVED", {
           opType,
@@ -1158,11 +1725,12 @@ const HomeComponent = () => {
           myCourierId: dbCourier?.id || null,
           assignmentStatus: element?.assignmentStatus || null,
           status: element?.status || null,
+          paymentStatus: element?.paymentStatus || null,
           transportationType: element?.transportationType || null,
           hasNewOffer: element?.hasNewOffer ?? null,
           userID: element?.userID || null,
           version: element?._version ?? null,
-          lastChangedAt: element?._lastChangedAt ?? null,
+          lastChangedAt: element?._lastChangedAt || null,
         });
 
         if (!element) {
@@ -1174,64 +1742,137 @@ const HomeComponent = () => {
         }
 
         /*
-        ====================================================
-        MICRO / MOTO
-        ====================================================
-        */
+      ========================================================
+      MICRO / MOTO
+      ========================================================
+      */
 
         if (!isMaxi) {
           /*
-          --------------------------------------------------
-          DOES THIS ORDER BELONG TO THIS COURIER?
-          --------------------------------------------------
-          */
+        ------------------------------------------------------
+        DETERMINE ALLOWED TRANSPORTATION TYPES
+        ------------------------------------------------------
 
-          const belongsToCourier = element.assignedCourierId === dbCourier.id;
+        Courier category:
+
+            MICRO
+            MOTO
+
+        Order types:
+
+            MICRO_EXPRESS
+            MICRO_BATCH
+            MOTO_EXPRESS
+            MOTO_BATCH
+        ------------------------------------------------------
+        */
+
+          let allowedTransportationTypes = [];
+          let pickupRadius = 0;
+
+          if (isMicro) {
+            allowedTransportationTypes = ["MICRO_EXPRESS", "MICRO_BATCH"];
+
+            pickupRadius = MICRO_RADIUS;
+          }
+
+          if (isMoto) {
+            allowedTransportationTypes = ["MOTO_EXPRESS", "MOTO_BATCH"];
+
+            pickupRadius = MOTO_RADIUS;
+          }
 
           /*
-          --------------------------------------------------
-          ACTIVE OFFER
-          --------------------------------------------------
-
-          IMPORTANT:
-
-          Lambda uses:
-
-              OFFERED
-
-          not PENDING.
-          */
-
-          const isOffered = element.assignmentStatus === "OFFERED";
-
-          /*
-          --------------------------------------------------
-          ORDER MUST STILL BE READY
-          --------------------------------------------------
-          */
+        ------------------------------------------------------
+        DETERMINE WHETHER THIS ORDER IS AVAILABLE
+        ------------------------------------------------------
+        */
 
           const isReadyForPickup = element.status === "READY_FOR_PICKUP";
 
-          /*
-          --------------------------------------------------
-          FINAL OFFER CHECK
-          --------------------------------------------------
-          */
+          const isPaid = element.paymentStatus === "PAID";
 
-          const isMyOffer = belongsToCourier && isOffered && isReadyForPickup;
+          const isUnassigned = !element.assignedCourierId;
+
+          const isCorrectTransportationType =
+            allowedTransportationTypes.includes(element.transportationType);
 
           /*
-          ==================================================
-          INSERT
-          ==================================================
-          */
+        ------------------------------------------------------
+        LOCATION CHECK
+        ------------------------------------------------------
+        */
+
+          let isWithinPickupRadius = false;
+
+          if (
+            location &&
+            typeof location.latitude === "number" &&
+            typeof location.longitude === "number" &&
+            typeof element.originLat === "number" &&
+            typeof element.originLng === "number"
+          ) {
+            const distance = getDistance(
+              location.latitude,
+              location.longitude,
+              element.originLat,
+              element.originLng,
+            );
+
+            isWithinPickupRadius = distance <= pickupRadius;
+
+            console.log("📍 MICRO/MOTO_ORDER_DISTANCE_CHECK", {
+              orderId: element.id,
+              transportationType: element.transportationType,
+              courierType: dbCourier?.transportationType,
+              distanceKm: Number(distance.toFixed(2)),
+              allowedRadiusKm: pickupRadius,
+              withinRadius: isWithinPickupRadius,
+            });
+          }
+
+          /*
+        ------------------------------------------------------
+        FINAL AVAILABILITY CHECK
+        ------------------------------------------------------
+
+        IMPORTANT:
+
+        There is deliberately NO:
+
+            assignedCourierId === dbCourier.id
+
+        and NO:
+
+            assignmentStatus === "OFFERED"
+
+        because this is now a marketplace.
+        ------------------------------------------------------
+        */
+
+          const isAvailableOrder =
+            isReadyForPickup &&
+            isPaid &&
+            isUnassigned &&
+            isCorrectTransportationType &&
+            isWithinPickupRadius;
+
+          /*
+        ======================================================
+        INSERT
+        ======================================================
+        */
 
           if (opType === "INSERT") {
-            if (!isMyOffer) {
+            if (!isAvailableOrder) {
               return;
             }
 
             setOrders((prev) => {
+              /*
+            Avoid duplicate entries.
+            */
+
               if (prev.some((order) => order.id === element.id)) {
                 return prev;
               }
@@ -1251,31 +1892,30 @@ const HomeComponent = () => {
           }
 
           /*
-          ==================================================
-          UPDATE
-          ==================================================
-          */
+        ======================================================
+        UPDATE
+        ======================================================
+        */
 
           if (opType === "UPDATE") {
             /*
-            ------------------------------------------------
-            ORDER NO LONGER AN ACTIVE OFFER
-            ------------------------------------------------
+          ----------------------------------------------------
+          ORDER NO LONGER AVAILABLE
+          ----------------------------------------------------
 
-            Examples:
+          Examples:
 
-                OFFERED → ACCEPTED
-                OFFERED → TIMEOUT
-                OFFERED → REJECTED
-                OFFERED → CANCELLED
-                courier changed
-                order no longer READY_FOR_PICKUP
+              READY_FOR_PICKUP → ACCEPTED
+              PAID → FAILED
+              assignedCourierId becomes populated
+              transportation type changes
+              courier moves outside radius
+              order is cancelled
+              order is otherwise no longer eligible
+          ----------------------------------------------------
+          */
 
-            Remove it from the offer list.
-            ------------------------------------------------
-            */
-
-            if (!isMyOffer) {
+            if (!isAvailableOrder) {
               setOrders((prev) =>
                 prev.filter((order) => order.id !== element.id),
               );
@@ -1288,10 +1928,12 @@ const HomeComponent = () => {
             }
 
             /*
-            ------------------------------------------------
-            ACTIVE OFFER UPDATED
-            ------------------------------------------------
-            */
+          ----------------------------------------------------
+          ORDER IS STILL AVAILABLE
+
+          Update it in the local list.
+          ----------------------------------------------------
+          */
 
             setOrders((prev) => {
               const exists = prev.some((order) => order.id === element.id);
@@ -1321,10 +1963,10 @@ const HomeComponent = () => {
           }
 
           /*
-          ==================================================
-          DELETE
-          ==================================================
-          */
+        ======================================================
+        DELETE
+        ======================================================
+        */
 
           if (opType === "DELETE") {
             setOrders((prev) =>
@@ -1340,19 +1982,18 @@ const HomeComponent = () => {
         }
 
         /*
-        ====================================================
-        MAXI
-        ====================================================
+      ========================================================
+      MAXI
+      ========================================================
 
-        MAXI is still a marketplace.
+      IMPORTANT:
 
-        ALL eligible MAXI jobs:
-            statsOrders
+      EXISTING MAXI REAL-TIME LOGIC.
 
-        MAXI jobs within 80km:
-            orders
-        ====================================================
-        */
+      We are deliberately keeping this separate from the
+      Micro/Moto marketplace logic above.
+      ========================================================
+      */
 
         const isRelevantMaxi =
           element.transportationType === "MAXI" &&
@@ -1361,10 +2002,10 @@ const HomeComponent = () => {
             element.status === "BIDDING");
 
         /*
-        ----------------------------------------------------
-        DELETE / NO LONGER RELEVANT
-        ----------------------------------------------------
-        */
+      --------------------------------------------------------
+      DELETE / NO LONGER RELEVANT
+      --------------------------------------------------------
+      */
 
         if (!isRelevantMaxi) {
           if (opType === "UPDATE" || opType === "DELETE") {
@@ -1381,10 +2022,10 @@ const HomeComponent = () => {
         }
 
         /*
-        ----------------------------------------------------
-        UPDATE ALL MAXI STATS
-        ----------------------------------------------------
-        */
+      --------------------------------------------------------
+      UPDATE ALL MAXI STATS
+      --------------------------------------------------------
+      */
 
         setStatsOrders((prev) => {
           const exists = prev.some((order) => order.id === element.id);
@@ -1407,10 +2048,10 @@ const HomeComponent = () => {
         });
 
         /*
-        ----------------------------------------------------
-        DELETE
-        ----------------------------------------------------
-        */
+      --------------------------------------------------------
+      DELETE
+      --------------------------------------------------------
+      */
 
         if (opType === "DELETE") {
           setOrders((prev) => prev.filter((order) => order.id !== element.id));
@@ -1423,10 +2064,10 @@ const HomeComponent = () => {
         }
 
         /*
-        ----------------------------------------------------
-        LOCATION REQUIRED FOR DISPLAY
-        ----------------------------------------------------
-        */
+      --------------------------------------------------------
+      LOCATION REQUIRED FOR DISPLAY
+      --------------------------------------------------------
+      */
 
         if (
           !location ||
@@ -1437,10 +2078,10 @@ const HomeComponent = () => {
         }
 
         /*
-        ----------------------------------------------------
-        CHECK 80KM DISPLAY RADIUS
-        ----------------------------------------------------
-        */
+      --------------------------------------------------------
+      CHECK 80KM DISPLAY RADIUS
+      --------------------------------------------------------
+      */
 
         const distance = getDistance(
           location.latitude,
@@ -1450,13 +2091,13 @@ const HomeComponent = () => {
         );
 
         /*
-        ----------------------------------------------------
-        OUTSIDE 80KM
+      --------------------------------------------------------
+      OUTSIDE 80KM
 
-        Remains in statsOrders,
-        but not visible in orders.
-        ----------------------------------------------------
-        */
+      Remains in statsOrders,
+      but not visible in orders.
+      --------------------------------------------------------
+      */
 
         if (distance > MAXI_RADIUS) {
           setOrders((prev) => prev.filter((order) => order.id !== element.id));
@@ -1465,10 +2106,10 @@ const HomeComponent = () => {
         }
 
         /*
-        ----------------------------------------------------
-        WITHIN 80KM
-        ----------------------------------------------------
-        */
+      --------------------------------------------------------
+      WITHIN 80KM
+      --------------------------------------------------------
+      */
 
         setOrders((prev) => {
           const exists = prev.some((order) => order.id === element.id);
@@ -1492,22 +2133,37 @@ const HomeComponent = () => {
       },
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [
     isOnline,
     isMaxi,
+    isMicro,
+    isMoto,
     location,
     dbCourier?.id,
     dbCourier?.vehicleClass,
+    dbCourier?.transportationType,
     dbCourier?.isApproved,
     dbCourier?.isBlocked,
   ]);
 
   /*
-  ==========================================================
-  STATS CALCULATION
-  ==========================================================
-  */
+============================================================
+STATS CALCULATION
+============================================================
+
+MICRO / MOTO:
+
+    statsOrders contains the currently available marketplace
+    orders for this courier.
+
+MAXI:
+
+    Existing Maxi statistics remain based on statsOrders.
+============================================================
+*/
 
   useEffect(() => {
     let total = 0;
@@ -1516,23 +2172,26 @@ const HomeComponent = () => {
     let express = 0;
 
     /*
-    ==========================================================
-    MICRO / MOTO
-    ==========================================================
-
-    statsOrders contains only this courier's
-    currently OFFERED jobs.
-    */
+  ==========================================================
+  MICRO / MOTO
+  ==========================================================
+  */
 
     if (!isMaxi) {
+      /*
+    --------------------------------------------------------
+    TOTAL AVAILABLE ORDERS
+    --------------------------------------------------------
+    */
+
       total = statsOrders.length;
 
       statsOrders.forEach((order) => {
         /*
-        -----------------------------------------------
-        BATCH
-        -----------------------------------------------
-        */
+      ------------------------------------------------------
+      BATCH
+      ------------------------------------------------------
+      */
 
         if (
           order.transportationType === "MICRO_BATCH" ||
@@ -1542,10 +2201,10 @@ const HomeComponent = () => {
         }
 
         /*
-        -----------------------------------------------
-        EXPRESS
-        -----------------------------------------------
-        */
+      ------------------------------------------------------
+      EXPRESS
+      ------------------------------------------------------
+      */
 
         if (
           order.transportationType === "MICRO_EXPRESS" ||
@@ -1555,14 +2214,20 @@ const HomeComponent = () => {
         }
 
         /*
-        -----------------------------------------------
-        NEARBY
+      ------------------------------------------------------
+      NEARBY
+      ------------------------------------------------------
 
-        Informational only.
+      For the new marketplace flow, every order already
+      satisfies the courier's actual 5km/10km radius.
 
-        Lambda has already selected the courier.
-        -----------------------------------------------
-        */
+      Therefore, every order currently in statsOrders is
+      considered nearby.
+
+      This avoids the old 15km informational threshold,
+      which no longer represents the marketplace rules.
+      ------------------------------------------------------
+      */
 
         if (
           location &&
@@ -1576,12 +2241,9 @@ const HomeComponent = () => {
             order.originLng,
           );
 
-          /*
-          Keep your existing 15km informational
-          nearby threshold.
-          */
+          const radius = isMicro ? MICRO_RADIUS : isMoto ? MOTO_RADIUS : 0;
 
-          if (distance <= 15) {
+          if (distance <= radius) {
             nearby++;
           }
         }
@@ -1589,10 +2251,13 @@ const HomeComponent = () => {
     }
 
     /*
-    ==========================================================
-    MAXI
-    ==========================================================
-    */
+  ==========================================================
+  MAXI
+  ==========================================================
+
+  Existing Maxi statistics logic is preserved.
+  ==========================================================
+  */
 
     if (isMaxi) {
       total = statsOrders.length;
@@ -1617,41 +2282,47 @@ const HomeComponent = () => {
       });
     }
 
+    /*
+  ==========================================================
+  SAVE STATS
+  ==========================================================
+  */
+
     setStats({
       total,
       nearby,
       batch,
       express,
     });
-  }, [statsOrders, location, isMaxi]);
+  }, [statsOrders, location, isMaxi, isMicro, isMoto]);
 
   /*
-  ==========================================================
-  LOADING
-  ==========================================================
-  */
+============================================================
+LOADING
+============================================================
+*/
 
   if (loading && isOnline) {
     return <ActivityIndicator size="large" style={styles.loading} />;
   }
 
   /*
-  ==========================================================
-  RENDER
-  ==========================================================
-  */
+============================================================
+RENDER
+============================================================
+*/
 
   return (
     <SafeAreaView style={styles.container}>
       {/* ==================================================
-          MAP
-      ================================================== */}
+        MAP
+    ================================================== */}
 
       <HomeMap orders={orders} location={location} setLocation={setLocation} />
 
       {/* ==================================================
-          TODAY'S EARNINGS
-      ================================================== */}
+        TODAY'S EARNINGS
+    ================================================== */}
 
       <TodayEarnings
         earnings={todayEarnings}
@@ -1660,8 +2331,8 @@ const HomeComponent = () => {
       />
 
       {/* ==================================================
-          BOTTOM SHEET
-      ================================================== */}
+        BOTTOM SHEET
+    ================================================== */}
 
       <BottomSheet
         ref={bottomSheetRef}
@@ -1675,8 +2346,8 @@ const HomeComponent = () => {
       >
         <BottomSheetScrollView>
           {/* ==================================================
-              STATUS / STATS
-          ================================================== */}
+            STATUS / STATS
+        ================================================== */}
 
           <BottomContainer
             isOnline={isOnline}
@@ -1689,20 +2360,20 @@ const HomeComponent = () => {
           />
 
           {/* ==================================================
-              EMPTY STATE
-          ================================================== */}
+            EMPTY STATE
+        ================================================== */}
 
           {isOnline && orders.length === 0 && (
             <Text style={styles.emptyStateText}>
               {isMaxi
                 ? "No Maxi jobs within 80km right now."
-                : "No delivery offers right now. Stay online."}
+                : "No delivery orders available nearby right now."}
             </Text>
           )}
 
           {/* ==================================================
-              ORDER LIST
-          ================================================== */}
+            ORDER LIST
+        ================================================== */}
 
           {isOnline &&
             !dbCourier?.isBlocked &&

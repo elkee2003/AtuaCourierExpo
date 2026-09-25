@@ -24,6 +24,7 @@ const DELIVERY_FLOW = {
     "ARRIVED_DROPOFF",
     "DELIVERED",
   ],
+
   MAXI: [
     "ACCEPTED",
     "ARRIVED_PICKUP",
@@ -39,11 +40,18 @@ const DELIVERY_FLOW = {
 /**
  * 🎯 BUTTON TITLES
  */
-const getStatusConfig = (isMaxi) => {
+const getStatusConfig = (isMaxi, isPaid) => {
   if (isMaxi) {
     return {
-      READY_FOR_PICKUP: { title: "Waiting for acceptance" },
-      ACCEPTED: { title: "Arrived at Pickup" },
+      /**
+       * MAXI:
+       * Courier cannot start moving toward pickup
+       * until the customer has paid.
+       */
+      ACCEPTED: {
+        title: isPaid ? "Arrived at Pickup" : "Waiting for Payment",
+      },
+
       ARRIVED_PICKUP: { title: "Start Loading" },
       LOADING: { title: "Confirm Loaded" },
       PICKED_UP: { title: "Start Trip" },
@@ -54,14 +62,16 @@ const getStatusConfig = (isMaxi) => {
     };
   }
 
-  // ✅ MOTO / MICRO FLOW
+  /**
+   * ✅ MOTO / MICRO FLOW
+   */
   return {
     READY_FOR_PICKUP: { title: "Waiting for acceptance" },
     ACCEPTED: { title: "Arrived at Pickup" },
-    ARRIVED_PICKUP: { title: "Pick Up Package" }, // ✅ FIX
+    ARRIVED_PICKUP: { title: "Pick Up Package" },
     PICKED_UP: { title: "Start Trip" },
     IN_TRANSIT: { title: "Arrived at Dropoff" },
-    ARRIVED_DROPOFF: { title: "Confirm Delivery" }, // ✅ FIX
+    ARRIVED_DROPOFF: { title: "Confirm Delivery" },
     DELIVERED: { title: "Completed" },
   };
 };
@@ -92,19 +102,28 @@ const OrderdeliveryMainCom = ({ order, user }) => {
   }, [isMaxi]);
 
   /**
+   * 💳 PAYMENT STATUS
+   *
+   * For MAXI orders, payment must be completed before
+   * the courier can proceed from ACCEPTED to ARRIVED_PICKUP.
+   */
+  const isPaid = order?.paymentStatus === "PAID";
+
+  /**
    * 🎯 NEXT STATUS
    */
   const nextStatus = useMemo(() => {
     if (!order?.status) return null;
 
     const index = flow.indexOf(order.status);
+
     if (index === -1) return null;
 
     return flow[index + 1] || null;
   }, [order?.status, flow]);
 
   /**
-   * 🗺 Animate
+   * 🗺 ANIMATE TO COURIER
    */
   const animateToUser = () => {
     if (!location) return;
@@ -123,11 +142,30 @@ const OrderdeliveryMainCom = ({ order, user }) => {
   const onButtonPressed = async () => {
     if (!order || loadingAction || !nextStatus) return;
 
+    /**
+     * 🔒 MAXI PAYMENT PROTECTION
+     *
+     * The courier cannot move from ACCEPTED
+     * to ARRIVED_PICKUP until payment is PAID.
+     */
+    if (
+      isMaxi &&
+      order.status === "ACCEPTED" &&
+      order.paymentStatus !== "PAID"
+    ) {
+      console.log(
+        "⏳ Maxi order cannot proceed: payment has not been completed.",
+      );
+
+      return;
+    }
+
     setLoadingAction(true);
 
     try {
       console.log("CURRENT:", order.status);
       console.log("NEXT:", nextStatus);
+      console.log("PAYMENT STATUS:", order.paymentStatus);
 
       if (nextStatus === "DELIVERED") {
         const success = await completeOrder(order.id);
@@ -157,10 +195,35 @@ const OrderdeliveryMainCom = ({ order, user }) => {
    * 🔒 DISABLE BUTTON
    */
   const isButtonDisabled = useMemo(() => {
-    if (!isMapLoaded || loadingAction) return true;
+    if (!isMapLoaded || loadingAction) {
+      return true;
+    }
 
-    if (order?.status === "READY_FOR_PICKUP") return true;
+    /**
+     * MAXI:
+     *
+     * ACCEPTED → ARRIVED_PICKUP requires payment.
+     *
+     * Until paymentStatus === "PAID", the button remains disabled.
+     */
+    if (
+      isMaxi &&
+      order?.status === "ACCEPTED" &&
+      order?.paymentStatus !== "PAID"
+    ) {
+      return true;
+    }
 
+    /**
+     * Courier cannot manually act while waiting for pickup.
+     */
+    if (order?.status === "READY_FOR_PICKUP") {
+      return true;
+    }
+
+    /**
+     * These statuses require courier proximity.
+     */
     const proximityRequired = ["ACCEPTED", "ARRIVED_PICKUP", "ARRIVED_DROPOFF"];
 
     if (proximityRequired.includes(order?.status)) {
@@ -168,7 +231,14 @@ const OrderdeliveryMainCom = ({ order, user }) => {
     }
 
     return false;
-  }, [order?.status, isCourierclose, isMapLoaded, loadingAction]);
+  }, [
+    order?.status,
+    order?.paymentStatus,
+    isMaxi,
+    isCourierclose,
+    isMapLoaded,
+    loadingAction,
+  ]);
 
   /**
    * 📦 PICKED STATE
@@ -182,7 +252,7 @@ const OrderdeliveryMainCom = ({ order, user }) => {
   /**
    * 🎯 BUTTON TEXT
    */
-  const statusConfig = getStatusConfig(isMaxi);
+  const statusConfig = getStatusConfig(isMaxi, isPaid);
 
   const buttonTitle = statusConfig[order?.status]?.title || "Continue";
 

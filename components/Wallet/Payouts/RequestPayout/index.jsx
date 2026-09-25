@@ -39,6 +39,8 @@ PAYOUT RULES
 
 const MINIMUM_PAYOUT = 1000;
 
+const PAYOUT_FEE = 100;
+
 /*
 ==========================================================
 PAYOUT METHOD
@@ -67,63 +69,54 @@ const formatShortCurrency = (amount = 0) => {
   })}`;
 };
 
-const maskAccountNumber = (accountNumber) => {
+const formatAccountNumber = (accountNumber) => {
   if (!accountNumber) {
-    return "—";
+    return "No account number registered";
   }
 
-  return `•••• ${String(accountNumber).slice(-4)}`;
+  return String(accountNumber);
 };
 
 /*
 ==========================================================
-GET CURRENT COURIER ID
+GET CURRENT COURIER
 ==========================================================
 
-IMPORTANT:
+Uses the authenticated Cognito user's `userId` to find
+the matching Courier record.
 
-Replace this function with however your app currently
-gets the authenticated courier ID.
+Your Courier schema contains:
+    sub: String!
 
-If you already have a CourierProvider/AuthProvider,
-use that instead of querying all couriers.
-
-The function below assumes the Courier model has
-an owner/user identifier.
+So we match:
+    Courier.sub === authenticated userId
 
 ==========================================================
 */
 
 const getCurrentCourier = async () => {
-  /*
-  --------------------------------------------------------
-  OPTION 1
+  try {
+    const { getCurrentUser } = await import("aws-amplify/auth");
 
-  If your Courier model has an `owner` field and your
-  auth setup automatically scopes it to the current user,
-  this query can be used.
+    const currentUser = await getCurrentUser();
 
-  --------------------------------------------------------
-  */
+    if (!currentUser?.userId) {
+      throw new Error("You are not signed in.");
+    }
 
-  const couriers = await DataStore.query(Courier);
+    const couriers = await DataStore.query(Courier, (courierQuery) =>
+      courierQuery.sub.eq(currentUser.userId),
+    );
 
-  if (!couriers || couriers.length === 0) {
-    return null;
+    if (!couriers || couriers.length === 0) {
+      return null;
+    }
+
+    return couriers[0];
+  } catch (error) {
+    console.error("Get current courier error:", error);
+    throw error;
   }
-
-  /*
-  --------------------------------------------------------
-  TEMPORARY SAFE FALLBACK
-
-  If your app already has a CourierProvider, replace
-  this entire function with the provider's courier.
-
-  DO NOT leave a hard-coded courier ID here.
-  --------------------------------------------------------
-  */
-
-  return couriers[0];
 };
 
 /*
@@ -224,17 +217,8 @@ const RequestPayout = () => {
       throw new Error("Courier ID is missing.");
     }
 
-    /*
-        --------------------------------------------------
-        Your Wallet model should have courierID.
-
-        If your schema uses a different field name,
-        change only this predicate.
-        --------------------------------------------------
-        */
-
     const wallets = await DataStore.query(Wallet, (walletQuery) =>
-      walletQuery.courierID.eq(courierRecord.id),
+      walletQuery.ownerID.eq(courierRecord.id),
     );
 
     const currentWallet = wallets?.[0] || null;
@@ -300,7 +284,7 @@ const RequestPayout = () => {
           return;
         }
 
-        if (element?.courierID !== courier.id) {
+        if (element?.ownerID !== courier.id) {
           return;
         }
 
@@ -341,6 +325,10 @@ const RequestPayout = () => {
 
   const availableBalance = Number(wallet?.availableBalance || 0);
 
+  const hasBankAccount = Boolean(
+    courier?.bankName && courier?.accountName && courier?.accountNumber,
+  );
+
   /*
   ========================================================
   PARSED AMOUNT
@@ -363,7 +351,9 @@ const RequestPayout = () => {
   ========================================================
   */
 
-  const remainingBalance = Math.max(availableBalance - numericAmount, 0);
+  const totalWalletDeduction = numericAmount + PAYOUT_FEE;
+
+  const remainingBalance = Math.max(availableBalance - totalWalletDeduction, 0);
 
   /*
   ========================================================
@@ -376,6 +366,10 @@ const RequestPayout = () => {
       return null;
     }
 
+    if (!hasBankAccount) {
+      return "Please add your bank account details before requesting a payout.";
+    }
+
     if (numericAmount <= 0) {
       return "Enter an amount to withdraw.";
     }
@@ -384,12 +378,11 @@ const RequestPayout = () => {
       return `Minimum payout is ${formatShortCurrency(MINIMUM_PAYOUT)}.`;
     }
 
-    if (numericAmount > availableBalance) {
-      return "You don't have enough available balance.";
+    if (numericAmount + PAYOUT_FEE > availableBalance) {
+      return "You don't have enough available balance to cover the payout and ₦100 payout fee.";
     }
-
     return null;
-  }, [amount, numericAmount, availableBalance]);
+  }, [amount, numericAmount, availableBalance, hasBankAccount]);
 
   /*
   ========================================================
@@ -402,8 +395,9 @@ const RequestPayout = () => {
     !submitting &&
     !!courier &&
     !!wallet &&
+    hasBankAccount &&
     numericAmount >= MINIMUM_PAYOUT &&
-    numericAmount <= availableBalance;
+    numericAmount + PAYOUT_FEE <= availableBalance;
 
   /*
   ========================================================
@@ -440,7 +434,9 @@ const RequestPayout = () => {
   };
 
   const handleMaxAmount = () => {
-    setAmount(String(availableBalance));
+    const maxPayoutAmount = Math.max(availableBalance - PAYOUT_FEE, 0);
+
+    setAmount(String(maxPayoutAmount));
   };
 
   /*
@@ -489,7 +485,7 @@ const RequestPayout = () => {
 
       const freshBalance = Number(freshWallet.availableBalance || 0);
 
-      if (numericAmount > freshBalance) {
+      if (numericAmount + PAYOUT_FEE > freshBalance) {
         setWallet(freshWallet);
 
         setShowConfirmation(false);
@@ -859,7 +855,7 @@ const RequestPayout = () => {
               </Text>
 
               <Text style={styles.accountNumber}>
-                {maskAccountNumber(courier?.accountNumber)}
+                {formatAccountNumber(courier?.accountNumber)}
               </Text>
             </View>
 
@@ -907,7 +903,10 @@ const RequestPayout = () => {
                   value={formatCurrency(numericAmount)}
                 />
 
-                <SummaryRow label="Payout fee" value="₦0.00" />
+                <SummaryRow
+                  label="Payout fee"
+                  value={formatCurrency(PAYOUT_FEE)}
+                />
 
                 <SummaryRow
                   label="You will receive"
@@ -1005,7 +1004,7 @@ const RequestPayout = () => {
                   </Text>
 
                   <Text style={styles.confirmationBankAccount}>
-                    {maskAccountNumber(courier?.accountNumber)}
+                    {formatAccountNumber(courier?.accountNumber)}
                   </Text>
                 </View>
               </View>

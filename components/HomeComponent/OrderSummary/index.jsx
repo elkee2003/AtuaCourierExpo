@@ -3,7 +3,7 @@ import { Courier, Offer, Order, User } from "@/src/models";
 import { DataStore } from "aws-amplify/datastore";
 import { getUrl } from "aws-amplify/storage";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   ActivityIndicator,
@@ -20,6 +20,8 @@ import {
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
+
+import FontAwesome from "react-native-vector-icons/FontAwesome";
 
 import MediaPreviewModal from "./MediaPreviewModal/MediaPreviewModal";
 import VideoThumbnail from "./VideoThumbnail";
@@ -41,6 +43,7 @@ const OrderSummary = ({ orderId }) => {
   const [offers, setOffers] = useState([]);
 
   const [sending, setSending] = useState(false);
+  const [accepting, setAccepting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -56,42 +59,37 @@ const OrderSummary = ({ orderId }) => {
 
   const isMaxi = order?.transportationType === "MAXI";
 
-  const isMicroOrMoto = !isMaxi;
+  const isMicroOrMoto =
+    order?.transportationType === "MICRO_EXPRESS" ||
+    order?.transportationType === "MICRO_BATCH" ||
+    order?.transportationType === "MOTO_EXPRESS" ||
+    order?.transportationType === "MOTO_BATCH";
+
+  const isMicro =
+    order?.transportationType === "MICRO_EXPRESS" ||
+    order?.transportationType === "MICRO_BATCH";
+
+  const isMoto =
+    order?.transportationType === "MOTO_EXPRESS" ||
+    order?.transportationType === "MOTO_BATCH";
+
+  const isExpress =
+    order?.transportationType === "MICRO_EXPRESS" ||
+    order?.transportationType === "MOTO_EXPRESS";
+
+  const isBatch =
+    order?.transportationType === "MICRO_BATCH" ||
+    order?.transportationType === "MOTO_BATCH";
 
   // ============================================================
-  // MICRO / MOTO ASSIGNMENT
-  // ============================================================
-  //
-  // assignedCourierId means:
-  //
-  // "This courier currently has the dispatch offer."
-  //
-  // It does NOT mean that the courier has accepted the order.
-  //
-  // assignmentStatus tells us what happened to that offer.
-  //
-  // OFFERED
-  // ACCEPTED
-  // TIMEOUT
-  // RELEASED
-  // etc.
-  //
-  // MAXI DOES NOT USE THIS SYSTEM.
-  // MAXI continues using the Offer model.
+  // MARKETPLACE STATE
   // ============================================================
 
-  const isAssignedToMe =
-    !!dbCourier?.id &&
-    !!order?.assignedCourierId &&
-    order.assignedCourierId === dbCourier.id;
+  const isOrderReady = order?.status === "READY_FOR_PICKUP";
 
-  const isAssignedToAnotherCourier =
-    !!order?.assignedCourierId && order.assignedCourierId !== dbCourier?.id;
+  const isOrderPaid = order?.paymentStatus === "PAID";
 
-  const assignmentStatus = order?.assignmentStatus || null;
-
-  const isCurrentlyOfferedToMe =
-    isMicroOrMoto && isAssignedToMe && assignmentStatus === "OFFERED";
+  const isOrderUnassigned = !order?.assignedCourierId;
 
   // ============================================================
   // CAPACITY
@@ -103,88 +101,37 @@ const OrderSummary = ({ orderId }) => {
 
   const currentMaxiCount = Number(courier?.currentMaxiCount || 0);
 
-  const courierTotal = currentExpressCount + currentBatchCount;
+  const MAX_ACTIVE_BATCH_ORDERS = 10;
 
-  // ============================================================
-  // MICRO / MOTO ORDER TYPE
-  // ============================================================
+  const hasActiveExpress = currentExpressCount > 0;
 
-  const isExpress =
-    isMicroOrMoto && order?.transportationType?.includes("EXPRESS");
+  const hasActiveBatch = currentBatchCount > 0;
 
-  const isBatch = isMicroOrMoto && order?.transportationType?.includes("BATCH");
+  const batchCapacityFull = currentBatchCount >= MAX_ACTIVE_BATCH_ORDERS;
 
-  // ============================================================
-  // EXPRESS CAPACITY
-  // ============================================================
-  //
-  // IMPORTANT:
-  //
-  // assignOrder may already have increased
-  // currentExpressCount because this order was RESERVED
-  // for this courier.
-  //
-  // Therefore:
-  //
-  // currentExpressCount === 1
-  //
-  // does NOT automatically mean:
-  //
-  // "You cannot accept this order."
-  //
-  // If this exact offer belongs to this courier,
-  // allow the courier to accept it.
-  //
-  // ============================================================
+  const expressBlocked = isExpress && (hasActiveExpress || hasActiveBatch);
 
-  const hasExpressCapacityUsed = currentExpressCount > 0;
-
-  const hasOtherExpressOrder =
-    isExpress && hasExpressCapacityUsed && !isAssignedToMe;
-
-  // ============================================================
-  // TOTAL MICRO / MOTO CAPACITY
-  // ============================================================
-
-  const MAX_ACTIVE_ORDERS = 10;
-
-  const isAtMaximumCapacity = courierTotal >= MAX_ACTIVE_ORDERS;
+  const batchBlocked = isBatch && (hasActiveExpress || batchCapacityFull);
 
   const capacityBlocksThisOrder =
-    isMicroOrMoto && isAtMaximumCapacity && !isAssignedToMe;
-
-  // ============================================================
-  // FORCE DISPATCH TIMER
-  // ============================================================
-
-  const lastBatchAssignedAt = courier?.lastBatchAssignedAt
-    ? new Date(courier.lastBatchAssignedAt)
-    : null;
-
-  const THREE_HOURS = 3 * 60 * 60 * 1000;
-
-  const exceededTime =
-    !!lastBatchAssignedAt &&
-    Date.now() - lastBatchAssignedAt.getTime() > THREE_HOURS;
-
-  const forceDispatchBlocksThisOrder =
-    isMicroOrMoto && exceededTime && courierTotal > 0 && !isAssignedToMe;
+    isMicroOrMoto && (expressBlocked || batchBlocked);
 
   // ============================================================
   // MAXI PRICING
   // ============================================================
 
   const minPrice = order?.estimatedMinPrice;
-
   const maxPrice = order?.estimatedMaxPrice;
 
   // ============================================================
   // MAXI LATEST OFFER
   // ============================================================
 
-  const latestOffer = [...offers].sort(
-    (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-  )[0];
+  const latestOffer = useMemo(() => {
+    return [...offers].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+    )[0];
+  }, [offers]);
 
   const displayPrice = isMaxi
     ? (latestOffer?.amount ?? order?.initialOfferPrice)
@@ -196,55 +143,33 @@ const OrderSummary = ({ orderId }) => {
   // MAXI USER OFFER
   // ============================================================
 
-  const latestUserOffer = [...offers]
-    .filter((item) => item.senderType === "USER")
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+  const latestUserOffer = useMemo(() => {
+    return [...offers]
+      .filter((item) => item.senderType === "USER")
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+  }, [offers]);
 
   const latestUserOfferAmount =
     latestUserOffer?.amount ?? order?.initialOfferPrice;
 
   // ============================================================
-  // MICRO / MOTO ACCEPT BUTTON
-  // ============================================================
-  //
-  // The courier must:
-  //
-  // 1. Be the courier currently assigned.
-  // 2. Have an OFFERED assignment.
-  // 3. Not have another Express order blocking them.
-  // 4. Not have reached overall capacity.
-  // 5. Not be blocked by force-dispatch rules.
-  //
+  // ACCEPT BUTTON
   // ============================================================
 
   const microMotoAcceptDisabled =
-    !isAssignedToMe ||
-    assignmentStatus !== "OFFERED" ||
-    order?.status === "ACCEPTED" ||
-    hasOtherExpressOrder ||
+    !dbCourier?.id ||
+    !order?.id ||
+    !isOrderReady ||
+    !isOrderPaid ||
+    !isOrderUnassigned ||
     capacityBlocksThisOrder ||
-    forceDispatchBlocksThisOrder;
-
-  // ============================================================
-  // MAXI ACCEPT BUTTON
-  // ============================================================
-  //
-  // MAXI continues using the Offer system.
-  //
-  // It does NOT depend on:
-  //
-  // assignmentStatus === "OFFERED"
-  //
-  // ============================================================
+    accepting;
 
   const maxiAcceptDisabled =
     order?.status === "ACCEPTED" ||
+    currentMaxiCount > 0 ||
     (latestOffer && latestOffer.senderType !== "USER") ||
     numericOffer !== latestUserOfferAmount;
-
-  // ============================================================
-  // FINAL ACCEPT STATE
-  // ============================================================
 
   const isAcceptDisabled = isMaxi
     ? maxiAcceptDisabled
@@ -253,14 +178,11 @@ const OrderSummary = ({ orderId }) => {
   // ============================================================
   // COUNTER OFFER
   // ============================================================
-  //
-  // ONLY MAXI.
-  //
-  // ============================================================
 
   const isCourierTurn = !latestOffer || latestOffer.senderType === "USER";
 
-  const isCounterDisabled = !isCourierTurn || !isBidding;
+  const isCounterDisabled =
+    !isCourierTurn || !isBidding || currentMaxiCount > 0;
 
   // ============================================================
   // RESPONSIBILITY
@@ -268,7 +190,7 @@ const OrderSummary = ({ orderId }) => {
 
   const formatResponsibility = (value) => {
     if (!value) {
-      return "Not specified";
+      return null;
     }
 
     switch (value) {
@@ -278,6 +200,50 @@ const OrderSummary = ({ orderId }) => {
       default:
         return value;
     }
+  };
+
+  // ============================================================
+  // HELPERS
+  // ============================================================
+
+  const hasValue = (value) => {
+    return value !== undefined && value !== null && String(value).trim() !== "";
+  };
+
+  const formatCurrency = (value) => {
+    if (value === undefined || value === null || value === "") {
+      return null;
+    }
+
+    const numeric = Number(value);
+
+    if (Number.isNaN(numeric)) {
+      return null;
+    }
+
+    return `₦${numeric.toLocaleString()}`;
+  };
+
+  const formatTransportationType = (value) => {
+    if (!value) {
+      return null;
+    }
+
+    return value
+      .replace(/_/g, " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
+  };
+
+  const formatVehicleClass = (value) => {
+    if (!value) {
+      return null;
+    }
+
+    return String(value)
+      .replace(/_/g, " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
   };
 
   // ============================================================
@@ -360,10 +326,6 @@ const OrderSummary = ({ orderId }) => {
 
     fetchData();
 
-    // ==========================================================
-    // REALTIME ORDER UPDATES
-    // ==========================================================
-
     const subscription = DataStore.observe(Order, orderId).subscribe(
       async (message) => {
         if (message.opType !== "UPDATE") {
@@ -399,10 +361,6 @@ const OrderSummary = ({ orderId }) => {
 
   // ============================================================
   // FETCH OFFERS
-  // ============================================================
-  //
-  // This is primarily for MAXI.
-  //
   // ============================================================
 
   useEffect(() => {
@@ -469,6 +427,14 @@ const OrderSummary = ({ orderId }) => {
 
     try {
       if (!price || price <= 0) {
+        return;
+      }
+
+      if (currentMaxiCount > 0) {
+        Alert.alert(
+          "Current Maxi delivery",
+          "You must complete your current Maxi delivery before making another Maxi offer.",
+        );
         return;
       }
 
@@ -544,12 +510,16 @@ const OrderSummary = ({ orderId }) => {
 
   // ============================================================
   // ACCEPT ORDER
+  //
+  // BUSINESS LOGIC PRESERVED
   // ============================================================
 
   const onAccept = async () => {
-    if (!dbCourier?.id || !order?.id) {
+    if (!dbCourier?.id || !order?.id || accepting) {
       return;
     }
+
+    setAccepting(true);
 
     try {
       // ========================================================
@@ -590,122 +560,121 @@ const OrderSummary = ({ orderId }) => {
       }
 
       // ========================================================
-      // MICRO / MOTO
+      // MICRO / MOTO MARKETPLACE
       // ========================================================
 
-      if (!isMaxi) {
-        // ------------------------------------------------------
-        // Check current assignment
-        // ------------------------------------------------------
+      if (isMicroOrMoto) {
+        const orderType = latestOrder.transportationType || "";
 
-        const assignedToMe = latestOrder.assignedCourierId === dbCourier.id;
+        const courierType = freshCourier.transportationType || "";
 
-        const assignedElsewhere =
-          !!latestOrder.assignedCourierId &&
-          latestOrder.assignedCourierId !== dbCourier.id;
+        const isLatestExpress =
+          orderType === "MICRO_EXPRESS" || orderType === "MOTO_EXPRESS";
 
-        if (assignedElsewhere) {
+        const isLatestBatch =
+          orderType === "MICRO_BATCH" || orderType === "MOTO_BATCH";
+
+        if (!isLatestExpress && !isLatestBatch) {
+          Alert.alert(
+            "Unavailable",
+            "This order is not available for Micro or Moto acceptance.",
+          );
+
+          return;
+        }
+
+        if (latestOrder.status !== "READY_FOR_PICKUP") {
           Alert.alert(
             "Order unavailable",
-            "This order has already been offered to another courier.",
+            "This order is no longer available for pickup.",
           );
 
           return;
         }
 
-        // ------------------------------------------------------
-        // Must currently be assigned to me
-        // ------------------------------------------------------
-
-        if (!assignedToMe) {
+        if (latestOrder.paymentStatus !== "PAID") {
           Alert.alert(
-            "Order unavailable",
-            "This order is no longer assigned to you.",
+            "Payment unavailable",
+            "This order has not been successfully paid.",
           );
 
           return;
         }
 
-        // ------------------------------------------------------
-        // Must still be OFFERED
-        // ------------------------------------------------------
-
-        if (latestOrder.assignmentStatus !== "OFFERED") {
+        if (latestOrder.assignedCourierId) {
           Alert.alert(
-            "Offer expired",
-            "This delivery offer is no longer active.",
+            "Order already taken",
+            "Another courier has already accepted this delivery.",
           );
 
           return;
         }
 
-        // ------------------------------------------------------
-        // EXPRESS CAPACITY
-        //
-        // If this exact order is assigned to this courier,
-        // the count may already be 1 because assignOrder
-        // reserved the slot.
-        // ------------------------------------------------------
+        const correctMicroOrder =
+          courierType === "MICRO" &&
+          (orderType === "MICRO_EXPRESS" || orderType === "MICRO_BATCH");
+
+        const correctMotoOrder =
+          courierType === "MOTO" &&
+          (orderType === "MOTO_EXPRESS" || orderType === "MOTO_BATCH");
+
+        if (!correctMicroOrder && !correctMotoOrder) {
+          Alert.alert(
+            "Unavailable",
+            "This order is not available for your courier category.",
+          );
+
+          return;
+        }
 
         const freshExpressCount = Number(freshCourier.currentExpressCount || 0);
 
-        if (isExpress && freshExpressCount > 0 && !assignedToMe) {
-          Alert.alert(
-            "Express capacity",
-            "You must finish your current Express delivery first.",
-          );
+        const freshBatchCount = Number(freshCourier.currentBatchCount || 0);
 
-          return;
+        if (isLatestExpress) {
+          if (freshExpressCount > 0 || freshBatchCount > 0) {
+            Alert.alert(
+              "Express unavailable",
+              "You must have no active Express or Batch deliveries before accepting an Express delivery.",
+            );
+
+            return;
+          }
         }
 
-        // ------------------------------------------------------
-        // TOTAL CAPACITY
-        // ------------------------------------------------------
+        if (isLatestBatch) {
+          if (freshExpressCount > 0) {
+            Alert.alert(
+              "Batch unavailable",
+              "You must finish your current Express delivery before accepting a Batch delivery.",
+            );
 
-        const freshTotal =
-          Number(freshCourier.currentBatchCount || 0) +
-          Number(freshCourier.currentExpressCount || 0);
+            return;
+          }
 
-        if (freshTotal >= MAX_ACTIVE_ORDERS && !assignedToMe) {
-          Alert.alert(
-            "Maximum capacity",
-            "You have reached your maximum number of active orders.",
-          );
+          if (freshBatchCount >= MAX_ACTIVE_BATCH_ORDERS) {
+            Alert.alert(
+              "Batch limit reached",
+              `You can have a maximum of ${MAX_ACTIVE_BATCH_ORDERS} active Batch deliveries.`,
+            );
 
-          return;
-        }
-
-        // ------------------------------------------------------
-        // FORCE DISPATCH TIMER
-        // ------------------------------------------------------
-
-        const lastBatchTime = freshCourier.lastBatchAssignedAt
-          ? new Date(freshCourier.lastBatchAssignedAt)
-          : null;
-
-        const exceededForceTime =
-          lastBatchTime && Date.now() - lastBatchTime.getTime() > THREE_HOURS;
-
-        if (exceededForceTime && freshTotal > 0 && !assignedToMe) {
-          Alert.alert(
-            "Start delivery",
-            "Please start your current deliveries before accepting another order.",
-          );
-
-          return;
+            return;
+          }
         }
 
         // ======================================================
         // ACCEPT MICRO / MOTO
         // ======================================================
 
+        const now = new Date().toISOString();
+
         await DataStore.save(
           Order.copyOf(latestOrder, (updated) => {
             updated.status = "ACCEPTED";
 
-            updated.acceptedAt = new Date().toISOString();
+            updated.acceptedAt = now;
 
-            updated.assignedCourierId = dbCourier.id;
+            updated.assignedCourierId = freshCourier.id;
 
             updated.assignmentStatus = "ACCEPTED";
 
@@ -714,20 +683,22 @@ const OrderSummary = ({ orderId }) => {
         );
 
         // ======================================================
-        // DO NOT INCREMENT COURIER COUNTS HERE
+        // UPDATE COURIER CAPACITY
         // ======================================================
-        //
-        // assignOrder already reserved the capacity.
-        //
-        // EXPRESS:
-        // currentExpressCount + 1
-        //
-        // BATCH:
-        // currentBatchCount + 1
-        //
-        // Incrementing again here would double-count.
-        //
-        // ======================================================
+
+        await DataStore.save(
+          Courier.copyOf(freshCourier, (updated) => {
+            if (isLatestExpress) {
+              updated.currentExpressCount = freshExpressCount + 1;
+            }
+
+            if (isLatestBatch) {
+              updated.currentBatchCount = freshBatchCount + 1;
+
+              updated.lastBatchAssignedAt = now;
+            }
+          }),
+        );
 
         router.replace("/deliveryhistory");
 
@@ -737,17 +708,6 @@ const OrderSummary = ({ orderId }) => {
       // ========================================================
       // MAXI
       // ========================================================
-      //
-      // MAXI remains completely separate from automatic
-      // MICRO/MOTO dispatch.
-      //
-      // MAXI uses the Offer model.
-      //
-      // ========================================================
-
-      // --------------------------------------------------------
-      // MAXI CAPACITY
-      // --------------------------------------------------------
 
       if (Number(freshCourier.currentMaxiCount || 0) > 0) {
         Alert.alert(
@@ -758,10 +718,6 @@ const OrderSummary = ({ orderId }) => {
         return;
       }
 
-      // --------------------------------------------------------
-      // GET FRESH MAXI OFFERS
-      // --------------------------------------------------------
-
       const freshOffers = await DataStore.query(Offer, (item) =>
         item.orderID.eq(latestOrder.id),
       );
@@ -769,10 +725,6 @@ const OrderSummary = ({ orderId }) => {
       const latest = [...freshOffers].sort(
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
       )[0];
-
-      // --------------------------------------------------------
-      // USER MUST HAVE THE CURRENT OFFER
-      // --------------------------------------------------------
 
       if (!latest || latest.senderType !== "USER") {
         Alert.alert(
@@ -784,10 +736,6 @@ const OrderSummary = ({ orderId }) => {
       }
 
       const priceToAccept = latest.amount;
-
-      // --------------------------------------------------------
-      // ACCEPT MAXI ORDER
-      // --------------------------------------------------------
 
       await DataStore.save(
         Order.copyOf(latestOrder, (updated) => {
@@ -805,24 +753,11 @@ const OrderSummary = ({ orderId }) => {
         }),
       );
 
-      // --------------------------------------------------------
-      // ACCEPT MAXI OFFER
-      // --------------------------------------------------------
-
       await DataStore.save(
         Offer.copyOf(latest, (updated) => {
           updated.status = "ACCEPTED";
         }),
       );
-
-      // --------------------------------------------------------
-      // MAXI COUNT
-      //
-      // MAXI is not using the automatic dispatch
-      // reservation system.
-      //
-      // Therefore MAXI still increments when accepted.
-      // --------------------------------------------------------
 
       await DataStore.save(
         Courier.copyOf(freshCourier, (updated) => {
@@ -835,6 +770,8 @@ const OrderSummary = ({ orderId }) => {
       console.error("Error accepting order:", error);
 
       Alert.alert("Error", "Error accepting order. Please try again.");
+    } finally {
+      setAccepting(false);
     }
   };
 
@@ -917,14 +854,42 @@ const OrderSummary = ({ orderId }) => {
 
   if (loading || !order) {
     return (
-      <ActivityIndicator
-        style={{
-          marginTop: 100,
-        }}
-        size="large"
-      />
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#111111" />
+
+        <Text style={styles.loadingText}>Loading delivery...</Text>
+      </View>
     );
   }
+
+  // ============================================================
+  // DERIVED DISPLAY DATA
+  // ============================================================
+
+  const formattedPrice =
+    displayPrice !== undefined && displayPrice !== null && displayPrice !== ""
+      ? Number(displayPrice).toLocaleString()
+      : "---";
+
+  const transportationLabel = formatTransportationType(
+    order?.transportationType,
+  );
+
+  const vehicleLabel = formatVehicleClass(order?.vehicleClass);
+
+  const pickupResponsibility = formatResponsibility(
+    order?.pickupLoadingResponsibility,
+  );
+
+  const dropoffResponsibility = formatResponsibility(
+    order?.dropoffUnloadingResponsibility,
+  );
+
+  const distance = hasValue(order?.distance) ? `${order.distance}` : null;
+
+  const senderName = [user?.firstName, user?.lastName]
+    .filter(Boolean)
+    .join(" ");
 
   // ============================================================
   // UI
@@ -933,322 +898,582 @@ const OrderSummary = ({ orderId }) => {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{
-        flex: 1,
-      }}
+      style={styles.screen}
       keyboardVerticalOffset={80}
     >
       <SafeAreaView style={styles.container}>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {/* ================================================== */}
-          {/* PRICE HEADER */}
-          {/* ================================================== */}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {/* ==================================================
+              HERO / PRICE
+              ================================================== */}
 
           <View
             style={[
-              styles.priceCard,
-              order.status === "ACCEPTED" && styles.priceCardAccepted,
+              styles.heroCard,
+              order.status === "ACCEPTED" && styles.heroCardAccepted,
             ]}
           >
-            <Text
-              style={[
-                styles.label,
-                order.status === "ACCEPTED" && styles.labelAccepted,
-              ]}
-            >
-              {order.status === "ACCEPTED"
-                ? "Final Price"
-                : isMaxi
-                  ? "Current Offer"
-                  : "Price"}
-            </Text>
+            <View style={styles.heroTop}>
+              <View>
+                <Text
+                  style={[
+                    styles.heroLabel,
+                    order.status === "ACCEPTED" && styles.heroLabelAccepted,
+                  ]}
+                >
+                  {order.status === "ACCEPTED"
+                    ? "FINAL EARNINGS"
+                    : isMaxi
+                      ? "CURRENT OFFER"
+                      : "DELIVERY EARNINGS"}
+                </Text>
 
-            <View style={styles.priceRow}>
-              <Text
-                style={[
-                  styles.price,
-                  order.status === "ACCEPTED" && styles.acceptedPrice,
-                ]}
-              >
-                ₦{displayPrice ? Number(displayPrice).toLocaleString() : "---"}
-              </Text>
+                <Text
+                  style={[
+                    styles.heroPrice,
+                    order.status === "ACCEPTED" && styles.heroPriceAccepted,
+                  ]}
+                >
+                  ₦{formattedPrice}
+                </Text>
+              </View>
+
+              <View style={styles.serviceHeroBadge}>
+                <FontAwesome
+                  name={
+                    isMicro
+                      ? "bicycle"
+                      : isMoto
+                        ? "motorcycle"
+                        : isMaxi
+                          ? "truck"
+                          : "road"
+                  }
+                  size={15}
+                  color="#FFFFFF"
+                />
+
+                <Text style={styles.serviceHeroText}>
+                  {isMicro ? "MICRO" : isMoto ? "MOTO" : "MAXI"}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.heroBottom}>
+              <View>
+                <Text style={styles.heroMetaLabel}>SERVICE</Text>
+
+                <Text style={styles.heroMetaValue}>
+                  {transportationLabel || "Delivery"}
+                </Text>
+              </View>
+
+              {distance && (
+                <View>
+                  <Text style={styles.heroMetaLabel}>DISTANCE</Text>
+
+                  <Text style={styles.heroMetaValue}>{distance}</Text>
+                </View>
+              )}
+
+              {vehicleLabel && (
+                <View>
+                  <Text style={styles.heroMetaLabel}>VEHICLE</Text>
+
+                  <Text style={styles.heroMetaValue}>{vehicleLabel}</Text>
+                </View>
+              )}
 
               {order.status === "ACCEPTED" && (
-                <View style={styles.lockBadge}>
-                  <Text style={styles.lockBadgeText}>LOCKED</Text>
+                <View style={styles.lockedBadge}>
+                  <FontAwesome name="lock" size={9} color="#86EFAC" />
+
+                  <Text style={styles.lockedText}>LOCKED</Text>
                 </View>
               )}
             </View>
           </View>
 
-          {/* ================================================== */}
-          {/* MICRO / MOTO OFFER STATUS */}
-          {/* ================================================== */}
+          {/* ==================================================
+              MARKETPLACE STATUS
+              ================================================== */}
 
-          {isMicroOrMoto &&
-            isCurrentlyOfferedToMe &&
-            order.status !== "ACCEPTED" && (
+          {isMicroOrMoto && order.status !== "ACCEPTED" && (
+            <View style={styles.statusCard}>
               <View
                 style={[
-                  styles.acceptedBanner,
-                  {
-                    marginBottom: 12,
-                  },
+                  styles.statusIcon,
+                  isOrderReady &&
+                  isOrderPaid &&
+                  isOrderUnassigned &&
+                  !capacityBlocksThisOrder
+                    ? styles.statusIconAvailable
+                    : styles.statusIconUnavailable,
                 ]}
               >
-                <View style={styles.acceptedBadge}>
-                  <Text style={styles.acceptedIcon}>!</Text>
+                <FontAwesome
+                  name={
+                    isOrderReady &&
+                    isOrderPaid &&
+                    isOrderUnassigned &&
+                    !capacityBlocksThisOrder
+                      ? "check"
+                      : "exclamation"
+                  }
+                  size={16}
+                  color="#FFFFFF"
+                />
+              </View>
+
+              <View style={styles.statusContent}>
+                <Text style={styles.statusTitle}>
+                  {isOrderReady &&
+                  isOrderPaid &&
+                  isOrderUnassigned &&
+                  !capacityBlocksThisOrder
+                    ? "Delivery available"
+                    : "Delivery unavailable"}
+                </Text>
+
+                <Text style={styles.statusSubtitle}>
+                  {!isOrderPaid
+                    ? "Payment has not been completed."
+                    : !isOrderReady
+                      ? "This delivery is no longer available for acceptance."
+                      : !isOrderUnassigned
+                        ? "This delivery has already been accepted by another courier."
+                        : isExpress && hasActiveExpress
+                          ? "Finish your current Express delivery first."
+                          : isExpress && hasActiveBatch
+                            ? "Finish your current Batch deliveries before accepting an Express delivery."
+                            : isBatch && hasActiveExpress
+                              ? "Finish your current Express delivery before accepting a Batch delivery."
+                              : isBatch && batchCapacityFull
+                                ? `You have reached the ${MAX_ACTIVE_BATCH_ORDERS}-order Batch limit.`
+                                : "This delivery is available for you to accept."}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* ==================================================
+              ACCEPTED STATUS
+              ================================================== */}
+
+          {order.status === "ACCEPTED" && (
+            <View style={styles.acceptedCard}>
+              <View style={styles.acceptedIcon}>
+                <FontAwesome name="check" size={18} color="#FFFFFF" />
+              </View>
+
+              <View style={styles.acceptedContent}>
+                <Text style={styles.acceptedTitle}>Delivery secured</Text>
+
+                <Text style={styles.acceptedSubtitle}>
+                  You have accepted this delivery.
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* ==================================================
+              SENDER
+              ================================================== */}
+
+          {hasValue(senderName) && (
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionIcon}>
+                  <FontAwesome name="user" size={12} color="#111111" />
+                </View>
+
+                <Text style={styles.sectionTitle}>Sender</Text>
+              </View>
+
+              <View style={styles.senderRow}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {senderName.charAt(0).toUpperCase()}
+                  </Text>
                 </View>
 
                 <View>
-                  <Text style={styles.acceptedTitle}>Delivery Offer</Text>
+                  <Text style={styles.senderName}>{senderName}</Text>
 
-                  <Text style={styles.acceptedSubtitle}>
-                    This delivery is currently offered to you.
-                  </Text>
+                  <Text style={styles.senderSubtitle}>Delivery sender</Text>
                 </View>
-              </View>
-            )}
-
-          {/* ================================================== */}
-          {/* ORDER ACCEPTED */}
-          {/* ================================================== */}
-
-          {order.status === "ACCEPTED" && (
-            <View style={styles.acceptedBanner}>
-              <View style={styles.acceptedBadge}>
-                <Text style={styles.acceptedIcon}>✓</Text>
-              </View>
-
-              <View>
-                <Text style={styles.acceptedTitle}>Offer Accepted</Text>
-
-                <Text style={styles.acceptedSubtitle}>
-                  You have secured this delivery
-                </Text>
               </View>
             </View>
           )}
 
-          {/* ================================================== */}
-          {/* SENDER */}
-          {/* ================================================== */}
+          {/* ==================================================
+              ROUTE
+              ================================================== */}
 
-          <View style={styles.card}>
-            <Text style={styles.section}>Sender</Text>
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionIcon}>
+                <FontAwesome name="map-marker" size={13} color="#111111" />
+              </View>
 
-            <Text style={styles.text}>{user?.firstName || "Unknown"}</Text>
+              <Text style={styles.sectionTitle}>Delivery route</Text>
+            </View>
+
+            <View style={styles.routeContainer}>
+              {hasValue(order.originAddress) && (
+                <View style={styles.routeRow}>
+                  <View style={styles.routeRail}>
+                    <View style={styles.pickupDot} />
+
+                    <View style={styles.routeLine} />
+                  </View>
+
+                  <View style={styles.routeContent}>
+                    <Text style={styles.routeLabel}>PICKUP</Text>
+
+                    <Text style={styles.routeAddress}>
+                      {order.originAddress}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {hasValue(order.destinationAddress) && (
+                <View style={styles.routeRow}>
+                  <View style={styles.routeRail}>
+                    <View style={styles.dropoffDot}>
+                      <View style={styles.dropoffInner} />
+                    </View>
+                  </View>
+
+                  <View style={styles.routeContent}>
+                    <Text style={styles.routeLabel}>DROPOFF</Text>
+
+                    <Text style={styles.routeAddress}>
+                      {order.destinationAddress}
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </View>
+
+            {(hasValue(order.tripType) ||
+              hasValue(order.distance) ||
+              hasValue(order.transportationType)) && (
+              <View style={styles.routeMeta}>
+                {hasValue(order.tripType) && (
+                  <View style={styles.routeMetaItem}>
+                    <Text style={styles.metaLabel}>TRIP</Text>
+
+                    <Text style={styles.metaValue}>{order.tripType}</Text>
+                  </View>
+                )}
+
+                {hasValue(order.distance) && (
+                  <View style={styles.routeMetaItem}>
+                    <Text style={styles.metaLabel}>DISTANCE</Text>
+
+                    <Text style={styles.metaValue}>{order.distance} </Text>
+                  </View>
+                )}
+
+                {hasValue(order.transportationType) && (
+                  <View style={styles.routeMetaItem}>
+                    <Text style={styles.metaLabel}>SERVICE</Text>
+
+                    <Text style={styles.metaValue}>{transportationLabel}</Text>
+                  </View>
+                )}
+              </View>
+            )}
           </View>
 
-          {/* ================================================== */}
-          {/* ROUTE */}
-          {/* ================================================== */}
-
-          <View style={styles.card}>
-            <Text style={styles.section}>Route</Text>
-
-            <Text style={styles.text}>Trip Type: {order?.tripType}</Text>
-
-            <Text style={styles.text}>Distance: {order?.distance}</Text>
-
-            <Text style={styles.text}>Pickup: {order.originAddress}</Text>
-
-            <Text style={styles.text}>Dropoff: {order.destinationAddress}</Text>
-
-            <Text style={styles.text}>
-              Transportation Type: {order?.transportationType}
-            </Text>
-          </View>
-
-          {/* ================================================== */}
-          {/* DISPATCH STATUS */}
-          {/* ================================================== */}
+          {/* ==================================================
+              DISPATCH
+              ================================================== */}
 
           {isMicroOrMoto && order.status !== "ACCEPTED" && (
-            <View style={styles.card}>
-              <Text style={styles.section}>Dispatch</Text>
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionIcon}>
+                  <FontAwesome name="bolt" size={12} color="#111111" />
+                </View>
 
-              {isAssignedToMe && assignmentStatus === "OFFERED" ? (
-                <>
-                  <Text style={styles.text}>Status: Offer received</Text>
+                <Text style={styles.sectionTitle}>Dispatch</Text>
+              </View>
 
-                  <Text style={styles.text}>
-                    This delivery is currently reserved for you.
+              <View style={styles.dispatchBox}>
+                <View style={styles.dispatchStatusDot} />
+
+                <View style={styles.dispatchContent}>
+                  <Text style={styles.dispatchTitle}>
+                    {isOrderPaid &&
+                    isOrderReady &&
+                    isOrderUnassigned &&
+                    !capacityBlocksThisOrder
+                      ? "Ready for acceptance"
+                      : "Currently unavailable"}
                   </Text>
+
+                  <Text style={styles.dispatchText}>
+                    {!isOrderPaid
+                      ? "Payment has not been completed."
+                      : !isOrderReady
+                        ? "This delivery is no longer available."
+                        : !isOrderUnassigned
+                          ? "Another courier has already accepted this delivery."
+                          : capacityBlocksThisOrder
+                            ? isExpress && hasActiveExpress
+                              ? "Finish your current Express delivery first."
+                              : isExpress && hasActiveBatch
+                                ? "Finish your current Batch deliveries before accepting Express."
+                                : isBatch && hasActiveExpress
+                                  ? "Finish your current Express delivery before accepting Batch."
+                                  : `You have reached the ${MAX_ACTIVE_BATCH_ORDERS}-order Batch limit.`
+                            : "This delivery is available for you to accept."}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* ==================================================
+              CARGO EVIDENCE
+              ================================================== */}
+
+          {(resolvedMedia.length > 0 ||
+            order.mediaUploadStatus === "PENDING") && (
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionIcon}>
+                  <FontAwesome name="camera" size={12} color="#111111" />
+                </View>
+
+                <Text style={styles.sectionTitle}>Cargo evidence</Text>
+              </View>
+
+              {order.mediaUploadStatus === "PENDING" && (
+                <View style={styles.mediaLoading}>
+                  <ActivityIndicator size="small" color="#111111" />
+
+                  <Text style={styles.mediaLoadingText}>
+                    Loading sender evidence...
+                  </Text>
+                </View>
+              )}
+
+              {resolvedMedia.length > 0 ? (
+                <>
+                  {/* PHOTOS */}
+
+                  {resolvedMedia.some((item) => item.type === "photo") && (
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      style={styles.photoScroll}
+                    >
+                      {resolvedMedia
+                        .filter((item) => item.type === "photo")
+                        .map((item, index) => (
+                          <TouchableOpacity
+                            key={index}
+                            onPress={() => {
+                              setSelectedIndex(index);
+
+                              setPreviewVisible(true);
+                            }}
+                            activeOpacity={0.9}
+                          >
+                            <Image
+                              source={{
+                                uri: item.uri,
+                              }}
+                              style={styles.previewImage}
+                            />
+                          </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                  )}
+
+                  {/* VIDEO */}
+
+                  {resolvedMedia.find((item) => item.type === "video") && (
+                    <TouchableOpacity
+                      style={styles.videoPreview}
+                      onPress={() => {
+                        const videoIndex = resolvedMedia.filter(
+                          (item) => item.type === "photo",
+                        ).length;
+
+                        setSelectedIndex(videoIndex);
+
+                        setPreviewVisible(true);
+                      }}
+                      activeOpacity={0.9}
+                    >
+                      <VideoThumbnail
+                        uri={
+                          resolvedMedia.find((item) => item.type === "video")
+                            .uri
+                        }
+                        style={styles.videoThumbnail}
+                      />
+
+                      <View style={styles.playOverlay}>
+                        <View style={styles.playButton}>
+                          <FontAwesome name="play" size={15} color="#111111" />
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  )}
                 </>
-              ) : isAssignedToAnotherCourier ? (
-                <Text style={styles.text}>
-                  This delivery is currently being offered to another courier.
-                </Text>
               ) : (
-                <Text style={styles.text}>Waiting for dispatch.</Text>
+                order.mediaUploadStatus !== "PENDING" && (
+                  <Text style={styles.emptyText}>
+                    No sender evidence provided.
+                  </Text>
+                )
               )}
             </View>
           )}
 
-          {/* ================================================== */}
-          {/* CARGO EVIDENCE */}
-          {/* ================================================== */}
+          {/* ==================================================
+              CARGO
+              ================================================== */}
 
-          <View style={styles.card}>
-            <Text style={styles.section}>Cargo Evidence</Text>
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionIcon}>
+                <FontAwesome name="cube" size={12} color="#111111" />
+              </View>
 
-            {order.mediaUploadStatus === "PENDING" && (
-              <Text
-                style={{
-                  color: "#F59E0B",
-                  marginBottom: 10,
-                }}
-              >
-                Loading sender evidence...
-              </Text>
-            )}
+              <Text style={styles.sectionTitle}>Cargo details</Text>
+            </View>
 
-            {resolvedMedia.length > 0 ? (
-              <>
-                {/* PHOTOS */}
+            <View style={styles.detailList}>
+              {hasValue(order.orderDetails) && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>DESCRIPTION</Text>
 
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {resolvedMedia
-                    .filter((item) => item.type === "photo")
-                    .map((item, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        onPress={() => {
-                          setSelectedIndex(index);
+                  <Text style={styles.detailValue}>{order.orderDetails}</Text>
+                </View>
+              )}
 
-                          setPreviewVisible(true);
-                        }}
-                      >
-                        <Image
-                          source={{
-                            uri: item.uri,
-                          }}
-                          style={styles.previewImage}
-                        />
-                      </TouchableOpacity>
-                    ))}
-                </ScrollView>
+              {hasValue(order.declaredWeightBracket) && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>WEIGHT</Text>
 
-                {/* VIDEO */}
+                  <Text style={styles.detailValue}>
+                    {order.declaredWeightBracket}
+                  </Text>
+                </View>
+              )}
 
-                {resolvedMedia.find((item) => item.type === "video") && (
-                  <TouchableOpacity
-                    style={styles.videoPreview}
-                    onPress={() => {
-                      const videoIndex = resolvedMedia.filter(
-                        (item) => item.type === "photo",
-                      ).length;
+              {hasValue(order.pickupFloorLevel) && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>PICKUP FLOOR</Text>
 
-                      setSelectedIndex(videoIndex);
+                  <Text style={styles.detailValue}>
+                    {order.pickupFloorLevel}
+                  </Text>
+                </View>
+              )}
 
-                      setPreviewVisible(true);
-                    }}
-                  >
-                    <VideoThumbnail
-                      uri={
-                        resolvedMedia.find((item) => item.type === "video").uri
-                      }
-                      style={styles.videoThumbnail}
-                    />
+              {pickupResponsibility && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>PICKUP RESPONSIBILITY</Text>
 
-                    <View style={styles.playOverlay}>
-                      <Text
-                        style={{
-                          color: "#FFF",
-                          fontSize: 20,
-                        }}
-                      >
-                        ▶
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
+                  <Text style={styles.detailValue}>{pickupResponsibility}</Text>
+                </View>
+              )}
+
+              {hasValue(order.dropoffFloorLevel) && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>DROPOFF FLOOR</Text>
+
+                  <Text style={styles.detailValue}>
+                    {order.dropoffFloorLevel}
+                  </Text>
+                </View>
+              )}
+
+              {dropoffResponsibility && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>DROPOFF RESPONSIBILITY</Text>
+
+                  <Text style={styles.detailValue}>
+                    {dropoffResponsibility}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+
+          {/* ==================================================
+              FEES
+              ================================================== */}
+
+          {(Number(order.loadingFee || 0) > 0 ||
+            Number(order.unloadingFee || 0) > 0) && (
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionIcon}>
+                  <FontAwesome name="money" size={12} color="#111111" />
+                </View>
+
+                <Text style={styles.sectionTitle}>Additional fees</Text>
+              </View>
+
+              <View style={styles.feeList}>
+                {Number(order.loadingFee || 0) > 0 && (
+                  <View style={styles.feeRow}>
+                    <Text style={styles.feeLabel}>Loading</Text>
+
+                    <Text style={styles.feeValue}>
+                      {formatCurrency(order.loadingFee)}
+                    </Text>
+                  </View>
                 )}
-              </>
-            ) : (
-              order.mediaUploadStatus !== "PENDING" && (
-                <Text
-                  style={{
-                    color: "#6B7280",
-                  }}
-                >
-                  No sender evidence provided
-                </Text>
-              )
-            )}
-          </View>
 
-          {/* ================================================== */}
-          {/* CARGO */}
-          {/* ================================================== */}
+                {Number(order.unloadingFee || 0) > 0 && (
+                  <View style={styles.feeRow}>
+                    <Text style={styles.feeLabel}>Unloading</Text>
 
-          <View style={styles.card}>
-            <Text style={styles.section}>Cargo</Text>
+                    <Text style={styles.feeValue}>
+                      {formatCurrency(order.unloadingFee)}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
 
-            <Text style={styles.text}>Description: {order.orderDetails}</Text>
+          {/* ==================================================
+              MAXI OFFER
+              ================================================== */}
 
-            <Text style={styles.text}>
-              Weight: {order?.declaredWeightBracket}
-            </Text>
+          {isMaxi && order.status !== "ACCEPTED" && (
+            <View style={styles.offerCard}>
+              <View style={styles.offerHeader}>
+                <View>
+                  <Text style={styles.offerTitle}>Your offer</Text>
 
-            <Text style={styles.text}>
-              Pickup Floor: {order?.pickupFloorLevel}
-            </Text>
+                  <Text style={styles.offerSubtitle}>
+                    Adjust your price within the allowed range.
+                  </Text>
+                </View>
 
-            <Text style={styles.text}>
-              Pickup Responsibility:{" "}
-              {formatResponsibility(order?.pickupLoadingResponsibility)}
-            </Text>
-
-            <Text style={styles.text}>
-              Dropoff Floor: {order?.dropoffFloorLevel}
-            </Text>
-
-            <Text style={styles.text}>
-              Dropoff Responsibility:{" "}
-              {formatResponsibility(order?.dropoffUnloadingResponsibility)}
-            </Text>
-          </View>
-
-          {/* ================================================== */}
-          {/* FEES */}
-          {/* ================================================== */}
-
-          <View style={styles.card}>
-            <Text style={styles.section}>Fees</Text>
-
-            <Text style={styles.text}>
-              Loading: ₦{Number(order.loadingFee || 0).toLocaleString()}
-            </Text>
-
-            <Text style={styles.text}>
-              Unloading: ₦{Number(order.unloadingFee || 0).toLocaleString()}
-            </Text>
-          </View>
-
-          {/* ================================================== */}
-          {/* MAXI OFFER */}
-          {/* ================================================== */}
-          {/*
-            IMPORTANT:
-            This entire section is ONLY for MAXI.
-
-            MAXI is a marketplace/bidding flow.
-
-            MAXI does NOT use assignmentStatus
-            to determine whether the courier can
-            counter or accept an offer.
-
-            MAXI uses the existing Offer model.
-          */}
-
-          {isMaxi && (
-            <View style={styles.offerBox}>
-              <Text style={styles.section}>Your Offer</Text>
+                <View style={styles.offerBadge}>
+                  <Text style={styles.offerBadgeText}>MAXI</Text>
+                </View>
+              </View>
 
               <View style={styles.offerControl}>
                 <TouchableOpacity
-                  style={styles.adjustBtn}
+                  style={styles.adjustButton}
                   onPress={() =>
                     setOffer((previous) => {
                       const value = Number(previous) || minPrice;
@@ -1256,29 +1481,34 @@ const OrderSummary = ({ orderId }) => {
                       return Math.max(minPrice, value - 1000).toString();
                     })
                   }
+                  activeOpacity={0.8}
                 >
-                  <Text style={styles.adjustText}>-</Text>
+                  <Text style={styles.adjustText}>−</Text>
                 </TouchableOpacity>
 
-                <TextInput
-                  style={styles.offerInput}
-                  keyboardType="numeric"
-                  value={offer}
-                  onFocus={() => setIsEditing(true)}
-                  onBlur={() => setIsEditing(false)}
-                  onChangeText={(value) => {
-                    if (value === "") {
-                      setOffer("");
+                <View style={styles.offerInputContainer}>
+                  <Text style={styles.offerCurrency}>₦</Text>
 
-                      return;
-                    }
+                  <TextInput
+                    style={styles.offerInput}
+                    keyboardType="numeric"
+                    value={offer}
+                    onFocus={() => setIsEditing(true)}
+                    onBlur={() => setIsEditing(false)}
+                    onChangeText={(value) => {
+                      if (value === "") {
+                        setOffer("");
 
-                    setOffer(Number(value).toString());
-                  }}
-                />
+                        return;
+                      }
+
+                      setOffer(Number(value).toString());
+                    }}
+                  />
+                </View>
 
                 <TouchableOpacity
-                  style={styles.adjustBtn}
+                  style={styles.adjustButton}
                   onPress={() =>
                     setOffer((previous) => {
                       const value = Number(previous) || minPrice;
@@ -1286,6 +1516,7 @@ const OrderSummary = ({ orderId }) => {
                       return Math.min(maxPrice, value + 1000).toString();
                     })
                   }
+                  activeOpacity={0.8}
                 >
                   <Text style={styles.adjustText}>+</Text>
                 </TouchableOpacity>
@@ -1293,16 +1524,15 @@ const OrderSummary = ({ orderId }) => {
 
               {numericOffer < minPrice || numericOffer > maxPrice ? (
                 <Text style={styles.feedBack}>
-                  Offer must be between ₦
-                  {Number(minPrice || 0).toLocaleString()} and ₦
-                  {Number(maxPrice || 0).toLocaleString()}
+                  Offer must be between {formatCurrency(minPrice)} and{" "}
+                  {formatCurrency(maxPrice)}
                 </Text>
               ) : null}
 
-              <View style={styles.row}>
+              <View style={styles.actionRow}>
                 <TouchableOpacity
                   style={[
-                    styles.counterBtn,
+                    styles.counterButton,
                     isCounterDisabled && styles.buttonDisabled,
                   ]}
                   onPress={() => {
@@ -1313,61 +1543,84 @@ const OrderSummary = ({ orderId }) => {
                     onSendOffer(Number(offer));
                   }}
                   disabled={isCounterDisabled}
+                  activeOpacity={0.8}
                 >
-                  <Text style={styles.btnText}>Counter</Text>
+                  <FontAwesome name="refresh" size={12} color="#FFFFFF" />
+
+                  <Text style={styles.buttonText}>Counter</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={[
-                    styles.acceptBtn,
+                    styles.acceptButton,
                     isAcceptDisabled && styles.buttonDisabled,
                   ]}
                   onPress={onAccept}
                   disabled={isAcceptDisabled}
+                  activeOpacity={0.8}
                 >
-                  <Text style={styles.btnText}>
-                    {isAcceptDisabled ? "Accept (disabled)" : "Accept"}
+                  <FontAwesome name="check" size={12} color="#FFFFFF" />
+
+                  <Text style={styles.buttonText}>
+                    {isAcceptDisabled
+                      ? currentMaxiCount > 0
+                        ? "Current delivery active"
+                        : "Accept"
+                      : "Accept offer"}
                   </Text>
                 </TouchableOpacity>
               </View>
             </View>
           )}
 
-          {/* ================================================== */}
-          {/* MICRO / MOTO ACCEPT */}
-          {/* ================================================== */}
+          {/* ==================================================
+              MICRO / MOTO ACCEPT
+              ================================================== */}
 
           {isMicroOrMoto && order.status !== "ACCEPTED" && (
-            <View style={styles.row}>
+            <View style={styles.bottomAction}>
               <TouchableOpacity
                 style={[
-                  styles.acceptBtn,
+                  styles.primaryAcceptButton,
                   isAcceptDisabled && styles.buttonDisabled,
                 ]}
                 onPress={onAccept}
                 disabled={isAcceptDisabled}
+                activeOpacity={0.85}
               >
-                <Text style={styles.btnText}>
-                  {!isAssignedToMe
-                    ? "Not assigned"
-                    : assignmentStatus !== "OFFERED"
-                      ? "Offer expired"
-                      : hasOtherExpressOrder
-                        ? "Finish express delivery first"
-                        : capacityBlocksThisOrder
-                          ? "Complete deliveries first"
-                          : forceDispatchBlocksThisOrder
-                            ? "Start delivery first"
-                            : "Accept"}
-                </Text>
+                {accepting ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <FontAwesome
+                      name={isAcceptDisabled ? "lock" : "check"}
+                      size={13}
+                      color="#FFFFFF"
+                    />
+
+                    <Text style={styles.primaryButtonText}>
+                      {isAcceptDisabled
+                        ? !isOrderPaid
+                          ? "Payment pending"
+                          : !isOrderReady
+                            ? "Unavailable"
+                            : !isOrderUnassigned
+                              ? "Already accepted"
+                              : capacityBlocksThisOrder
+                                ? "Currently unavailable"
+                                : "Unavailable"
+                        : "Accept delivery"}
+                    </Text>
+                  </>
+                )}
               </TouchableOpacity>
             </View>
           )}
         </ScrollView>
 
-        {/* ================================================== */}
-        {/* MEDIA MODAL */}
-        {/* ================================================== */}
+        {/* ======================================================
+            MEDIA MODAL
+            ====================================================== */}
 
         <MediaPreviewModal
           visible={previewVisible}

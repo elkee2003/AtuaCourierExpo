@@ -11,12 +11,40 @@ const BottomContainer = ({
   onToggleOnline,
   transportationType,
 }) => {
+  // ============================================================
+  // TRANSPORTATION TYPE
+  // ============================================================
+  //
+  // MAXI continues to use the existing Maxi job / bidding flow.
+  //
+  // MICRO and MOTO use the marketplace flow.
+  //
+  // The parent Courier Home is responsible for filtering:
+  //
+  // MICRO -> 5 km from pickup
+  // MOTO  -> 10 km from pickup
+  //
+  // BottomContainer does not perform radius calculations.
+  // ============================================================
+
   const isMaxi = transportationType === "MAXI";
 
+  const isMicro =
+    transportationType === "MICRO" ||
+    transportationType === "MICRO_EXPRESS" ||
+    transportationType === "MICRO_BATCH";
+
+  const isMoto =
+    transportationType === "MOTO" ||
+    transportationType === "MOTO_EXPRESS" ||
+    transportationType === "MOTO_BATCH";
+
+  const isMicroOrMoto = isMicro || isMoto;
+
   /*
-  ==========================================================
+  ============================================================
   STATUS
-  ==========================================================
+  ============================================================
   */
 
   const statusTitle = isBlocked
@@ -30,13 +58,15 @@ const BottomContainer = ({
   const statusSubtitle = isBlocked
     ? "Your account has been blocked. You cannot receive delivery requests."
     : isOnline
-      ? "Receiving delivery requests nearby"
-      : "Go online to start receiving orders";
+      ? isMaxi
+        ? "Receiving Maxi jobs nearby"
+        : "Marketplace deliveries are visible nearby"
+      : "Go online to view available deliveries";
 
   /*
-  ==========================================================
+  ============================================================
   BUTTON STATE
-  ==========================================================
+  ============================================================
   */
 
   const buttonDisabled = !isApproved || isBlocked;
@@ -50,9 +80,9 @@ const BottomContainer = ({
         : "Go Online";
 
   /*
-  ==========================================================
+  ============================================================
   RENDER
-  ==========================================================
+  ============================================================
   */
 
   return (
@@ -219,13 +249,13 @@ const BottomContainer = ({
       </View>
 
       {/* =====================================================
-          LIVE JOB STATS
+          LIVE JOB / MARKETPLACE STATS
       ===================================================== */}
 
       {isOnline && !isBlocked && (
         <View style={styles.statsCard}>
           {/* =================================================
-              TOTAL
+              TOTAL AVAILABLE
           ================================================= */}
 
           <View style={styles.statItem}>
@@ -254,7 +284,7 @@ const BottomContainer = ({
               MICRO / MOTO ONLY
           ================================================= */}
 
-          {!isMaxi && (
+          {isMicroOrMoto && (
             <>
               {/* DIVIDER */}
 
@@ -285,14 +315,20 @@ const BottomContainer = ({
       )}
 
       {/* =====================================================
-          REFRESH JOBS
+          REFRESH JOBS / DELIVERIES
       ===================================================== */}
 
       {isOnline && !isBlocked && (
-        <Pressable style={styles.refreshButton} onPress={onRefresh}>
+        <Pressable
+          style={styles.refreshButton}
+          onPress={onRefresh}
+          disabled={!onRefresh}
+        >
           <Text style={styles.refreshIcon}>↻</Text>
 
-          <Text style={styles.refreshText}>Refresh Jobs</Text>
+          <Text style={styles.refreshText}>
+            {isMaxi ? "Refresh Jobs" : "Refresh Deliveries"}
+          </Text>
         </Pressable>
       )}
     </View>

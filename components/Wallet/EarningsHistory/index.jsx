@@ -531,15 +531,28 @@ const EarningsHistory = () => {
   ========================================================
   */
 
-  const handleOrderPress = (transaction) => {
-    if (!transaction?.orderID) {
+  // const handleOrderPress = (transaction) => {
+  //   if (!transaction?.orderID) {
+  //     return;
+  //   }
+
+  //   router.push({
+  //     pathname: "/orderhistory/orderdetails/[id]",
+  //     params: {
+  //       id: String(transaction.orderID),
+  //     },
+  //   });
+  // };
+
+  const handleTransactionPress = (transaction) => {
+    if (!transaction?.id) {
       return;
     }
 
     router.push({
-      pathname: "/orderhistory/orderdetails/[id]",
+      pathname: "/wallet/transactions/[transactionId]",
       params: {
-        id: String(transaction.orderID),
+        transactionId: String(transaction.id),
       },
     });
   };
@@ -999,7 +1012,8 @@ const EarningsHistory = () => {
                     index !== recentEarnings.length - 1 &&
                       styles.earningRowBorder,
                   ]}
-                  onPress={() => handleOrderPress(transaction)}
+                  // onPress={() => handleOrderPress(transaction)}
+                  onPress={() => handleTransactionPress(transaction)}
                   activeOpacity={0.75}
                 >
                   {/* ICON */}

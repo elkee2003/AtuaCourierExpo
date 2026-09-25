@@ -3,7 +3,7 @@ import { Transaction, Wallet } from "@/src/models";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { DataStore } from "aws-amplify/datastore";
 import { router } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   RefreshControl,
@@ -82,8 +82,10 @@ const getTransactionTitle = (transaction) => {
 
 const getTransactionDescription = (transaction) => {
   /*
-  If this transaction is linked to an order,
+  --------------------------------------------------------
+  If the transaction is linked to an order,
   show the order first.
+  --------------------------------------------------------
   */
 
   if (transaction?.orderID) {
@@ -91,7 +93,9 @@ const getTransactionDescription = (transaction) => {
   }
 
   /*
+  --------------------------------------------------------
   Otherwise use the transaction description.
+  --------------------------------------------------------
   */
 
   if (transaction?.description) {
@@ -99,7 +103,9 @@ const getTransactionDescription = (transaction) => {
   }
 
   /*
+  --------------------------------------------------------
   Finally use the transaction reference.
+  --------------------------------------------------------
   */
 
   if (transaction?.reference) {
@@ -147,6 +153,27 @@ const WalletOverview = () => {
   const [loading, setLoading] = useState(true);
 
   const [refreshing, setRefreshing] = useState(false);
+
+  /*
+  ========================================================
+  REALTIME SUBSCRIPTION REFS
+  ========================================================
+
+  We keep the DataStore subscriptions in refs so that
+  they can be safely cleaned up whenever the courier or
+  wallet changes.
+
+  Wallet observer:
+    Watches wallet balance changes.
+
+  Transaction observer:
+    Watches new/updated wallet transactions.
+  ========================================================
+  */
+
+  const walletSubscriptionRef = useRef(null);
+
+  const transactionSubscriptionRef = useRef(null);
 
   /*
   ========================================================
@@ -324,8 +351,10 @@ const WalletOverview = () => {
       console.error("Wallet Overview fetch error:", error);
 
       /*
+      ------------------------------------------------------
       Do not destroy the previous wallet state if
       a refresh fails.
+      ------------------------------------------------------
       */
 
       if (!wallet) {
@@ -346,6 +375,226 @@ const WalletOverview = () => {
   useEffect(() => {
     fetchWallet();
   }, [fetchWallet]);
+
+  /*
+  ========================================================
+  REALTIME WALLET + TRANSACTION SUBSCRIPTIONS
+  ========================================================
+
+  THIS IS THE IMPORTANT NEW SECTION.
+
+  DataStore.observe() listens for local/cloud DataStore
+  changes.
+
+  When a Lambda updates the Wallet through AppSync,
+  DataStore receives the synced change and this observer
+  fires.
+
+  When a Lambda creates or updates a Transaction,
+  the Transaction observer fires.
+
+  We then re-fetch the wallet and transactions so the
+  complete Wallet Overview stays synchronized.
+  ========================================================
+  */
+
+  useEffect(() => {
+    /*
+    ------------------------------------------------------
+    CLEAN UP ANY PREVIOUS SUBSCRIPTIONS
+    ------------------------------------------------------
+
+    This is important when:
+
+      - courier changes
+      - walletID changes
+      - component remounts
+
+    We do not want duplicate listeners.
+    ------------------------------------------------------
+    */
+
+    if (walletSubscriptionRef.current) {
+      walletSubscriptionRef.current.unsubscribe();
+      walletSubscriptionRef.current = null;
+    }
+
+    if (transactionSubscriptionRef.current) {
+      transactionSubscriptionRef.current.unsubscribe();
+      transactionSubscriptionRef.current = null;
+    }
+
+    /*
+    ------------------------------------------------------
+    NO COURIER / NO WALLET
+    ------------------------------------------------------
+    */
+
+    if (!dbCourier?.id || !dbCourier?.walletID) {
+      return undefined;
+    }
+
+    /*
+    ------------------------------------------------------
+    WATCH WALLET
+    ------------------------------------------------------
+
+    This watches specifically this courier's wallet.
+
+    Examples of changes this catches:
+
+      availableBalance
+      pendingBalance
+      lifetimeEarnings
+      any other Wallet field update
+
+    When releaseFunds changes:
+
+      pendingBalance
+      availableBalance
+
+    this observer fires.
+
+    When releaseCourierMilestoneFunds changes the wallet,
+    this observer fires.
+
+    When processPayouts changes the wallet later,
+    this observer will also fire.
+    ------------------------------------------------------
+    */
+
+    walletSubscriptionRef.current = DataStore.observe(Wallet, (walletRecord) =>
+      walletRecord.id.eq(dbCourier.walletID),
+    ).subscribe({
+      next: (change) => {
+        /*
+        --------------------------------------------------
+        Ignore deleted records.
+        --------------------------------------------------
+        */
+
+        if (change?.element?._deleted) {
+          return;
+        }
+
+        console.log(
+          "Wallet Overview realtime update:",
+          change?.op,
+          change?.element?.id,
+        );
+
+        /*
+        --------------------------------------------------
+        Re-fetch the wallet and transactions.
+
+        We intentionally re-query instead of manually
+        changing only one balance field.
+
+        This keeps the entire overview synchronized.
+        --------------------------------------------------
+        */
+
+        fetchWallet();
+      },
+
+      error: (error) => {
+        console.error(
+          "Wallet Overview wallet realtime subscription error:",
+          error,
+        );
+      },
+    });
+
+    /*
+    ------------------------------------------------------
+    WATCH TRANSACTIONS
+    ------------------------------------------------------
+
+    This watches transactions belonging to this wallet.
+
+    It catches:
+
+      new CREDIT transaction
+      CREDIT status changing
+      new DEBIT transaction
+      payout transaction updates
+
+    This is important because Today's Earnings,
+    Today's Deliveries and Recent Activity are based on
+    Transaction records.
+    ------------------------------------------------------
+    */
+
+    transactionSubscriptionRef.current = DataStore.observe(
+      Transaction,
+      (transaction) => transaction.walletID.eq(dbCourier.walletID),
+    ).subscribe({
+      next: (change) => {
+        /*
+          ------------------------------------------------
+          Ignore deleted transactions.
+          ------------------------------------------------
+          */
+
+        if (change?.element?._deleted) {
+          return;
+        }
+
+        console.log(
+          "Wallet Overview transaction realtime update:",
+          change?.op,
+          change?.element?.id,
+        );
+
+        /*
+          ------------------------------------------------
+          Re-fetch everything so:
+
+            Today's Earnings
+            Today's Deliveries
+            Recent Activity
+
+          remain synchronized.
+          ------------------------------------------------
+          */
+
+        fetchWallet();
+      },
+
+      error: (error) => {
+        console.error(
+          "Wallet Overview transaction realtime subscription error:",
+          error,
+        );
+      },
+    });
+
+    /*
+    ------------------------------------------------------
+    CLEANUP
+    ------------------------------------------------------
+
+    React calls this when:
+
+      - component unmounts
+      - dbCourier.id changes
+      - dbCourier.walletID changes
+      - fetchWallet dependency changes
+    ------------------------------------------------------
+    */
+
+    return () => {
+      if (walletSubscriptionRef.current) {
+        walletSubscriptionRef.current.unsubscribe();
+        walletSubscriptionRef.current = null;
+      }
+
+      if (transactionSubscriptionRef.current) {
+        transactionSubscriptionRef.current.unsubscribe();
+        transactionSubscriptionRef.current = null;
+      }
+    };
+  }, [dbCourier?.id, dbCourier?.walletID, fetchWallet]);
 
   /*
   ========================================================

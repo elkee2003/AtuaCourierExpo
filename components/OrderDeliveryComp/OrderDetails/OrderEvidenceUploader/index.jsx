@@ -7,6 +7,7 @@ import { Image, Modal, Text, TouchableOpacity, View } from "react-native";
 import CameraCapture from "../CameraCapture";
 import MediaPreviewModal from "../MediaPreviewModal/MediaPreviewModal";
 import VideoThumbnail from "./VideoThumbnail";
+import styles from "./styles";
 
 export default function OrderEvidenceUploader({ order }) {
   const {
