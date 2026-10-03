@@ -152,6 +152,9 @@ const OrderSummary = ({ orderId }) => {
   const latestUserOfferAmount =
     latestUserOffer?.amount ?? order?.initialOfferPrice;
 
+  const hasMaxiAdditionalFees =
+    Number(order?.loadingFee || 0) > 0 || Number(order?.unloadingFee || 0) > 0;
+
   // ============================================================
   // ACCEPT BUTTON
   // ============================================================
@@ -759,12 +762,6 @@ const OrderSummary = ({ orderId }) => {
         }),
       );
 
-      await DataStore.save(
-        Courier.copyOf(freshCourier, (updated) => {
-          updated.currentMaxiCount = Number(updated.currentMaxiCount || 0) + 1;
-        }),
-      );
-
       router.replace("/deliveryhistory");
     } catch (error) {
       console.error("Error accepting order:", error);
@@ -1362,6 +1359,14 @@ const OrderSummary = ({ orderId }) => {
                 </View>
               )}
 
+              {hasValue(order.loadCategory) && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>LOAD CATEGORY</Text>
+
+                  <Text style={styles.detailValue}>{order.loadCategory}</Text>
+                </View>
+              )}
+
               {hasValue(order.declaredWeightBracket) && (
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>WEIGHT</Text>
@@ -1521,6 +1526,12 @@ const OrderSummary = ({ orderId }) => {
                   <Text style={styles.adjustText}>+</Text>
                 </TouchableOpacity>
               </View>
+
+              <Text style={styles.offerFeeNote}>
+                {hasMaxiAdditionalFees
+                  ? "Loading & unloading fees are included in the total offer amount."
+                  : ""}
+              </Text>
 
               {numericOffer < minPrice || numericOffer > maxPrice ? (
                 <Text style={styles.feedBack}>

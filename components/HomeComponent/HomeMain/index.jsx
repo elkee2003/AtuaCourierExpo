@@ -1025,6 +1025,12 @@ No `todayEarnings` field is required on Courier.
         order.and((o) => [
           o.status.eq("READY_FOR_PICKUP"),
           o.paymentStatus.eq("PAID"),
+
+          // for production environment
+          // o.orderEnvironment.eq("PRODUCTION"),
+
+          // for testing environment
+          o.orderEnvironment.eq("TEST"),
         ]),
       );
 
@@ -1242,6 +1248,10 @@ No `todayEarnings` field is required on Courier.
           o.transportationType.eq("MAXI"),
 
           o.vehicleClass.eq(dbCourier.vehicleClass),
+
+          // o.orderEnvironment.eq("PRODUCTION"),
+
+          o.orderEnvironment.eq("TEST"),
 
           o.or((status) => [
             status.status.eq("READY_FOR_PICKUP"),

@@ -35,15 +35,45 @@ const client = generateClient();
 ==========================================================
 PAYOUT RULES
 ==========================================================
+
+Courier-requested payout rules:
+
+1. Minimum payout amount = ₦3,000
+2. Payout fee = ₦100
+3. Courier receives the full requested payout amount
+4. The ₦100 fee is deducted from the courier wallet
+5. Therefore:
+
+   Requested payout: ₦5,000
+   Fee:              ₦100
+   Wallet deduction: ₦5,100
+   Courier receives: ₦5,000
+
+The backend remains authoritative and must enforce
+these rules independently of the frontend.
+==========================================================
 */
 
-const MINIMUM_PAYOUT = 1000;
+const MINIMUM_PAYOUT = 3000;
 
 const PAYOUT_FEE = 100;
 
 /*
 ==========================================================
 PAYOUT METHOD
+==========================================================
+
+This value is kept as BANK_TRANSFER because that is the
+value currently expected by the requestPayout mutation.
+
+The backend processPayouts function normalizes this legacy
+value to:
+
+    payoutMethod = MANUAL_SINGLE
+    payoutSource = COURIER_REQUESTED
+
+Do not change this to MANUAL_SINGLE here unless the
+requestPayout resolver is also changed to expect that value.
 ==========================================================
 */
 
@@ -82,15 +112,10 @@ const formatAccountNumber = (accountNumber) => {
 GET CURRENT COURIER
 ==========================================================
 
-Uses the authenticated Cognito user's `userId` to find
-the matching Courier record.
+Uses the authenticated Cognito user's userId to find the
+matching Courier record.
 
-Your Courier schema contains:
-    sub: String!
-
-So we match:
-    Courier.sub === authenticated userId
-
+Courier.sub === authenticated Cognito userId
 ==========================================================
 */
 
@@ -124,21 +149,21 @@ const getCurrentCourier = async () => {
 REQUEST PAYOUT MUTATION
 ==========================================================
 
-IMPORTANT:
+The frontend only requests the payout.
 
-The exact GraphQL/Lambda operation name depends on the
-Lambda/API wiring in your project.
+The backend is responsible for:
 
-This is the client-side mutation shape.
+- validating the payout
+- calculating the fee
+- creating the Payout record
+- reserving/debiting the wallet
+- creating the Transaction
+- initiating Paystack
+- handling Paystack status
+- reconciling failures
 
-Your Lambda should receive:
-
-    courierID
-    requestedAmount
-    payoutMethod
-
-The Lambda then performs the secure payout process.
-
+The frontend never performs those financial operations
+directly.
 ==========================================================
 */
 
@@ -325,6 +350,12 @@ const RequestPayout = () => {
 
   const availableBalance = Number(wallet?.availableBalance || 0);
 
+  /*
+  ========================================================
+  BANK ACCOUNT CHECK
+  ========================================================
+  */
+
   const hasBankAccount = Boolean(
     courier?.bankName && courier?.accountName && courier?.accountNumber,
   );
@@ -347,11 +378,24 @@ const RequestPayout = () => {
 
   /*
   ========================================================
-  REMAINING BALANCE
+  TOTAL WALLET DEDUCTION
+  ========================================================
+
+  Example:
+
+  ₦5,000 payout
+  + ₦100 fee
+  = ₦5,100 wallet deduction
   ========================================================
   */
 
   const totalWalletDeduction = numericAmount + PAYOUT_FEE;
+
+  /*
+  ========================================================
+  REMAINING BALANCE
+  ========================================================
+  */
 
   const remainingBalance = Math.max(availableBalance - totalWalletDeduction, 0);
 
@@ -374,15 +418,36 @@ const RequestPayout = () => {
       return "Enter an amount to withdraw.";
     }
 
+    /*
+    IMPORTANT:
+
+    Courier-requested payout minimum is ₦3,000.
+    */
+
     if (numericAmount < MINIMUM_PAYOUT) {
       return `Minimum payout is ${formatShortCurrency(MINIMUM_PAYOUT)}.`;
     }
 
-    if (numericAmount + PAYOUT_FEE > availableBalance) {
+    /*
+    The courier must have enough money for BOTH:
+
+    requested payout
+    +
+    ₦100 fee
+    */
+
+    if (totalWalletDeduction > availableBalance) {
       return "You don't have enough available balance to cover the payout and ₦100 payout fee.";
     }
+
     return null;
-  }, [amount, numericAmount, availableBalance, hasBankAccount]);
+  }, [
+    amount,
+    numericAmount,
+    totalWalletDeduction,
+    availableBalance,
+    hasBankAccount,
+  ]);
 
   /*
   ========================================================
@@ -397,7 +462,7 @@ const RequestPayout = () => {
     !!wallet &&
     hasBankAccount &&
     numericAmount >= MINIMUM_PAYOUT &&
-    numericAmount + PAYOUT_FEE <= availableBalance;
+    totalWalletDeduction <= availableBalance;
 
   /*
   ========================================================
@@ -423,18 +488,55 @@ const RequestPayout = () => {
   ========================================================
   QUICK AMOUNTS
   ========================================================
+
+  Quick amounts below ₦3,000 are intentionally not offered.
+
+  Also, the button is disabled when the courier's wallet
+  cannot cover the payout amount plus the ₦100 fee.
+  ========================================================
   */
 
+  const quickAmounts = [3000, 5000, 10000, 20000];
+
   const handleQuickAmount = (value) => {
-    if (value > availableBalance) {
+    if (value < MINIMUM_PAYOUT) {
+      return;
+    }
+
+    if (value + PAYOUT_FEE > availableBalance) {
       return;
     }
 
     setAmount(String(value));
   };
 
+  /*
+  ========================================================
+  MAX PAYOUT
+  ========================================================
+
+  Maximum payout = available balance - ₦100 fee.
+
+  Example:
+
+  Available balance = ₦10,000
+  Fee               = ₦100
+  Maximum payout    = ₦9,900
+  ========================================================
+  */
+
   const handleMaxAmount = () => {
     const maxPayoutAmount = Math.max(availableBalance - PAYOUT_FEE, 0);
+
+    /*
+    If the maximum possible payout is below ₦3,000,
+    don't populate the field with an invalid amount.
+    */
+
+    if (maxPayoutAmount < MINIMUM_PAYOUT) {
+      setAmount("");
+      return;
+    }
 
     setAmount(String(maxPayoutAmount));
   };
@@ -468,14 +570,12 @@ const RequestPayout = () => {
 
     try {
       /*
-        --------------------------------------------------
-        RECHECK THE WALLET BEFORE SUBMITTING
+      --------------------------------------------------
+      RECHECK THE WALLET BEFORE SUBMITTING
+      --------------------------------------------------
 
-        This is important because another operation may
-        have changed the available balance since the
-        screen opened.
-        --------------------------------------------------
-        */
+      The wallet may have changed since the screen opened.
+      */
 
       const freshWallet = await DataStore.query(Wallet, wallet.id);
 
@@ -484,6 +584,12 @@ const RequestPayout = () => {
       }
 
       const freshBalance = Number(freshWallet.availableBalance || 0);
+
+      /*
+      Recheck the complete wallet requirement:
+
+      payout amount + ₦100 fee
+      */
 
       if (numericAmount + PAYOUT_FEE > freshBalance) {
         setWallet(freshWallet);
@@ -496,21 +602,37 @@ const RequestPayout = () => {
       }
 
       /*
-        --------------------------------------------------
-        CALL SECURE BACKEND
-        --------------------------------------------------
+      --------------------------------------------------
+      RECHECK MINIMUM PAYOUT
+      --------------------------------------------------
 
-        The app does NOT:
+      The frontend checks this already, but we also
+      check immediately before submitting.
+      */
 
-          ❌ create Payout
-          ❌ debit Wallet
-          ❌ create Transaction
-          ❌ call Paystack
-          ❌ use Paystack secret key
+      if (numericAmount < MINIMUM_PAYOUT) {
+        setShowConfirmation(false);
 
-        The backend does all of those.
-        --------------------------------------------------
-        */
+        throw new Error(
+          `Minimum payout is ${formatShortCurrency(MINIMUM_PAYOUT)}.`,
+        );
+      }
+
+      /*
+      --------------------------------------------------
+      CALL SECURE BACKEND
+      --------------------------------------------------
+
+      The app does NOT:
+
+        - create Payout
+        - debit Wallet
+        - create Transaction
+        - call Paystack
+        - use Paystack secret key
+
+      The backend performs all financial operations.
+      */
 
       const response = await client.graphql({
         query: REQUEST_PAYOUT,
@@ -520,15 +642,25 @@ const RequestPayout = () => {
 
           requestedAmount: numericAmount,
 
+          /*
+          Keep BANK_TRANSFER for compatibility with the
+          existing requestPayout resolver.
+
+          processPayouts normalizes this to:
+
+            MANUAL_SINGLE
+            COURIER_REQUESTED
+          */
+
           payoutMethod: PAYOUT_METHOD,
         },
       });
 
       /*
-        --------------------------------------------------
-        GRAPHQL RESPONSE
-        --------------------------------------------------
-        */
+      --------------------------------------------------
+      GRAPHQL RESPONSE
+      --------------------------------------------------
+      */
 
       const result = response?.data?.requestPayout;
 
@@ -537,28 +669,28 @@ const RequestPayout = () => {
       }
 
       /*
-        --------------------------------------------------
-        CLOSE CONFIRMATION
-        --------------------------------------------------
-        */
+      --------------------------------------------------
+      CLOSE CONFIRMATION
+      --------------------------------------------------
+      */
 
       setShowConfirmation(false);
 
       /*
-        --------------------------------------------------
-        CLEAR AMOUNT
-        --------------------------------------------------
-        */
+      --------------------------------------------------
+      CLEAR AMOUNT
+      --------------------------------------------------
+      */
 
       setAmount("");
 
       /*
-        --------------------------------------------------
-        REFRESH WALLET
+      --------------------------------------------------
+      REFRESH WALLET
+      --------------------------------------------------
 
-        Backend has already reserved the money.
-        --------------------------------------------------
-        */
+      The backend should have reserved/debited the wallet.
+      */
 
       const updatedWallet = await DataStore.query(Wallet, wallet.id);
 
@@ -567,10 +699,10 @@ const RequestPayout = () => {
       }
 
       /*
-        --------------------------------------------------
-        SUCCESS
-        --------------------------------------------------
-        */
+      --------------------------------------------------
+      SUCCESS
+      --------------------------------------------------
+      */
 
       Alert.alert(
         "Payout requested",
@@ -580,15 +712,18 @@ const RequestPayout = () => {
         [
           {
             text: "View payout",
+
             onPress: () => {
               router.replace({
                 pathname: "/wallet/payouts/[payoutId]",
+
                 params: {
                   payoutId: String(result.id),
                 },
               });
             },
           },
+
           {
             text: "Done",
             style: "cancel",
@@ -599,18 +734,18 @@ const RequestPayout = () => {
       console.error("Request payout error:", error);
 
       /*
-        --------------------------------------------------
-        CLOSE CONFIRMATION
-        --------------------------------------------------
-        */
+      --------------------------------------------------
+      CLOSE CONFIRMATION
+      --------------------------------------------------
+      */
 
       setShowConfirmation(false);
 
       /*
-        --------------------------------------------------
-        EXTRACT USEFUL ERROR
-        --------------------------------------------------
-        */
+      --------------------------------------------------
+      EXTRACT USEFUL ERROR
+      --------------------------------------------------
+      */
 
       let message = "We couldn't submit your payout request. Please try again.";
 
@@ -782,42 +917,58 @@ const RequestPayout = () => {
           ================================================= */}
 
           <View style={styles.quickAmountRow}>
-            {[5000, 10000, 20000].map((value) => (
-              <TouchableOpacity
-                key={value}
-                style={[
-                  styles.quickAmountButton,
-                  numericAmount === value && styles.quickAmountButtonActive,
-                  value > availableBalance && styles.quickAmountButtonDisabled,
-                ]}
-                onPress={() => handleQuickAmount(value)}
-                disabled={value > availableBalance}
-                activeOpacity={0.75}
-              >
-                <Text
+            {quickAmounts.map((value) => {
+              const canAfford = value + PAYOUT_FEE <= availableBalance;
+
+              return (
+                <TouchableOpacity
+                  key={value}
                   style={[
-                    styles.quickAmountText,
-                    numericAmount === value && styles.quickAmountTextActive,
+                    styles.quickAmountButton,
+
+                    numericAmount === value && styles.quickAmountButtonActive,
+
+                    !canAfford && styles.quickAmountButtonDisabled,
                   ]}
+                  onPress={() => handleQuickAmount(value)}
+                  disabled={!canAfford}
+                  activeOpacity={0.75}
                 >
-                  {formatShortCurrency(value)}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={[
+                      styles.quickAmountText,
+
+                      numericAmount === value && styles.quickAmountTextActive,
+                    ]}
+                  >
+                    {formatShortCurrency(value)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
 
             <TouchableOpacity
               style={[
                 styles.quickAmountButton,
-                numericAmount === availableBalance &&
+
+                numericAmount === Math.max(availableBalance - PAYOUT_FEE, 0) &&
+                  numericAmount >= MINIMUM_PAYOUT &&
                   styles.quickAmountButtonActive,
+
+                availableBalance < MINIMUM_PAYOUT + PAYOUT_FEE &&
+                  styles.quickAmountButtonDisabled,
               ]}
               onPress={handleMaxAmount}
+              disabled={availableBalance < MINIMUM_PAYOUT + PAYOUT_FEE}
               activeOpacity={0.75}
             >
               <Text
                 style={[
                   styles.quickAmountText,
-                  numericAmount === availableBalance &&
+
+                  numericAmount ===
+                    Math.max(availableBalance - PAYOUT_FEE, 0) &&
+                    numericAmount >= MINIMUM_PAYOUT &&
                     styles.quickAmountTextActive,
                 ]}
               >
@@ -884,6 +1035,14 @@ const RequestPayout = () => {
               </Text>
 
               <Text style={styles.infoText}>
+                A ₦100 payout fee applies to courier- requested payouts.
+              </Text>
+
+              <Text style={styles.infoText}>
+                The minimum payout amount is ₦3,000.
+              </Text>
+
+              <Text style={styles.infoText}>
                 Once processing begins, a payout may not be cancellable.
               </Text>
             </View>
@@ -915,6 +1074,11 @@ const RequestPayout = () => {
                 />
 
                 <View style={styles.summaryDivider} />
+
+                <SummaryRow
+                  label="Total wallet deduction"
+                  value={formatCurrency(totalWalletDeduction)}
+                />
 
                 <SummaryRow
                   label="Remaining wallet balance"
@@ -964,8 +1128,9 @@ const RequestPayout = () => {
           ================================================= */}
 
           <Text style={styles.footerText}>
-            Minimum payout: {formatShortCurrency(MINIMUM_PAYOUT)}. Your
-            available balance must be sufficient to complete the request.
+            Minimum payout: {formatShortCurrency(MINIMUM_PAYOUT)}. A ₦100 payout
+            fee applies. Your available balance must be sufficient to cover both
+            the payout and the fee.
           </Text>
         </ScrollView>
 
@@ -1007,6 +1172,30 @@ const RequestPayout = () => {
                     {formatAccountNumber(courier?.accountNumber)}
                   </Text>
                 </View>
+              </View>
+
+              {/* ==========================================
+                  CONFIRMATION FEE BREAKDOWN
+              ========================================== */}
+
+              <View style={styles.confirmationRemaining}>
+                <Text style={styles.confirmationRemainingLabel}>
+                  Payout fee
+                </Text>
+
+                <Text style={styles.confirmationRemainingValue}>
+                  {formatCurrency(PAYOUT_FEE)}
+                </Text>
+              </View>
+
+              <View style={styles.confirmationRemaining}>
+                <Text style={styles.confirmationRemainingLabel}>
+                  Total wallet deduction
+                </Text>
+
+                <Text style={styles.confirmationRemainingValue}>
+                  {formatCurrency(totalWalletDeduction)}
+                </Text>
               </View>
 
               <View style={styles.confirmationRemaining}>

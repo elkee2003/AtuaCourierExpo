@@ -850,6 +850,15 @@ export default StyleSheet.create({
     maxWidth: 250,
   },
 
+  offerFeeNote: {
+    fontSize: 8,
+    lineHeight: 12,
+    color: "#8F8F8F",
+    textAlign: "center",
+    marginTop: 6,
+    alignSelf: "center",
+  },
+
   offerBadge: {
     backgroundColor: "#292929",
 
