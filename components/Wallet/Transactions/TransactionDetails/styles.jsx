@@ -208,6 +208,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#FEF2F2",
   },
 
+  statusBadgeReversed: {
+    backgroundColor: "#F1F5F9",
+  },
+
   statusBadgeDot: {
     width: 7,
     height: 7,
@@ -229,6 +233,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#DC2626",
   },
 
+  statusDotReversed: {
+    backgroundColor: "#64748B",
+  },
+
   statusBadgeText: {
     fontSize: 11,
 
@@ -247,6 +255,10 @@ const styles = StyleSheet.create({
 
   statusTextFailed: {
     color: "#DC2626",
+  },
+
+  statusTextReversed: {
+    color: "#64748B",
   },
 
   amountDate: {
@@ -295,6 +307,10 @@ const styles = StyleSheet.create({
 
   statusMessageFailed: {
     backgroundColor: "#FEF2F2",
+  },
+
+  statusMessageReversed: {
+    backgroundColor: "#F1F5F9",
   },
 
   statusMessageText: {
@@ -405,6 +421,12 @@ const styles = StyleSheet.create({
 
   detailStatusFailed: {
     color: "#DC2626",
+  },
+
+  detailStatusReversed: {
+    color: "#64748B",
+
+    fontWeight: "700",
   },
 
   /*

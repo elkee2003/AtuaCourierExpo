@@ -191,6 +191,9 @@ const getStatusLabel = (status) => {
     case "FAILED":
       return "Failed";
 
+    case "REVERSED":
+      return "Reversed";
+
     default:
       return status || "Unknown";
   }
@@ -697,8 +700,8 @@ const Transactions = () => {
                   const isCredit = transaction.type === "CREDIT";
 
                   const isPending = transaction.status === "PENDING";
-
                   const isFailed = transaction.status === "FAILED";
+                  const isReversed = transaction.status === "REVERSED";
 
                   return (
                     <TouchableOpacity
@@ -755,7 +758,9 @@ const Transactions = () => {
                                   ? styles.pendingDot
                                   : isFailed
                                     ? styles.failedDot
-                                    : styles.completedDot,
+                                    : isReversed
+                                      ? styles.reversedDot
+                                      : styles.completedDot,
                               ]}
                             />
 
@@ -766,7 +771,9 @@ const Transactions = () => {
                                   ? styles.pendingStatus
                                   : isFailed
                                     ? styles.failedStatus
-                                    : styles.completedStatus,
+                                    : isReversed
+                                      ? styles.reversedStatus
+                                      : styles.completedStatus,
                               ]}
                             >
                               {getStatusLabel(transaction.status)}

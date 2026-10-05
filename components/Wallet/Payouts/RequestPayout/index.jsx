@@ -149,39 +149,46 @@ const getCurrentCourier = async () => {
 REQUEST PAYOUT MUTATION
 ==========================================================
 
-The frontend only requests the payout.
+The courier app only requests the payout.
 
-The backend is responsible for:
+The backend processPayouts Lambda is responsible for:
 
 - validating the payout
-- calculating the fee
-- creating the Payout record
+- enforcing the ₦3,000 minimum
+- calculating the ₦100 fee
 - reserving/debiting the wallet
 - creating the Transaction
+- creating the Payout
 - initiating Paystack
-- handling Paystack status
-- reconciling failures
+- handling transfer failures
+- reconciliation
 
-The frontend never performs those financial operations
-directly.
+The GraphQL mutation returns:
+
+    ProcessPayoutsResponse
+
+which contains:
+
+    statusCode
+    body
+
+The detailed payout result is inside the JSON body.
 ==========================================================
 */
 
 const REQUEST_PAYOUT = /* GraphQL */ `
   mutation RequestPayout(
     $courierID: ID!
-    $requestedAmount: Float
-    $payoutMethod: String
+    $requestedAmount: Float!
+    $payoutMethod: String!
   ) {
     requestPayout(
       courierID: $courierID
       requestedAmount: $requestedAmount
       payoutMethod: $payoutMethod
     ) {
-      id
-      status
-      amount
-      reference
+      statusCode
+      body
     }
   }
 `;
@@ -657,15 +664,87 @@ const RequestPayout = () => {
       });
 
       /*
-      --------------------------------------------------
-      GRAPHQL RESPONSE
-      --------------------------------------------------
-      */
+--------------------------------------------------
+GRAPHQL RESPONSE
+--------------------------------------------------
 
-      const result = response?.data?.requestPayout;
+requestPayout returns:
 
-      if (!result?.id) {
-        throw new Error("The payout request was not created.");
+    {
+      statusCode,
+      body
+    }
+
+The detailed payout result is contained inside
+the JSON body.
+--------------------------------------------------
+*/
+
+      const responseResult = response?.data?.requestPayout;
+
+      if (!responseResult) {
+        throw new Error("The payout service returned no response.");
+      }
+
+      /*
+--------------------------------------------------
+PARSE BACKEND RESPONSE
+--------------------------------------------------
+*/
+
+      let result = responseResult.body;
+
+      if (typeof result === "string") {
+        try {
+          result = JSON.parse(result);
+        } catch (parseError) {
+          console.error("Could not parse payout response:", parseError);
+
+          throw new Error("The payout service returned an invalid response.");
+        }
+      }
+
+      /*
+--------------------------------------------------
+CHECK BACKEND STATUS
+--------------------------------------------------
+
+The Lambda may return:
+
+    statusCode = 200
+
+while the actual payout result inside body
+contains:
+
+    success: false
+
+Therefore check BOTH.
+--------------------------------------------------
+*/
+
+      if (
+        Number(responseResult.statusCode) >= 400 ||
+        result?.success === false
+      ) {
+        throw new Error(
+          result?.message || "The payout could not be initiated.",
+        );
+      }
+
+      /*
+--------------------------------------------------
+VERIFY PAYOUT ID
+--------------------------------------------------
+
+A successfully initiated payout should have
+a Payout record ID.
+--------------------------------------------------
+*/
+
+      if (!result?.payoutID) {
+        throw new Error(
+          "The payout was processed but no payout ID was returned.",
+        );
       }
 
       /*
@@ -708,17 +787,16 @@ const RequestPayout = () => {
         "Payout requested",
         `${formatCurrency(
           result.amount || numericAmount,
-        )} has been submitted for payout.`,
+        )} has been submitted for payout.\n\n` +
+          `Status: ${result.status || "PROCESSING"}`,
         [
           {
             text: "View payout",
-
             onPress: () => {
               router.replace({
                 pathname: "/wallet/payouts/[payoutId]",
-
                 params: {
-                  payoutId: String(result.id),
+                  payoutId: String(result.payoutID),
                 },
               });
             },

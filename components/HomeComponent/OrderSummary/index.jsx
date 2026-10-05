@@ -936,6 +936,12 @@ const OrderSummary = ({ orderId }) => {
                 >
                   ₦{formattedPrice}
                 </Text>
+
+                {/* {order.status === "ACCEPTED" && ( */}
+                <Text style={styles.earningsNote}>
+                  Platform commission already deducted
+                </Text>
+                {/* )} */}
               </View>
 
               <View style={styles.serviceHeroBadge}>

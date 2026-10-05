@@ -547,6 +547,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#DC2626",
   },
 
+  reversedDot: {
+    backgroundColor: "#64748B",
+  },
+
   statusText: {
     fontSize: 9.5,
 
@@ -565,6 +569,10 @@ const styles = StyleSheet.create({
 
   failedStatus: {
     color: "#DC2626",
+  },
+
+  reversedStatus: {
+    color: "#64748B",
   },
 
   /*

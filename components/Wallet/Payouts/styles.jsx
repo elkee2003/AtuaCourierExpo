@@ -616,6 +616,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#FEF2F2",
   },
 
+  payoutIconReversed: {
+    backgroundColor: "#F1F5F9",
+  },
+
   /*
   ==========================================================
   PAYOUT DETAILS
@@ -702,6 +706,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#DC2626",
   },
 
+  statusDotReversed: {
+    backgroundColor: "#64748B",
+  },
+
   payoutStatus: {
     fontSize: 9,
 
@@ -722,6 +730,10 @@ const styles = StyleSheet.create({
 
   payoutStatusFailed: {
     color: "#DC2626",
+  },
+
+  payoutStatusReversed: {
+    color: "#64748B",
   },
 
   /*

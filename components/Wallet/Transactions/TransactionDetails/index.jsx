@@ -80,6 +80,9 @@ const getStatusLabel = (status) => {
     case "FAILED":
       return "Failed";
 
+    case "REVERSED":
+      return "Reversed";
+
     default:
       return status || "Unknown";
   }
@@ -104,6 +107,10 @@ const getStatusDescription = (transaction) => {
 
   if (transaction?.status === "FAILED") {
     return "This transaction could not be completed. No successful wallet movement was made.";
+  }
+
+  if (transaction?.status === "REVERSED") {
+    return "This payout failed, and the wallet amount has been returned to your available balance.";
   }
 
   return "Transaction status information.";
@@ -285,6 +292,8 @@ const TransactionDetails = ({ transactionId }) => {
 
   const isFailed = transaction.status === "FAILED";
 
+  const isReversed = transaction.status === "REVERSED";
+
   const statusLabel = getStatusLabel(transaction.status);
 
   /*
@@ -365,7 +374,9 @@ const TransactionDetails = ({ transactionId }) => {
                 ? styles.statusBadgePending
                 : isFailed
                   ? styles.statusBadgeFailed
-                  : styles.statusBadgeCompleted,
+                  : isReversed
+                    ? styles.statusBadgeReversed
+                    : styles.statusBadgeCompleted,
             ]}
           >
             <View
@@ -375,7 +386,9 @@ const TransactionDetails = ({ transactionId }) => {
                   ? styles.statusDotPending
                   : isFailed
                     ? styles.statusDotFailed
-                    : styles.statusDotCompleted,
+                    : isReversed
+                      ? styles.statusDotReversed
+                      : styles.statusDotCompleted,
               ]}
             />
 
@@ -386,7 +399,9 @@ const TransactionDetails = ({ transactionId }) => {
                   ? styles.statusTextPending
                   : isFailed
                     ? styles.statusTextFailed
-                    : styles.statusTextCompleted,
+                    : isReversed
+                      ? styles.statusTextReversed
+                      : styles.statusTextCompleted,
               ]}
             >
               {statusLabel}
@@ -413,7 +428,9 @@ const TransactionDetails = ({ transactionId }) => {
               ? styles.statusMessagePending
               : isFailed
                 ? styles.statusMessageFailed
-                : styles.statusMessageCompleted,
+                : isReversed
+                  ? styles.statusMessageReversed
+                  : styles.statusMessageCompleted,
           ]}
         >
           <Ionicons
@@ -422,10 +439,20 @@ const TransactionDetails = ({ transactionId }) => {
                 ? "time-outline"
                 : isFailed
                   ? "alert-circle-outline"
-                  : "checkmark-circle-outline"
+                  : isReversed
+                    ? "refresh-circle-outline"
+                    : "checkmark-circle-outline"
             }
             size={20}
-            color={isPending ? "#D97706" : isFailed ? "#DC2626" : "#059669"}
+            color={
+              isPending
+                ? "#D97706"
+                : isFailed
+                  ? "#DC2626"
+                  : isReversed
+                    ? "#64748B"
+                    : "#059669"
+            }
           />
 
           <Text style={styles.statusMessageText}>
@@ -581,6 +608,10 @@ const DetailRow = ({
 
   if (status === "FAILED") {
     statusStyle = styles.detailStatusFailed;
+  }
+
+  if (status === "REVERSED") {
+    statusStyle = styles.detailStatusReversed;
   }
 
   return (

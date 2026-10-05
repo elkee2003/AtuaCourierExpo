@@ -95,6 +95,9 @@ const getStatusLabel = (status) => {
     case "FAILED":
       return "Failed";
 
+    case "REVERSED":
+      return "Reversed";
+
     default:
       return status || "Unknown";
   }
@@ -113,6 +116,9 @@ const getStatusIcon = (status) => {
 
     case "FAILED":
       return "close-circle-outline";
+
+    case "REVERSED":
+      return "refresh-circle-outline";
 
     default:
       return "ellipse-outline";
@@ -138,6 +144,9 @@ const getStatusColor = (status) => {
 
     case "FAILED":
       return "#DC2626";
+
+    case "REVERSED":
+      return "#64748B";
 
     default:
       return "#6B7280";
@@ -902,6 +911,26 @@ const Payouts = () => {
               Failed
             </Text>
           </TouchableOpacity>
+
+          {/* REVERSED */}
+
+          <TouchableOpacity
+            style={[
+              styles.filterButton,
+              filter === "REVERSED" && styles.filterButtonActive,
+            ]}
+            onPress={() => setFilter("REVERSED")}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[
+                styles.filterText,
+                filter === "REVERSED" && styles.filterTextActive,
+              ]}
+            >
+              Reversed
+            </Text>
+          </TouchableOpacity>
         </ScrollView>
 
         {/* =================================================
@@ -956,6 +985,7 @@ const Payouts = () => {
                         styles.payoutIconProcessing,
                       payout.status === "PENDING" && styles.payoutIconPending,
                       payout.status === "FAILED" && styles.payoutIconFailed,
+                      payout.status === "REVERSED" && styles.payoutIconReversed,
                     ]}
                   >
                     <Ionicons
@@ -995,6 +1025,8 @@ const Payouts = () => {
                               styles.statusDotPending,
                             payout.status === "FAILED" &&
                               styles.statusDotFailed,
+                            payout.status === "REVERSED" &&
+                              styles.statusDotReversed,
                           ]}
                         />
 
@@ -1008,6 +1040,8 @@ const Payouts = () => {
                               styles.payoutStatusPending,
                             payout.status === "FAILED" &&
                               styles.payoutStatusFailed,
+                            payout.status === "REVERSED" &&
+                              styles.payoutStatusReversed,
                           ]}
                         >
                           {getStatusLabel(payout.status)}

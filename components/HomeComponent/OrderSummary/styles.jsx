@@ -113,6 +113,13 @@ export default StyleSheet.create({
     color: "#4ADE80",
   },
 
+  earningsNote: {
+    fontSize: 7.5,
+    fontWeight: "700",
+    color: "#86EFAC",
+    marginTop: 5,
+  },
+
   serviceHeroBadge: {
     flexDirection: "row",
     alignItems: "center",

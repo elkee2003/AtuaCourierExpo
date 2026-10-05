@@ -115,6 +115,9 @@ const getStatusLabel = (status) => {
     case "FAILED":
       return "Failed";
 
+    case "REVERSED":
+      return "Reversed";
+
     default:
       return status || "Unknown";
   }
@@ -133,6 +136,9 @@ const getStatusDescription = (status) => {
 
     case "FAILED":
       return "Your payout could not be completed. Please review the failure information below.";
+
+    case "REVERSED":
+      return "The payout could not be completed, and the amount has been returned to your wallet.";
 
     default:
       return "Payout status information.";
@@ -153,6 +159,9 @@ const getStatusColor = (status) => {
     case "FAILED":
       return "#DC2626";
 
+    case "REVERSED":
+      return "#64748B";
+
     default:
       return "#6B7280";
   }
@@ -171,6 +180,9 @@ const getStatusIcon = (status) => {
 
     case "FAILED":
       return "close-circle-outline";
+
+    case "REVERSED":
+      return "refresh-circle-outline";
 
     default:
       return "ellipse-outline";
@@ -545,6 +557,8 @@ const PayoutDetails = () => {
 
   const isFailed = payout.status === "FAILED";
 
+  const isReversed = payout.status === "REVERSED";
+
   const statusLabel = getStatusLabel(payout.status);
 
   const statusColor = getStatusColor(payout.status);
@@ -616,6 +630,7 @@ const PayoutDetails = () => {
               isProcessing && styles.summaryIconProcessing,
               isPending && styles.summaryIconPending,
               isFailed && styles.summaryIconFailed,
+              isReversed && styles.summaryIconReversed,
             ]}
           >
             <Ionicons name="cash-outline" size={27} color={statusColor} />
@@ -630,20 +645,38 @@ const PayoutDetails = () => {
           <View
             style={[
               styles.statusBadge,
-              isPaid && styles.statusBadgePaid,
-              isProcessing && styles.statusBadgeProcessing,
-              isPending && styles.statusBadgePending,
-              isFailed && styles.statusBadgeFailed,
+              isPending
+                ? styles.statusBadgePending
+                : isFailed
+                  ? styles.statusBadgeFailed
+                  : isReversed
+                    ? styles.statusBadgeReversed
+                    : styles.statusBadgeCompleted,
             ]}
           >
-            <Ionicons name={statusIcon} size={15} color={statusColor} />
+            <View
+              style={[
+                styles.statusBadgeDot,
+                isPending
+                  ? styles.statusDotPending
+                  : isFailed
+                    ? styles.statusDotFailed
+                    : isReversed
+                      ? styles.statusDotReversed
+                      : styles.statusDotCompleted,
+              ]}
+            />
 
             <Text
               style={[
                 styles.statusBadgeText,
-                {
-                  color: statusColor,
-                },
+                isPending
+                  ? styles.statusTextPending
+                  : isFailed
+                    ? styles.statusTextFailed
+                    : isReversed
+                      ? styles.statusTextReversed
+                      : styles.statusTextCompleted,
               ]}
             >
               {statusLabel}
@@ -668,6 +701,7 @@ const PayoutDetails = () => {
             isProcessing && styles.statusMessageProcessing,
             isPending && styles.statusMessagePending,
             isFailed && styles.statusMessageFailed,
+            isReversed && styles.statusMessageReversed,
           ]}
         >
           <Ionicons name={statusIcon} size={21} color={statusColor} />
@@ -701,6 +735,19 @@ const PayoutDetails = () => {
           <DetailRow
             label="Method"
             value={payout.payoutMethod || "Bank transfer"}
+          />
+
+          <DetailRow
+            label="Requested by"
+            value={
+              payout.payoutSource === "COURIER_REQUESTED"
+                ? "Courier"
+                : payout.payoutSource === "ADMIN_MANUAL"
+                  ? "Admin"
+                  : payout.payoutSource === "SYSTEM"
+                    ? "Automatic system"
+                    : "Unknown"
+            }
           />
 
           <DetailRow
@@ -816,7 +863,7 @@ const PayoutDetails = () => {
             FAILURE INFORMATION
         ================================================= */}
 
-        {isFailed && payout.failureReason && (
+        {(isFailed || isReversed) && payout.failureReason && (
           <>
             <Text style={styles.sectionTitle}>What happened?</Text>
 
@@ -859,7 +906,7 @@ const PayoutDetails = () => {
 
           {/* PROCESSING */}
 
-          {(isProcessing || isPaid || isFailed) && (
+          {(isProcessing || isPaid || isFailed || isReversed) && (
             <TimelineItem
               title="Transfer processing"
               description={
@@ -870,7 +917,7 @@ const PayoutDetails = () => {
                   : "Transfer submitted"
               }
               active
-              completed={isPaid || isFailed}
+              completed={isPaid || isFailed || isReversed}
               processing={isProcessing}
               failed={false}
               last={isProcessing || isFailed}
@@ -908,6 +955,18 @@ const PayoutDetails = () => {
               active
               completed={false}
               failed
+              last
+            />
+          )}
+
+          {/* REVERSED */}
+
+          {isReversed && (
+            <TimelineItem
+              title="Payout reversed"
+              description="The transfer failed and the wallet debit was returned."
+              active
+              completed
               last
             />
           )}
@@ -1046,6 +1105,10 @@ const DetailRow = ({
 
   if (status === "FAILED") {
     statusStyle = styles.detailStatusFailed;
+  }
+
+  if (status === "REVERSED") {
+    statusStyle = styles.detailStatusReversed;
   }
 
   return (

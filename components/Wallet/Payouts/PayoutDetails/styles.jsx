@@ -163,6 +163,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#FEF2F2",
   },
 
+  summaryIconReversed: {
+    backgroundColor: "#F1F5F9",
+  },
+
   summaryLabel: {
     fontSize: 10,
 
@@ -223,6 +227,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#FEF2F2",
   },
 
+  statusBadgeReversed: {
+    backgroundColor: "#F1F5F9",
+  },
+
   statusBadgeText: {
     fontSize: 10,
 
@@ -269,6 +277,10 @@ const styles = StyleSheet.create({
 
   statusMessageFailed: {
     backgroundColor: "#FEF2F2",
+  },
+
+  statusMessageReversed: {
+    backgroundColor: "#F1F5F9",
   },
 
   statusMessageContent: {
@@ -402,6 +414,11 @@ const styles = StyleSheet.create({
   detailStatusFailed: {
     color: "#DC2626",
 
+    fontWeight: "700",
+  },
+
+  detailStatusReversed: {
+    color: "#64748B",
     fontWeight: "700",
   },
 
