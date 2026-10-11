@@ -2,13 +2,13 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 import { DataStore } from "aws-amplify/datastore";
-import { remove, uploadData } from "aws-amplify/storage";
+import { getUrl, remove, uploadData } from "aws-amplify/storage";
 
 import * as Crypto from "expo-crypto";
 import * as ImageManipulator from "expo-image-manipulator";
 
 import { router } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   ActivityIndicator,
@@ -271,11 +271,18 @@ const deleteStorageFileSafely = async (path) => {
   }
 
   try {
-    await remove({
+    console.log("🗑️ Attempting to delete old storage file:", path);
+
+    const result = await remove({
       path,
     });
+
+    console.log("✅ Old storage file deleted:", path, result);
   } catch (error) {
-    console.log("Unable to delete old storage file:", path, error);
+    console.error("❌ FAILED TO DELETE OLD STORAGE FILE:", {
+      path,
+      error,
+    });
   }
 };
 
@@ -362,6 +369,128 @@ const ReviewCourierCom = () => {
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [resolvedProfilePic, setResolvedProfilePic] = useState(null);
+  const [resolvedNINImage, setResolvedNINImage] = useState(null);
+  const [resolvedMaxiImages, setResolvedMaxiImages] = useState([]);
+
+  useEffect(() => {
+    const fetchReviewImages = async () => {
+      // ------------------------------------------------------------
+      // PROFILE PICTURE
+      // ------------------------------------------------------------
+
+      if (!profilePic) {
+        setResolvedProfilePic(null);
+      } else {
+        const profilePath = getImageUri(profilePic);
+
+        if (!profilePath) {
+          setResolvedProfilePic(null);
+        } else if (profilePath.startsWith("http")) {
+          setResolvedProfilePic(profilePath);
+        } else {
+          try {
+            const result = await getUrl({
+              path: profilePath,
+              options: {
+                validateObjectExistence: true,
+              },
+            });
+
+            setResolvedProfilePic(result.url.toString());
+          } catch (error) {
+            console.log("Error fetching review profile image:", error);
+
+            setResolvedProfilePic(null);
+          }
+        }
+      }
+
+      // ------------------------------------------------------------
+      // COURIER NIN IMAGE
+      // ------------------------------------------------------------
+
+      if (!courierNINImage) {
+        setResolvedNINImage(null);
+      } else {
+        const ninPath = getImageUri(courierNINImage);
+
+        if (!ninPath) {
+          setResolvedNINImage(null);
+        } else if (ninPath.startsWith("http")) {
+          setResolvedNINImage(ninPath);
+        } else {
+          try {
+            const result = await getUrl({
+              path: ninPath,
+              options: {
+                validateObjectExistence: true,
+              },
+            });
+
+            setResolvedNINImage(result.url.toString());
+          } catch (error) {
+            console.log("Error fetching review NIN image:", error);
+
+            setResolvedNINImage(null);
+          }
+        }
+      }
+
+      // ------------------------------------------------------------
+      // MAXI IMAGES
+      // ------------------------------------------------------------
+
+      if (!Array.isArray(maxiImages) || maxiImages.length === 0) {
+        setResolvedMaxiImages([]);
+        return;
+      }
+
+      const resolvedImages = [];
+
+      for (const image of maxiImages) {
+        const imagePath = getImageUri(image);
+
+        if (!imagePath) {
+          continue;
+        }
+
+        // Already a local image selected from camera/gallery
+        if (
+          imagePath.startsWith("file://") ||
+          imagePath.startsWith("content://") ||
+          imagePath.startsWith("data:")
+        ) {
+          resolvedImages.push(imagePath);
+          continue;
+        }
+
+        // Already a normal URL
+        if (imagePath.startsWith("http")) {
+          resolvedImages.push(imagePath);
+          continue;
+        }
+
+        // Stored Amplify/S3 path
+        try {
+          const result = await getUrl({
+            path: imagePath,
+            options: {
+              validateObjectExistence: true,
+            },
+          });
+
+          resolvedImages.push(result.url.toString());
+        } catch (error) {
+          console.log("Error fetching MAXI image:", imagePath, error);
+        }
+      }
+
+      setResolvedMaxiImages(resolvedImages);
+    };
+
+    fetchReviewImages();
+  }, [profilePic, courierNINImage, maxiImages]);
 
   /* =================================================================
     VALIDATION
@@ -1216,8 +1345,8 @@ const ReviewCourierCom = () => {
 
   const initials = getInitials();
 
-  const profileImageUri = getImageUri(profilePic);
-  const courierNINImageUri = getImageUri(courierNINImage);
+  const profileImageUri = resolvedProfilePic;
+  const courierNINImageUri = resolvedNINImage;
 
   const transportationLabel = transportationType
     ? String(transportationType)
@@ -1499,51 +1628,47 @@ const ReviewCourierCom = () => {
               MAXI VEHICLE PHOTOS
           ======================================================== */}
 
-          {transportationType === "MAXI" &&
-            Array.isArray(maxiImages) &&
-            maxiImages.length > 0 && (
-              <View style={styles.reviewSection}>
-                <SectionHeader
-                  icon="images-outline"
-                  title="Vehicle photos"
-                  description={`${maxiImages.length} ${
-                    maxiImages.length === 1 ? "photo" : "photos"
-                  } uploaded`}
-                />
+          {transportationType === "MAXI" && resolvedMaxiImages.length > 0 && (
+            <View style={styles.reviewSection}>
+              <SectionHeader
+                icon="images-outline"
+                title="Vehicle photos"
+                description={`${maxiImages.length} ${
+                  maxiImages.length === 1 ? "photo" : "photos"
+                } uploaded`}
+              />
 
-                <View style={styles.vehicleGalleryCard}>
-                  <View style={styles.imageListContainer}>
-                    {maxiImages.map((image, index) => {
-                      const imageUri = getImageUri(image);
+              <View style={styles.vehicleGalleryCard}>
+                <View style={styles.imageListContainer}>
+                  {resolvedMaxiImages.map((imageUri, index) => {
+                    if (!imageUri) {
+                      return null;
+                    }
 
-                      if (!imageUri) {
-                        return null;
-                      }
+                    return (
+                      <View
+                        key={`${imageUri}-${index}`}
+                        style={styles.maxiImageWrapper}
+                      >
+                        <Image
+                          source={{
+                            uri: imageUri,
+                          }}
+                          style={styles.maxiImages}
+                        />
 
-                      return (
-                        <View
-                          key={`${imageUri}-${index}`}
-                          style={styles.maxiImageWrapper}
-                        >
-                          <Image
-                            source={{
-                              uri: imageUri,
-                            }}
-                            style={styles.maxiImages}
-                          />
-
-                          <View style={styles.imageNumberBadge}>
-                            <Text style={styles.imageNumberText}>
-                              {index + 1}
-                            </Text>
-                          </View>
+                        <View style={styles.imageNumberBadge}>
+                          <Text style={styles.imageNumberText}>
+                            {index + 1}
+                          </Text>
                         </View>
-                      );
-                    })}
-                  </View>
+                      </View>
+                    );
+                  })}
                 </View>
               </View>
-            )}
+            </View>
+          )}
 
           {/* ========================================================
               LOCATION

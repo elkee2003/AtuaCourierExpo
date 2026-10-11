@@ -1,6 +1,6 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
 import * as ImagePicker from "expo-image-picker";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Image,
@@ -12,12 +12,16 @@ import {
 } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 
-import { useProfileContext } from "../../../providers/ProfileProvider";
+import { useAuthContext } from "@/providers/AuthProvider";
+import { useProfileContext } from "@/providers/ProfileProvider";
+import { getUrl } from "aws-amplify/storage";
 import { createStyles } from "./styles";
 
 const TransportationTypeCom = () => {
   const isDark = useColorScheme() === "dark";
   const styles = useMemo(() => createStyles(isDark), [isDark]);
+
+  const { dbCourier } = useAuthContext();
 
   const {
     transportationType,
@@ -47,6 +51,79 @@ const TransportationTypeCom = () => {
   const [colourFocused, setColourFocused] = useState(false);
   const [plateFocused, setPlateFocused] = useState(false);
   const [descriptionFocused, setDescriptionFocused] = useState(false);
+
+  const [signedMaxiImages, setSignedMaxiImages] = useState([]);
+
+  useEffect(() => {
+    if (!dbCourier || transportationType !== "MAXI") {
+      setSignedMaxiImages([]);
+      return;
+    }
+
+    const loadMaxiImages = async () => {
+      try {
+        const images = dbCourier.maxiImages || [];
+
+        if (images.length === 0) {
+          setSignedMaxiImages([]);
+          return;
+        }
+
+        const signedUrls = await Promise.all(
+          images.map(async (path) => {
+            try {
+              // Local image selected from the phone
+              if (path.startsWith("file://")) {
+                return path;
+              }
+
+              // Already a complete URL
+              if (path.startsWith("http")) {
+                return path;
+              }
+
+              // S3 / Amplify Storage path
+              const result = await getUrl({
+                path,
+                options: {
+                  expiresIn: 3600,
+                },
+              });
+
+              return result.url.toString();
+            } catch (error) {
+              console.log("Failed to load MAXI image:", error);
+              return null;
+            }
+          }),
+        );
+
+        setSignedMaxiImages(signedUrls.filter(Boolean));
+      } catch (error) {
+        console.log("Failed to load MAXI images:", error);
+        setSignedMaxiImages([]);
+      }
+    };
+
+    loadMaxiImages();
+  }, [dbCourier, transportationType]);
+
+  const displayImages = maxiImages
+    .map((image, index) => {
+      // Newly selected local image
+      if (image.startsWith("file://")) {
+        return image;
+      }
+
+      // Already a URL
+      if (image.startsWith("http")) {
+        return image;
+      }
+
+      // Existing image from S3
+      return signedMaxiImages[index] || null;
+    })
+    .filter(Boolean);
 
   const transportationTypes = [
     {
@@ -256,6 +333,10 @@ const TransportationTypeCom = () => {
     );
 
     setMaxiImages(updatedImages);
+
+    setSignedMaxiImages((current) =>
+      current.filter((_, index) => index !== indexToRemove),
+    );
   };
 
   return (
@@ -683,9 +764,9 @@ const TransportationTypeCom = () => {
                 )}
               </TouchableOpacity>
 
-              {maxiImages.length > 0 && (
+              {displayImages.length > 0 && (
                 <View style={styles.imagePreviewContainer}>
-                  {maxiImages.map((uri, index) => (
+                  {displayImages.map((uri, index) => (
                     <View
                       key={`${uri}-${index}`}
                       style={styles.previewImageWrapper}

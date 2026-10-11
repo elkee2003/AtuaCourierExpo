@@ -1,7 +1,7 @@
 import { useAuthContext } from "@/providers/AuthProvider";
 import { router } from "expo-router";
 import { useEffect } from "react";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 import WalletOverview from "../../../components/Wallet/WalletOverview";
 
 const WalletScreen = () => {

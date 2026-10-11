@@ -1,4 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { generateClient } from "aws-amplify/api";
 import { DataStore } from "aws-amplify/datastore";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -21,6 +22,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Courier, Wallet } from "@/src/models";
 
 import styles from "./styles";
+
+const client = generateClient();
 
 /*
 ==========================================================
@@ -875,18 +878,6 @@ a Payout record ID.
         )} has been submitted for payout.\n\n` +
           `Status: ${result.status || "PROCESSING"}`,
         [
-          {
-            text: "View payout",
-            onPress: () => {
-              router.replace({
-                pathname: "/wallet/payouts/[payoutId]",
-                params: {
-                  payoutId: String(result.payoutID),
-                },
-              });
-            },
-          },
-
           {
             text: "Done",
             style: "cancel",

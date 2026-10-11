@@ -75,9 +75,8 @@ const CompletedDeliverySingle = ({ item }) => {
   /**
    * 💰 PRICE
    */
-  const displayPrice = isMaxi
-    ? (item?.currentOfferPrice ?? item?.initialOfferPrice)
-    : item?.courierEarnings;
+  const displayPrice =
+    item?.courierEarnings ?? item?.currentOfferPrice ?? item?.initialOfferPrice;
 
   const price = Number(displayPrice || 0).toLocaleString();
 

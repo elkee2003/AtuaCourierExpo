@@ -1,8 +1,9 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { getUrl } from "aws-amplify/storage";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   Alert,
@@ -238,6 +239,66 @@ const NextEditProfile = () => {
     errorMessage,
     onValidateGuarantorInput,
   } = useProfileContext();
+
+  const [resolvedGuarantorNINImage, setResolvedGuarantorNINImage] =
+    useState(null);
+
+  useEffect(() => {
+    const resolveGuarantorNINImage = async () => {
+      if (!guarantorNINImage) {
+        setResolvedGuarantorNINImage(null);
+        return;
+      }
+
+      // Local image selected from camera/gallery
+      if (
+        typeof guarantorNINImage === "string" &&
+        (guarantorNINImage.startsWith("file://") ||
+          guarantorNINImage.startsWith("content://") ||
+          guarantorNINImage.startsWith("data:"))
+      ) {
+        setResolvedGuarantorNINImage(guarantorNINImage);
+        return;
+      }
+
+      // Existing normal URL
+      if (
+        typeof guarantorNINImage === "string" &&
+        guarantorNINImage.startsWith("http")
+      ) {
+        setResolvedGuarantorNINImage(guarantorNINImage);
+        return;
+      }
+
+      // Existing image stored in S3
+      if (typeof guarantorNINImage === "string") {
+        try {
+          const result = await getUrl({
+            path: guarantorNINImage,
+            options: {
+              validateObjectExistence: true,
+            },
+          });
+
+          setResolvedGuarantorNINImage(result.url.toString());
+        } catch (error) {
+          console.log(
+            "Error fetching guarantor NIN image from storage:",
+            guarantorNINImage,
+            error,
+          );
+
+          setResolvedGuarantorNINImage(null);
+        }
+
+        return;
+      }
+
+      setResolvedGuarantorNINImage(null);
+    };
+
+    resolveGuarantorNINImage();
+  }, [guarantorNINImage]);
 
   /* ================================================================
      IMAGE PICKER
@@ -674,7 +735,7 @@ const NextEditProfile = () => {
                       <View style={styles.documentImageWrapper}>
                         <Image
                           source={{
-                            uri: guarantorNINImage,
+                            uri: resolvedGuarantorNINImage,
                           }}
                           style={styles.ninImage}
                         />

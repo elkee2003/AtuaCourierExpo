@@ -252,9 +252,18 @@ const StandaloneTtypeCom = () => {
       for (const oldImage of oldImages) {
         if (!uploadedPaths.includes(oldImage)) {
           try {
-            await remove({ path: oldImage });
+            console.log("🗑️ Attempting to delete old MAXI image:", oldImage);
+
+            const result = await remove({
+              path: oldImage,
+            });
+
+            console.log("✅ Old MAXI image deleted:", oldImage, result);
           } catch (error) {
-            console.log("Failed to remove old image:", error);
+            console.error("❌ FAILED TO DELETE OLD MAXI IMAGE:", {
+              path: oldImage,
+              error,
+            });
           }
         }
       }
@@ -264,9 +273,9 @@ const StandaloneTtypeCom = () => {
   };
 
   const updateTransportType = async () => {
-    const validationError = validateVehicleInfo();
+    const isValid = validateVehicleInfo();
 
-    if (validationError) {
+    if (!isValid) {
       return;
     }
 
@@ -280,9 +289,18 @@ const StandaloneTtypeCom = () => {
       } else if (dbCourier?.maxiImages?.length) {
         for (const oldImage of dbCourier.maxiImages) {
           try {
-            await remove({ path: oldImage });
+            console.log("🗑️ Attempting to delete old MAXI image:", oldImage);
+
+            const result = await remove({
+              path: oldImage,
+            });
+
+            console.log("✅ Old MAXI image deleted:", oldImage, result);
           } catch (error) {
-            console.log("Failed to remove old MAXI image:", error);
+            console.error("❌ FAILED TO DELETE OLD MAXI IMAGE:", {
+              path: oldImage,
+              error,
+            });
           }
         }
       }
@@ -416,7 +434,8 @@ const StandaloneTtypeCom = () => {
     <SafeAreaView style={[styles.container, isDark && styles.containerDark]}>
       <KeyboardAvoidingView
         style={styles.keyboardAvoiding}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContent}

@@ -296,7 +296,16 @@ type Payout @model @auth(rules: [{ allow: public }]) {
 
   walletID: ID @index(name: "byWallet")
 
+  # The amount actually sent to the courier bank.
+  # Does NOT include Atua fee.
   amount: Float!
+
+  # Atua fee charged for this payout.
+  payoutFee: Float
+
+  # Total amount deducted from the courier wallet.
+  # = amount + payoutFee
+  totalWalletDebit: Float
 
   status: PayoutStatus
 
@@ -337,6 +346,7 @@ type Transaction @model @auth(rules: [{ allow: public }]) {
   id: ID!
 
   walletID: ID! @index(name: "byWallet")
+  payoutID: ID @index(name: "byPayout")
 
   type: TransactionType
   # CREDIT | DEBIT

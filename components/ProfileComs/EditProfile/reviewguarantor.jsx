@@ -2,13 +2,13 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 import { DataStore } from "aws-amplify/datastore";
-import { remove, uploadData } from "aws-amplify/storage";
+import { getUrl, remove, uploadData } from "aws-amplify/storage";
 
 import * as Crypto from "expo-crypto";
 import * as ImageManipulator from "expo-image-manipulator";
 
 import { router } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   ActivityIndicator,
@@ -279,6 +279,119 @@ const ReviewGuarantorCom = () => {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
 
+  const [resolvedGuarantorNINImage, setResolvedGuarantorNINImage] =
+    useState(null);
+  const [resolvedCourierNINImage, setResolvedCourierNINImage] = useState(null);
+
+  useEffect(() => {
+    const resolveGuarantorNINImage = async () => {
+      if (!guarantorNINImage) {
+        setResolvedGuarantorNINImage(null);
+        return;
+      }
+
+      const imageUri = getImageUri(guarantorNINImage);
+
+      if (!imageUri) {
+        setResolvedGuarantorNINImage(null);
+        return;
+      }
+
+      // Local image selected from camera/gallery
+      if (
+        imageUri.startsWith("file://") ||
+        imageUri.startsWith("content://") ||
+        imageUri.startsWith("data:")
+      ) {
+        setResolvedGuarantorNINImage(imageUri);
+        return;
+      }
+
+      // Already a normal URL
+      if (imageUri.startsWith("http")) {
+        setResolvedGuarantorNINImage(imageUri);
+        return;
+      }
+
+      // Existing image stored in S3
+      try {
+        const result = await getUrl({
+          path: imageUri,
+          options: {
+            validateObjectExistence: true,
+          },
+        });
+
+        setResolvedGuarantorNINImage(result.url.toString());
+      } catch (error) {
+        console.log(
+          "Error fetching guarantor NIN image from storage:",
+          imageUri,
+          error,
+        );
+
+        setResolvedGuarantorNINImage(null);
+      }
+    };
+
+    resolveGuarantorNINImage();
+  }, [guarantorNINImage]);
+
+  // useeffect for Courier NIN fetch
+  useEffect(() => {
+    const resolveCourierNINImage = async () => {
+      if (!courierNINImage) {
+        setResolvedCourierNINImage(null);
+        return;
+      }
+
+      const imageUri = getImageUri(courierNINImage);
+
+      if (!imageUri) {
+        setResolvedCourierNINImage(null);
+        return;
+      }
+
+      // Local image selected from camera/gallery
+      if (
+        imageUri.startsWith("file://") ||
+        imageUri.startsWith("content://") ||
+        imageUri.startsWith("data:")
+      ) {
+        setResolvedCourierNINImage(imageUri);
+        return;
+      }
+
+      // Already a normal URL
+      if (imageUri.startsWith("http")) {
+        setResolvedCourierNINImage(imageUri);
+        return;
+      }
+
+      // Existing image stored in S3
+      try {
+        const result = await getUrl({
+          path: imageUri,
+          options: {
+            validateObjectExistence: true,
+          },
+        });
+
+        setResolvedCourierNINImage(result.url.toString());
+      } catch (error) {
+        console.log(
+          "Error fetching courier NIN image from storage:",
+          imageUri,
+          error,
+        );
+
+        setResolvedCourierNINImage(null);
+      }
+    };
+
+    resolveCourierNINImage();
+  }, [courierNINImage]);
+
   /* =================================================================
      VALIDATION
      ================================================================= */
@@ -533,8 +646,8 @@ const ReviewGuarantorCom = () => {
   const guarantorInitials = getInitials(guarantorName, guarantorLastName);
 
   const profileImageUri = getImageUri(profilePic);
-  const courierNINImageUri = getImageUri(courierNINImage);
-  const guarantorNINImageUri = getImageUri(guarantorNINImage);
+  const courierNINImageUri = resolvedCourierNINImage;
+  const guarantorNINImageUri = resolvedGuarantorNINImage;
 
   const transportationLabel = transportationType
     ? String(transportationType)
