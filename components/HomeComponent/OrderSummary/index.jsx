@@ -4,6 +4,7 @@ import { DataStore } from "aws-amplify/datastore";
 import { getUrl } from "aws-amplify/storage";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
+import { calculateMaxiFinancials } from "../../../modules/freightPricingEngine";
 
 import {
   ActivityIndicator,
@@ -134,7 +135,9 @@ const OrderSummary = ({ orderId }) => {
   }, [offers]);
 
   const displayPrice = isMaxi
-    ? (latestOffer?.amount ?? order?.initialOfferPrice)
+    ? order?.status === "ACCEPTED"
+      ? order?.courierEarnings
+      : (latestOffer?.amount ?? order?.initialOfferPrice)
     : order?.courierEarnings;
 
   const numericOffer = offer ? Number(offer) : null;
@@ -563,6 +566,30 @@ const OrderSummary = ({ orderId }) => {
       }
 
       // ========================================================
+      // MAXI: VERIFY THE ORDER IS STILL AVAILABLE
+      // These checks stop acceptance if another courier has
+      // already been assigned, even if the status is stale.
+      // ========================================================
+
+      if (latestOrder.transportationType === "MAXI") {
+        if (latestOrder.status !== "BIDDING") {
+          Alert.alert(
+            "Order unavailable",
+            "This Maxi order is no longer open for acceptance.",
+          );
+          return;
+        }
+
+        if (latestOrder.assignedCourierId || latestOrder.acceptedOfferID) {
+          Alert.alert(
+            "Order already taken",
+            "Another courier has already accepted this Maxi offer.",
+          );
+          return;
+        }
+      }
+
+      // ========================================================
       // MICRO / MOTO MARKETPLACE
       // ========================================================
 
@@ -740,13 +767,48 @@ const OrderSummary = ({ orderId }) => {
 
       const priceToAccept = latest.amount;
 
+      const financials = calculateMaxiFinancials({
+        type: latestOrder.vehicleClass,
+        agreedAmount: priceToAccept,
+      });
+
+      if (!financials) {
+        Alert.alert(
+          "Unable to accept offer",
+          "The pricing information for this vehicle is unavailable.",
+        );
+        return;
+      }
+
       await DataStore.save(
         Order.copyOf(latestOrder, (updated) => {
           updated.status = "ACCEPTED";
 
           updated.acceptedAt = new Date().toISOString();
 
-          updated.totalPrice = priceToAccept;
+          // Negotiated Maxi amount
+          updated.operationalFare = financials.operationalFare;
+
+          // Atua commission
+          updated.commissionAmount = financials.commissionAmount;
+
+          // Fixed platform fee
+          updated.platformFee = financials.platformFee;
+
+          // Commission + platform fee
+          updated.platformServiceRevenue = financials.platformServiceRevenue;
+
+          // VAT
+          updated.vatAmount = financials.vatAmount;
+
+          // Platform revenue after VAT
+          updated.platformNetRevenue = financials.platformNetRevenue;
+
+          // Courier's actual earnings after commission
+          updated.courierEarnings = financials.courierEarnings;
+
+          // Amount customer must pay
+          updated.totalPrice = financials.customerPrice;
 
           updated.acceptedOfferID = latest.id;
 
@@ -937,11 +999,11 @@ const OrderSummary = ({ orderId }) => {
                   ₦{formattedPrice}
                 </Text>
 
-                {/* {order.status === "ACCEPTED" && ( */}
-                <Text style={styles.earningsNote}>
-                  Platform commission already deducted
-                </Text>
-                {/* )} */}
+                {order.status === "ACCEPTED" && (
+                  <Text style={styles.earningsNote}>
+                    Platform commission already deducted
+                  </Text>
+                )}
               </View>
 
               <View style={styles.serviceHeroBadge}>

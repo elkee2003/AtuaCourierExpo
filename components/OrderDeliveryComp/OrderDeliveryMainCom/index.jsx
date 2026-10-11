@@ -195,6 +195,10 @@ const OrderdeliveryMainCom = ({ order, user }) => {
    * 🔒 DISABLE BUTTON
    */
   const isButtonDisabled = useMemo(() => {
+    // Disable if the order is cancelled or completed
+    if (order?.status === "CANCELLED" || order?.status === "DELIVERED") {
+      return true;
+    }
     if (!isMapLoaded || loadingAction) {
       return true;
     }
@@ -252,9 +256,13 @@ const OrderdeliveryMainCom = ({ order, user }) => {
   /**
    * 🎯 BUTTON TEXT
    */
+
   const statusConfig = getStatusConfig(isMaxi, isPaid);
 
-  const buttonTitle = statusConfig[order?.status]?.title || "Continue";
+  const buttonTitle =
+    order?.status === "CANCELLED"
+      ? "Order Cancelled"
+      : statusConfig[order?.status]?.title || "Continue";
 
   if (!order) {
     return <ActivityIndicator style={{ marginTop: 100 }} size="large" />;

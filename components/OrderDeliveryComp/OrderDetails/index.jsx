@@ -255,6 +255,10 @@ const OrderDetails = ({
    * ==========================================================
    */
   const handleMainAction = async () => {
+    if (order?.status === "CANCELLED" || order?.status === "DELIVERED") {
+      return;
+    }
+
     if (!nextStatus) {
       console.log("❌ No next status");
       return;

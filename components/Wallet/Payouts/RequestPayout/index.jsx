@@ -1,5 +1,4 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { generateClient } from "aws-amplify/api";
 import { DataStore } from "aws-amplify/datastore";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -25,29 +24,45 @@ import styles from "./styles";
 
 /*
 ==========================================================
-AMPLIFY API CLIENT
-==========================================================
-*/
-
-const client = generateClient();
-
-/*
-==========================================================
 PAYOUT RULES
 ==========================================================
 
 Courier-requested payout rules:
 
 1. Minimum payout amount = ₦3,000
-2. Payout fee = ₦100
+2. Payout fee depends on the requested amount
 3. Courier receives the full requested payout amount
-4. The ₦100 fee is deducted from the courier wallet
-5. Therefore:
+4. The Atua payout fee is additionally deducted
+   from the courier wallet
 
-   Requested payout: ₦5,000
-   Fee:              ₦100
-   Wallet deduction: ₦5,100
-   Courier receives: ₦5,000
+Fee schedule:
+
+₦3,000 – ₦50,000       → ₦100 fee
+₦50,001 – ₦100,000     → ₦200 fee
+₦100,001 – ₦250,000    → ₦250 fee
+₦250,001+              → ₦300 fee
+
+Examples:
+
+Requested payout: ₦5,000
+Fee:              ₦100
+Wallet deduction: ₦5,100
+Courier receives: ₦5,000
+
+Requested payout: ₦75,000
+Fee:              ₦200
+Wallet deduction: ₦75,200
+Courier receives: ₦75,000
+
+Requested payout: ₦150,000
+Fee:              ₦250
+Wallet deduction: ₦150,250
+Courier receives: ₦150,000
+
+Requested payout: ₦300,000
+Fee:              ₦300
+Wallet deduction: ₦300,300
+Courier receives: ₦300,000
 
 The backend remains authoritative and must enforce
 these rules independently of the frontend.
@@ -56,7 +71,27 @@ these rules independently of the frontend.
 
 const MINIMUM_PAYOUT = 3000;
 
-const PAYOUT_FEE = 100;
+const getPayoutFee = (amount) => {
+  const numericAmount = Number(amount);
+
+  if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+    return 0;
+  }
+
+  if (numericAmount <= 50000) {
+    return 100;
+  }
+
+  if (numericAmount <= 100000) {
+    return 200;
+  }
+
+  if (numericAmount <= 250000) {
+    return 250;
+  }
+
+  return 300;
+};
 
 /*
 ==========================================================
@@ -155,7 +190,7 @@ The backend processPayouts Lambda is responsible for:
 
 - validating the payout
 - enforcing the ₦3,000 minimum
-- calculating the ₦100 fee
+- calculating the applicable tiered fee
 - reserving/debiting the wallet
 - creating the Transaction
 - creating the Payout
@@ -384,19 +419,58 @@ const RequestPayout = () => {
   }, [amount]);
 
   /*
-  ========================================================
-  TOTAL WALLET DEDUCTION
-  ========================================================
+    ==========================================================
+    TOTAL WALLET DEDUCTION
+    ==========================================================
 
-  Example:
+    The courier receives the requested payout amount.
 
-  ₦5,000 payout
-  + ₦100 fee
-  = ₦5,100 wallet deduction
-  ========================================================
+    The applicable Atua payout fee is additionally
+    deducted from the wallet.
+
+    Example:
+
+    ₦75,000 payout
+    + ₦200 fee
+    = ₦75,200 wallet deduction
+
+  ==========================================================
   */
 
-  const totalWalletDeduction = numericAmount + PAYOUT_FEE;
+  const payoutFee = getPayoutFee(numericAmount);
+
+  const totalWalletDeduction = numericAmount + payoutFee;
+
+  const getMaximumPayoutAmount = (availableBalance) => {
+    const balance = Number(availableBalance || 0);
+
+    if (!Number.isFinite(balance) || balance < 3100) {
+      return 0;
+    }
+
+    // ₦250,001+ payout tier → ₦300 fee
+    if (balance >= 250301) {
+      return Number((balance - 300).toFixed(2));
+    }
+
+    // ₦100,001–₦250,000 payout tier → ₦250 fee
+    if (balance >= 100251) {
+      return Number(Math.min(balance - 250, 250000).toFixed(2));
+    }
+
+    // ₦50,001–₦100,000 payout tier → ₦200 fee
+    if (balance >= 50201) {
+      return Number(Math.min(balance - 200, 100000).toFixed(2));
+    }
+
+    // ₦3,000–₦50,000 payout tier → ₦100 fee
+    return Number(Math.min(balance - 100, 50000).toFixed(2));
+  };
+
+  const maximumPayoutAmount = useMemo(
+    () => getMaximumPayoutAmount(availableBalance),
+    [availableBalance],
+  );
 
   /*
   ========================================================
@@ -440,17 +514,20 @@ const RequestPayout = () => {
 
     requested payout
     +
-    ₦100 fee
+    applicable Atua payout fee
     */
 
     if (totalWalletDeduction > availableBalance) {
-      return "You don't have enough available balance to cover the payout and ₦100 payout fee.";
+      return `You don't have enough available balance to cover the payout and ${formatCurrency(
+        payoutFee,
+      )} payout fee.`;
     }
 
     return null;
   }, [
     amount,
     numericAmount,
+    payoutFee,
     totalWalletDeduction,
     availableBalance,
     hasBankAccount,
@@ -499,7 +576,7 @@ const RequestPayout = () => {
   Quick amounts below ₦3,000 are intentionally not offered.
 
   Also, the button is disabled when the courier's wallet
-  cannot cover the payout amount plus the ₦100 fee.
+  cannot cover the payout amount plus its applicable fee.
   ========================================================
   */
 
@@ -510,7 +587,9 @@ const RequestPayout = () => {
       return;
     }
 
-    if (value + PAYOUT_FEE > availableBalance) {
+    const fee = getPayoutFee(value);
+
+    if (value + fee > availableBalance) {
       return;
     }
 
@@ -518,34 +597,37 @@ const RequestPayout = () => {
   };
 
   /*
-  ========================================================
-  MAX PAYOUT
-  ========================================================
+  =======================================
+    MAX PAYOUT
+    ==========================================================
 
-  Maximum payout = available balance - ₦100 fee.
+    Maximum payout is calculated based on the applicable
+    tiered Atua payout fee.
 
-  Example:
+    Examples:
 
-  Available balance = ₦10,000
-  Fee               = ₦100
-  Maximum payout    = ₦9,900
-  ========================================================
+    Available balance = ₦10,000
+    Fee               = ₦100
+    Maximum payout    = ₦9,900
+
+    Available balance = ₦75,200
+    Fee               = ₦200
+    Maximum payout    = ₦75,000
+
+    Available balance = ₦150,250
+    Fee               = ₦250
+    Maximum payout    = ₦150,000
+
+  ==========================================================
   */
 
   const handleMaxAmount = () => {
-    const maxPayoutAmount = Math.max(availableBalance - PAYOUT_FEE, 0);
-
-    /*
-    If the maximum possible payout is below ₦3,000,
-    don't populate the field with an invalid amount.
-    */
-
-    if (maxPayoutAmount < MINIMUM_PAYOUT) {
+    if (maximumPayoutAmount < MINIMUM_PAYOUT) {
       setAmount("");
       return;
     }
 
-    setAmount(String(maxPayoutAmount));
+    setAmount(String(maximumPayoutAmount));
   };
 
   /*
@@ -593,12 +675,15 @@ const RequestPayout = () => {
       const freshBalance = Number(freshWallet.availableBalance || 0);
 
       /*
-      Recheck the complete wallet requirement:
+      * Recheck the complete wallet requirement:
 
-      payout amount + ₦100 fee
+      * payout amount + applicable Atua fee
       */
 
-      if (numericAmount + PAYOUT_FEE > freshBalance) {
+      const freshPayoutFee = getPayoutFee(numericAmount);
+      const freshTotalWalletDeduction = numericAmount + freshPayoutFee;
+
+      if (freshTotalWalletDeduction > freshBalance) {
         setWallet(freshWallet);
 
         setShowConfirmation(false);
@@ -996,7 +1081,7 @@ a Payout record ID.
 
           <View style={styles.quickAmountRow}>
             {quickAmounts.map((value) => {
-              const canAfford = value + PAYOUT_FEE <= availableBalance;
+              const canAfford = value + getPayoutFee(value) <= availableBalance;
 
               return (
                 <TouchableOpacity
@@ -1029,23 +1114,22 @@ a Payout record ID.
               style={[
                 styles.quickAmountButton,
 
-                numericAmount === Math.max(availableBalance - PAYOUT_FEE, 0) &&
+                numericAmount === maximumPayoutAmount &&
                   numericAmount >= MINIMUM_PAYOUT &&
                   styles.quickAmountButtonActive,
 
-                availableBalance < MINIMUM_PAYOUT + PAYOUT_FEE &&
+                maximumPayoutAmount < MINIMUM_PAYOUT &&
                   styles.quickAmountButtonDisabled,
               ]}
               onPress={handleMaxAmount}
-              disabled={availableBalance < MINIMUM_PAYOUT + PAYOUT_FEE}
+              disabled={maximumPayoutAmount < MINIMUM_PAYOUT}
               activeOpacity={0.75}
             >
               <Text
                 style={[
                   styles.quickAmountText,
 
-                  numericAmount ===
-                    Math.max(availableBalance - PAYOUT_FEE, 0) &&
+                  numericAmount === maximumPayoutAmount &&
                     numericAmount >= MINIMUM_PAYOUT &&
                     styles.quickAmountTextActive,
                 ]}
@@ -1113,7 +1197,9 @@ a Payout record ID.
               </Text>
 
               <Text style={styles.infoText}>
-                A ₦100 payout fee applies to courier- requested payouts.
+                A tiered payout fee applies to courier-requested payouts: ₦100
+                for ₦3,000-₦50,000, ₦200 for ₦50,001-₦100,000, ₦250 for
+                ₦100,001-₦250,000, and ₦300 above ₦250,000.
               </Text>
 
               <Text style={styles.infoText}>
@@ -1142,7 +1228,7 @@ a Payout record ID.
 
                 <SummaryRow
                   label="Payout fee"
-                  value={formatCurrency(PAYOUT_FEE)}
+                  value={formatCurrency(payoutFee)}
                 />
 
                 <SummaryRow
@@ -1206,9 +1292,9 @@ a Payout record ID.
           ================================================= */}
 
           <Text style={styles.footerText}>
-            Minimum payout: {formatShortCurrency(MINIMUM_PAYOUT)}. A ₦100 payout
-            fee applies. Your available balance must be sufficient to cover both
-            the payout and the fee.
+            Minimum payout: {formatShortCurrency(MINIMUM_PAYOUT)}. A tiered
+            payout fee applies. Your available balance must be sufficient to
+            cover both the payout and the applicable fee.
           </Text>
         </ScrollView>
 
@@ -1262,7 +1348,7 @@ a Payout record ID.
                 </Text>
 
                 <Text style={styles.confirmationRemainingValue}>
-                  {formatCurrency(PAYOUT_FEE)}
+                  {formatCurrency(payoutFee)}
                 </Text>
               </View>
 

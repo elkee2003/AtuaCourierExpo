@@ -57,12 +57,12 @@
         },
         "verifyAtuaPayment": {
           "deploymentBucketName": "amplify-atua-staging-19d66-deployment",
-          "s3Key": "amplify-builds/verifyAtuaPayment-496e6a67773438553049-build.zip",
+          "s3Key": "amplify-builds/verifyAtuaPayment-556f4c76794c4e2f5937-build.zip",
           "secretsPathAmplifyAppId": "d4d2e6dwzso4a"
         },
         "paystackWebhook": {
           "deploymentBucketName": "amplify-atua-staging-19d66-deployment",
-          "s3Key": "amplify-builds/paystackWebhook-2f364178422b6a686e69-build.zip",
+          "s3Key": "amplify-builds/paystackWebhook-4136327052304d6c344e-build.zip",
           "secretsPathAmplifyAppId": "d4d2e6dwzso4a"
         },
         "allocateCourierEarnings": {
@@ -83,8 +83,27 @@
         },
         "reconcilePayouts": {
           "deploymentBucketName": "amplify-atua-staging-19d66-deployment",
-          "s3Key": "amplify-builds/reconcilePayouts-49706d63765771513144-build.zip",
+          "s3Key": "amplify-builds/reconcilePayouts-41306e5a674264306a4a-build.zip",
           "secretsPathAmplifyAppId": "d4d2e6dwzso4a"
+        },
+        "chargeAtuaPaymentMethod": {
+          "deploymentBucketName": "amplify-atua-staging-19d66-deployment",
+          "s3Key": "amplify-builds/chargeAtuaPaymentMethod-4d2b6a4c5a5a69675839-build.zip",
+          "secretsPathAmplifyAppId": "d4d2e6dwzso4a"
+        },
+        "deletePaymentMethod": {
+          "deploymentBucketName": "amplify-atua-staging-19d66-deployment",
+          "s3Key": "amplify-builds/deletePaymentMethod-5a4354524f4c796c4536-build.zip",
+          "secretsPathAmplifyAppId": "d4d2e6dwzso4a"
+        },
+        "cancelOrder": {
+          "deploymentBucketName": "amplify-atua-staging-19d66-deployment",
+          "s3Key": "amplify-builds/cancelOrder-4d35537570674a633330-build.zip",
+          "secretsPathAmplifyAppId": "d4d2e6dwzso4a"
+        },
+        "deleteOrder": {
+          "deploymentBucketName": "amplify-atua-staging-19d66-deployment",
+          "s3Key": "amplify-builds/deleteOrder-5a62702b5647796c7758-build.zip"
         }
       },
       "storage": {

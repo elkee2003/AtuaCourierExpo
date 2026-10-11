@@ -1,9 +1,10 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { signOut } from "aws-amplify/auth";
+import { getUrl } from "aws-amplify/storage";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Image,
@@ -19,6 +20,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useAuthContext } from "@/providers/AuthProvider";
 import { useProfileContext } from "../../../providers/ProfileProvider";
 import TranportionType from "../TransporationType";
 import BankDetails from "./bankDetails";
@@ -135,6 +137,12 @@ const EditProfile = ({ onRefresh, refreshing }) => {
   const [bankError, setBankError] = useState("");
 
   /* ============================================================
+     AUTH CONTEXT
+     ============================================================ */
+
+  const { dbCourier } = useAuthContext();
+
+  /* ============================================================
      PROFILE CONTEXT
      ============================================================ */
 
@@ -171,6 +179,41 @@ const EditProfile = ({ onRefresh, refreshing }) => {
     errorMessage,
     onValidateCourierInput,
   } = useProfileContext();
+
+  /* ============================================================
+   LOAD EXISTING PROFILE PHOTO
+   ============================================================ */
+
+  const fetchProfileImage = async () => {
+    if (!dbCourier?.profilePic) {
+      setProfilePic(null);
+      return;
+    }
+
+    // Already a local/remote URI — use it directly.
+    if (dbCourier.profilePic.startsWith("http")) {
+      setProfilePic(dbCourier.profilePic);
+      return;
+    }
+
+    try {
+      const result = await getUrl({
+        path: dbCourier.profilePic,
+        options: {
+          validateObjectExistence: true,
+        },
+      });
+
+      setProfilePic(result.url.toString());
+    } catch (error) {
+      console.log("Error fetching profile image:", error);
+      setProfilePic(null);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfileImage();
+  }, [dbCourier?.profilePic]);
 
   /* ============================================================
      PROFILE IMAGE FUNCTIONS

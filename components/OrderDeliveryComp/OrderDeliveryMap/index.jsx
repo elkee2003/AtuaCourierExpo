@@ -665,7 +665,7 @@ const OrderDeliveryMap = ({ order, user, onMapReady }) => {
               /**
                * Existing proximity threshold preserved.
                */
-              setIsCourierClose(result.distance <= 3.8);
+              setIsCourierClose(result.distance <= 4.8);
 
               setTotalMins(result.duration);
               setTotalKm(result.distance);

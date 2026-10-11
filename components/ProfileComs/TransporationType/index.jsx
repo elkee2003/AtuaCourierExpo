@@ -15,79 +15,9 @@ import { Dropdown } from "react-native-element-dropdown";
 import { useProfileContext } from "../../../providers/ProfileProvider";
 import { createStyles } from "./styles";
 
-/**
- * ============================================================
- * TRANSPORTATION TYPE
- * ============================================================
- *
- * This component is intentionally designed as an EMBEDDED child
- * of EditProfile.
- *
- * IMPORTANT:
- * ------------------------------------------------------------
- * EditProfile already owns the main ScrollView.
- *
- * Therefore this component must NOT create another ScrollView.
- *
- * The previous implementation had:
- *
- *     ScrollView
- *        └── Transportation content
- *
- * while EditProfile also had:
- *
- *     ScrollView
- *        └── TransportationType
- *
- * That created nested scrolling/measurement behaviour.
- *
- * This version uses a normal View instead.
- *
- * The component still has its own styles.js because it lives in
- * a separate folder, but the visual language intentionally
- * matches the EditProfile design.
- * ============================================================
- */
-
 const TransportationTypeCom = () => {
-  /* ============================================================
-     THEME
-     ============================================================ */
-
-  const colorScheme = useColorScheme();
-
-  const isDark = colorScheme === "dark";
-
-  /*
-   * Generate the local stylesheet from the current appearance.
-   *
-   * We intentionally do this locally because TransportationType
-   * has its own styles.js.
-   */
+  const isDark = useColorScheme() === "dark";
   const styles = useMemo(() => createStyles(isDark), [isDark]);
-
-  /* ============================================================
-     INPUT COLORS
-     ============================================================ */
-
-  /*
-   * TextInput text and placeholder colors are supplied explicitly.
-   *
-   * This prevents dark-mode inputs from appearing blank or having
-   * invisible text.
-   */
-  const inputColors = useMemo(
-    () => ({
-      text: isDark ? "#F5F7FA" : "#171A1F",
-      placeholder: isDark ? "#8F98A8" : "#858B95",
-      selection: isDark ? "#FFFFFF" : "#111111",
-    }),
-    [isDark],
-  );
-
-  /* ============================================================
-     PROFILE CONTEXT
-     ============================================================ */
 
   const {
     transportationType,
@@ -112,594 +42,673 @@ const TransportationTypeCom = () => {
     setMaxiDescription,
   } = useProfileContext();
 
-  /* ============================================================
-     LOCAL STATE
-     ============================================================ */
+  const [categoryFocused, setCategoryFocused] = useState(false);
+  const [modelFocused, setModelFocused] = useState(false);
+  const [colourFocused, setColourFocused] = useState(false);
+  const [plateFocused, setPlateFocused] = useState(false);
+  const [descriptionFocused, setDescriptionFocused] = useState(false);
 
-  const [isFocus, setIsFocus] = useState(false);
-
-  /* ============================================================
-     TRANSPORTATION CATEGORIES
-     ============================================================ */
-
-  const transportData = [
+  const transportationTypes = [
     {
       label: "Micro",
       value: "MICRO",
-      description:
-        "This transportation method option includes eco-friendly transport methods such as Bicycles, Scooters, Skates for quick, short-distance deliveries.",
+      description: "Bicycle and other small delivery vehicles.",
     },
     {
       label: "Moto",
       value: "MOTO",
-      description:
-        "This transportation method is suitable for faster, mid-sized deliveries that require speed and distance. This option includes Motorcycles, Mopeds, Car.",
+      description: "Motorcycles and similar two-wheel delivery vehicles.",
     },
     {
       label: "Maxi",
       value: "MAXI",
-      description:
-        "This transportation method is best for large or bulky items that need spacious transport. This option includes Vans, Moving Trucks, Large Cargo vehicles.",
+      description: "Cars, vans, pickups and trucks for larger deliveries.",
     },
   ];
-
-  /* ============================================================
-     MOTO VEHICLE CLASSES
-     ============================================================ */
 
   const motoClasses = [
     {
       label: "Motorcycle",
-      value: "Motorcycle",
+      value: "MOTORCYCLE",
+      description: "Standard motorcycle suitable for courier deliveries.",
     },
-
-    /*
-     * Additional vehicle classes can be enabled later.
-     */
-    // {
-    //   label: "Car (Sedan)",
-    //   value: "Car_Sedan",
-    // },
-    // {
-    //   label: "Car (SUV)",
-    //   value: "Car_SUV",
-    // },
   ];
-
-  /* ============================================================
-     MAXI VEHICLE CLASSES
-     ============================================================ */
 
   const maxiClasses = [
     {
-      label: "Small Van (1-1.5 Tons)",
+      label: "Car",
+      value: "CAR",
+      capacity: "Passenger car",
+      description: "Suitable for smaller packages and lighter deliveries.",
+      image: require("../../../assets/maxiCategories/car.jpg"),
+    },
+
+    {
+      label: "Wagon",
+      value: "WAGON",
+      capacity: "Larger cargo space",
+      description: "A car-style vehicle with additional rear cargo space.",
+      image: require("../../../assets/maxiCategories/wagon.jpg"),
+    },
+
+    {
+      label: "Minibus",
+      value: "MINIBUS",
+      capacity: "Multi-purpose cargo space",
+      description:
+        "Suitable for larger items and deliveries requiring more interior space.",
+      image: require("../../../assets/maxiCategories/minibus.jpg"),
+    },
+
+    {
+      label: "Pickup",
+      value: "PICKUP",
+      capacity: "Open cargo bed",
+      description:
+        "Suitable for bulky items and goods that can be transported in an open cargo bed.",
+      image: require("../../../assets/maxiCategories/pickup.jpg"),
+    },
+
+    {
+      label: "Small Van",
       value: "SMALL_VAN",
+      capacity: "1-1.5 tons",
+      description: "Small commercial vans for lighter cargo loads.",
+      image: require("../../../assets/maxiCategories/smallvan.jpg"),
     },
+
     {
-      label: "Medium Van (2-3 Tons)",
+      label: "Medium Van",
       value: "MEDIUM_VAN",
+      capacity: "2-3 tons",
+      description: "Medium commercial vans for larger cargo loads.",
+      image: require("../../../assets/maxiCategories/mediumvan.jpg"),
     },
+
     {
-      label: "Large Van (3-5 Tons)",
+      label: "Large Van",
       value: "LARGE_VAN",
+      capacity: "3-5 tons",
+      description:
+        "Large commercial vans designed for bulky and heavier cargo.",
+      image: require("../../../assets/maxiCategories/largevan.jpg"),
     },
+
     {
       label: "5 Ton Truck",
       value: "TRUCK_5T",
+      capacity: "Up to 5 tons",
+      description: "Medium-duty truck suitable for heavier commercial cargo.",
+      image: require("../../../assets/maxiCategories/truck5t.jpg"),
     },
+
     {
       label: "10 Ton Truck",
       value: "TRUCK_10T",
+      capacity: "Up to 10 tons",
+      description: "Heavy-duty truck for large commercial cargo loads.",
+      image: require("../../../assets/maxiCategories/truck10t.jpg"),
     },
-
-    /*
-     * Future options.
-     */
-    // {
-    //   label: "20 Ton Truck",
-    //   value: "TRUCK_20T",
-    // },
 
     {
       label: "Flatbed 5 Ton",
       value: "FLATBED_5T",
-    },
-    {
-      label: "Flatbed 10 Ton",
-      value: "FLATBED_10T",
+      capacity: "Up to 5 tons",
+      description:
+        "Open flatbed vehicle for bulky, oversized or difficult-to-load cargo.",
+      image: require("../../../assets/maxiCategories/flatbed5t.jpg"),
     },
 
-    // {
-    //   label: "Flatbed 20 Ton",
-    //   value: "FLATBED_20T",
-    // },
-
     {
-      label: "Tipper 5 Ton (Sand/Gravel)",
+      label: "Tipper 5 Ton",
       value: "TIPPER_5T",
+      capacity: "Up to 5 tons",
+      description:
+        "Tipper vehicle designed for materials such as sand, gravel and aggregates.",
+      image: require("../../../assets/maxiCategories/tipper5t.jpg"),
     },
-    {
-      label: "Tipper 10 Ton (Sand/Gravel)",
-      value: "TIPPER_10T",
-    },
-
-    // {
-    //   label: "Tipper 20 Ton (Sand/Gravel)",
-    //   value: "TIPPER_20T",
-    // },
 
     {
       label: "Refrigerated 5 Ton",
       value: "REFRIGERATED_5T",
-    },
-    {
-      label: "Refrigerated 10 Ton",
-      value: "REFRIGERATED_10T",
+      capacity: "Up to 5 tons",
+      description:
+        "Temperature-controlled cargo vehicle for goods requiring refrigeration.",
+      image: require("../../../assets/maxiCategories/refrigerated5t.jpg"),
     },
   ];
 
-  /* ============================================================
-     TRANSPORTATION INFORMATION
-     ============================================================ */
+  const selectedMaxiVehicle = useMemo(
+    () => maxiClasses.find((item) => item.value === vehicleClass) || null,
+    [vehicleClass],
+  );
+
+  const handleTransportationTypeChange = (value) => {
+    setTransportationType(value);
+
+    /*
+     * Clear the vehicle class when switching transportation categories.
+     * This prevents a previously selected MAXI/MOTO class from remaining
+     * attached to a different transportation type.
+     */
+    if (value !== transportationType) {
+      setVehicleClass("");
+    }
+  };
+
+  const handleMaxiClassSelect = (value) => {
+    setVehicleClass(value);
+  };
 
   const handleInfoPress = (description) => {
     Alert.alert("Transportation Type Details", description);
   };
 
-  /* ============================================================
-     MAXI IMAGE PICKER
-     ============================================================ */
-
   const pickImages = async () => {
-    try {
-      /*
-       * Open the device gallery.
-       */
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsMultipleSelection: true,
-        quality: 1,
-      });
-
-      /*
-       * User cancelled the picker.
-       */
-      if (result.canceled) {
-        return;
-      }
-
-      /*
-       * Maxi vehicles require at least three photos.
-       */
-      if (!result.assets || result.assets.length < 3) {
-        Alert.alert(
-          "More photos required",
-          "Please select at least 3 vehicle images.",
-        );
-
-        return;
-      }
-
-      /*
-       * Store only the image URIs in the profile context.
-       */
-      const selectedImages = result.assets.map((asset) => asset.uri);
-
-      setMaxiImages(selectedImages);
-    } catch (error) {
-      console.log("Failed to select vehicle images:", error);
-
+    if (maxiImages.length >= 3) {
       Alert.alert(
-        "Unable to select photos",
-        "Something went wrong while selecting your vehicle photos. Please try again.",
+        "Maximum Photos Reached",
+        "You have already uploaded the maximum number of vehicle photos.",
       );
+      return;
     }
+
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permissionResult.granted) {
+      Alert.alert(
+        "Permission Required",
+        "Please allow access to your photos so you can upload vehicle images.",
+      );
+      return;
+    }
+
+    const remainingSlots = 3 - maxiImages.length;
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsMultipleSelection: true,
+      selectionLimit: remainingSlots,
+      quality: 0.8,
+    });
+
+    if (result.canceled) {
+      return;
+    }
+
+    const selectedImages = result.assets || [];
+
+    if (selectedImages.length === 0) {
+      return;
+    }
+
+    const imageUris = selectedImages.map((asset) => asset.uri);
+
+    const updatedImages = [...maxiImages, ...imageUris].slice(0, 3);
+
+    setMaxiImages(updatedImages);
   };
 
-  /* ============================================================
-     DROPDOWN COLORS
-     ============================================================ */
+  const removeImage = (indexToRemove) => {
+    const updatedImages = maxiImages.filter(
+      (_, index) => index !== indexToRemove,
+    );
 
-  const dropdownColors = useMemo(
-    () => ({
-      activeColor: isDark ? "#1D252F" : "#F3F5F7",
-      iconColor: isDark ? "#AAB2C0" : "#69727E",
-    }),
-    [isDark],
-  );
-
-  /* ============================================================
-     RENDER
-     ============================================================ */
+    setMaxiImages(updatedImages);
+  };
 
   return (
-    /*
-     * IMPORTANT:
-     *
-     * This is deliberately a normal View.
-     *
-     * EditProfile already provides the ScrollView.
-     */
     <View style={styles.container}>
-      {/* ======================================================
+      {/* =========================================================
           TRANSPORTATION CATEGORY
-          ====================================================== */}
-
+      ========================================================= */}
       <View style={styles.categoryGroup}>
         <View style={styles.categoryHeader}>
           <View style={styles.categoryHeaderIcon}>
             <AntDesign
               name="car"
-              size={16}
+              size={18}
               color={isDark ? "#F5F7FA" : "#171A1F"}
             />
           </View>
 
           <View style={styles.categoryHeaderCopy}>
-            <Text style={styles.categoryTitle}>Vehicle category</Text>
+            <Text style={styles.categoryTitle}>Transportation Type</Text>
 
             <Text style={styles.categoryDescription}>
-              Select the type of vehicle you operate
+              Select the type of vehicle you use for deliveries.
             </Text>
           </View>
         </View>
 
-        {/* ====================================================
-            TRANSPORTATION DROPDOWN
-            ==================================================== */}
-
         <Dropdown
-          style={[styles.dropdown, isFocus && styles.dropdownFocused]}
-          data={transportData}
-          labelField="label"
-          valueField="value"
-          placeholder="Select category"
+          style={[styles.dropdown, categoryFocused && styles.dropdownFocused]}
           placeholderStyle={styles.dropdownPlaceholder}
           selectedTextStyle={styles.dropdownSelectedText}
-          itemTextStyle={styles.dropdownItemText}
-          value={transportationType || null}
-          activeColor={dropdownColors.activeColor}
-          iconColor={dropdownColors.iconColor}
-          onFocus={() => setIsFocus(true)}
-          onBlur={() => setIsFocus(false)}
+          itemContainerStyle={styles.dropdownItem}
+          data={transportationTypes}
+          labelField="label"
+          valueField="value"
+          placeholder="Select transportation type"
+          value={transportationType}
+          onFocus={() => setCategoryFocused(true)}
+          onBlur={() => setCategoryFocused(false)}
           onChange={(item) => {
-            /*
-             * Save the selected transportation category.
-             */
-            setTransportationType(item.value);
-
-            /*
-             * A vehicle class belongs to a specific category.
-             *
-             * Therefore, when the category changes, the old class
-             * must be cleared.
-             */
-            setVehicleClass(null);
-
-            setIsFocus(false);
+            setCategoryFocused(false);
+            handleTransportationTypeChange(item.value);
           }}
           renderItem={(item) => (
-            <View style={styles.dropdownItem}>
-              <View style={styles.dropdownItemCopy}>
-                <Text style={styles.itemLabel}>{item.label}</Text>
+            <View style={styles.dropdownItemCopy}>
+              <Text style={styles.itemLabel}>{item.label}</Text>
 
-                {!!item.description && (
-                  <Text style={styles.itemDescription} numberOfLines={2}>
-                    {item.description}
-                  </Text>
-                )}
-              </View>
-
-              <TouchableOpacity
-                onPress={() => handleInfoPress(item.description)}
-                style={styles.infoButton}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel={`More information about ${item.label}`}
-              >
-                <AntDesign name="info-circle" style={styles.infoIcon} />
-              </TouchableOpacity>
+              <Text style={styles.itemDescription}>{item.description}</Text>
             </View>
+          )}
+          renderRightIcon={() => (
+            <AntDesign
+              name={categoryFocused ? "up" : "down"}
+              size={14}
+              color={isDark ? "#A7B0BC" : "#626C78"}
+            />
           )}
         />
       </View>
 
-      {/* ======================================================
+      {/* =========================================================
           MOTO
-          ====================================================== */}
-
+      ========================================================= */}
       {transportationType === "MOTO" && (
         <View style={styles.detailSection}>
-          {/* --------------------------------------------------
-              MOTO HEADER
-              -------------------------------------------------- */}
-
           <View style={styles.detailHeader}>
             <View style={styles.detailIcon}>
               <AntDesign
                 name="dashboard"
-                size={15}
+                size={17}
                 color={isDark ? "#F5F7FA" : "#171A1F"}
               />
             </View>
 
             <View style={styles.detailHeaderCopy}>
-              <Text style={styles.detailTitle}>Vehicle details</Text>
+              <Text style={styles.detailTitle}>Motorcycle Details</Text>
 
               <Text style={styles.detailSubtitle}>
-                Tell us about your motorcycle
+                Tell us about the motorcycle you use for deliveries.
               </Text>
             </View>
           </View>
 
-          {/* --------------------------------------------------
-              MOTO DETAILS CARD
-              -------------------------------------------------- */}
-
           <View style={styles.detailCard}>
-            {/* Vehicle class */}
-
-            <Text style={styles.inputLabel}>Vehicle class</Text>
+            <Text style={styles.inputLabel}>Vehicle Class</Text>
 
             <Dropdown
               style={styles.dropdown}
+              placeholderStyle={styles.dropdownPlaceholder}
+              selectedTextStyle={styles.dropdownSelectedText}
+              itemContainerStyle={styles.dropdownItem}
               data={motoClasses}
               labelField="label"
               valueField="value"
               placeholder="Select vehicle class"
-              placeholderStyle={styles.dropdownPlaceholder}
-              selectedTextStyle={styles.dropdownSelectedText}
-              itemTextStyle={styles.dropdownItemText}
-              value={vehicleClass || null}
-              activeColor={dropdownColors.activeColor}
-              iconColor={dropdownColors.iconColor}
+              value={vehicleClass}
               onChange={(item) => setVehicleClass(item.value)}
+              renderItem={(item) => (
+                <View style={styles.dropdownItemCopy}>
+                  <Text style={styles.itemLabel}>{item.label}</Text>
+
+                  <Text style={styles.itemDescription}>{item.description}</Text>
+                </View>
+              )}
             />
 
-            {/* Vehicle model */}
-
-            <Text style={styles.inputLabel}>Vehicle model</Text>
+            <Text style={styles.inputLabel}>Model</Text>
 
             <TextInput
-              style={styles.input}
-              value={model || ""}
+              style={[styles.input, modelFocused && styles.inputFocused]}
+              value={model}
               onChangeText={setModel}
-              placeholder="Vehicle model (e.g. Honda CB125)"
-              placeholderTextColor={inputColors.placeholder}
-              selectionColor={inputColors.selection}
+              placeholder="e.g. Honda CG 125"
+              placeholderTextColor={isDark ? "#8A95A2" : "#8A9099"}
+              onFocus={() => setModelFocused(true)}
+              onBlur={() => setModelFocused(false)}
               autoCapitalize="words"
-              autoCorrect={false}
-              keyboardType="default"
-              textContentType="none"
             />
 
-            {/* Vehicle colour */}
-
-            <Text style={styles.inputLabel}>Vehicle colour</Text>
+            <Text style={styles.inputLabel}>Colour</Text>
 
             <TextInput
-              style={styles.input}
-              value={vehicleColour || ""}
+              style={[styles.input, colourFocused && styles.inputFocused]}
+              value={vehicleColour}
               onChangeText={setVehicleColour}
-              placeholder="Vehicle colour (e.g. Red)"
-              placeholderTextColor={inputColors.placeholder}
-              selectionColor={inputColors.selection}
+              placeholder="e.g. Black"
+              placeholderTextColor={isDark ? "#8A95A2" : "#8A9099"}
+              onFocus={() => setColourFocused(true)}
+              onBlur={() => setColourFocused(false)}
               autoCapitalize="words"
-              autoCorrect={false}
-              keyboardType="default"
-              textContentType="none"
             />
 
-            {/* Plate number */}
-
-            <Text style={styles.inputLabel}>Plate number</Text>
+            <Text style={styles.inputLabel}>Plate Number</Text>
 
             <TextInput
-              style={styles.input}
-              value={plateNumber || ""}
+              style={[styles.input, plateFocused && styles.inputFocused]}
+              value={plateNumber}
               onChangeText={setPlateNumber}
-              placeholder="Plate number"
-              placeholderTextColor={inputColors.placeholder}
-              selectionColor={inputColors.selection}
+              placeholder="e.g. ABC 123 XY"
+              placeholderTextColor={isDark ? "#8A95A2" : "#8A9099"}
+              onFocus={() => setPlateFocused(true)}
+              onBlur={() => setPlateFocused(false)}
               autoCapitalize="characters"
-              autoCorrect={false}
-              keyboardType="default"
-              textContentType="none"
             />
           </View>
         </View>
       )}
 
-      {/* ======================================================
+      {/* =========================================================
           MAXI
-          ====================================================== */}
-
+      ========================================================= */}
       {transportationType === "MAXI" && (
         <View style={styles.detailSection}>
-          {/* --------------------------------------------------
-              MAXI HEADER
-              -------------------------------------------------- */}
-
           <View style={styles.detailHeader}>
             <View style={styles.detailIcon}>
               <AntDesign
                 name="car"
-                size={15}
+                size={17}
                 color={isDark ? "#F5F7FA" : "#171A1F"}
               />
             </View>
 
             <View style={styles.detailHeaderCopy}>
-              <Text style={styles.detailTitle}>Vehicle details</Text>
+              <Text style={styles.detailTitle}>Vehicle Details</Text>
 
               <Text style={styles.detailSubtitle}>
-                Provide the details of your cargo vehicle
+                Choose the vehicle category that best matches your vehicle.
               </Text>
             </View>
           </View>
 
-          {/* --------------------------------------------------
-              MAXI DETAILS CARD
-              -------------------------------------------------- */}
-
           <View style={styles.detailCard}>
-            {/* Vehicle class */}
+            {/* =====================================================
+                MAXI VEHICLE SELECTION INTRO
+            ===================================================== */}
+            <View style={styles.vehicleSelectionIntro}>
+              <View style={styles.vehicleSelectionIntroIcon}>
+                <AntDesign
+                  name="picture"
+                  size={17}
+                  color={isDark ? "#F5F7FA" : "#171A1F"}
+                />
+              </View>
 
-            <Text style={styles.inputLabel}>Vehicle class</Text>
+              <View style={styles.vehicleSelectionIntroCopy}>
+                <Text style={styles.vehicleSelectionTitle}>
+                  Identify your vehicle
+                </Text>
 
-            <Dropdown
-              style={styles.dropdown}
-              data={maxiClasses}
-              labelField="label"
-              valueField="value"
-              placeholder="Select vehicle class"
-              placeholderStyle={styles.dropdownPlaceholder}
-              selectedTextStyle={styles.dropdownSelectedText}
-              itemTextStyle={styles.dropdownItemText}
-              value={vehicleClass || null}
-              activeColor={dropdownColors.activeColor}
-              iconColor={dropdownColors.iconColor}
-              onChange={(item) => setVehicleClass(item.value)}
-            />
+                <Text style={styles.vehicleSelectionSubtitle}>
+                  Choose the vehicle that looks most like yours. The images
+                  below are reference examples only.
+                </Text>
+              </View>
+            </View>
 
-            {/* Vehicle model */}
+            {/* =====================================================
+                MAXI VEHICLE VISUAL GRID
+            ===================================================== */}
+            <View style={styles.maxiVehicleGrid}>
+              {maxiClasses.map((item) => {
+                const isSelected = vehicleClass === item.value;
 
-            <Text style={styles.inputLabel}>Vehicle model</Text>
+                return (
+                  <TouchableOpacity
+                    key={item.value}
+                    activeOpacity={0.85}
+                    onPress={() => handleMaxiClassSelect(item.value)}
+                    style={[
+                      styles.maxiVehicleCard,
+                      isSelected && styles.maxiVehicleCardSelected,
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.maxiVehicleImageWrapper,
+                        isSelected && styles.maxiVehicleImageWrapperSelected,
+                      ]}
+                    >
+                      <Image
+                        source={item.image}
+                        style={styles.maxiVehicleImage}
+                        resizeMode="contain"
+                      />
+
+                      {isSelected && (
+                        <View style={styles.maxiVehicleSelectedBadge}>
+                          <AntDesign name="check" size={13} color="#FFFFFF" />
+                        </View>
+                      )}
+                    </View>
+
+                    <View style={styles.maxiVehicleCardContent}>
+                      <Text
+                        style={[
+                          styles.maxiVehicleCardTitle,
+                          isSelected && styles.maxiVehicleCardTitleSelected,
+                        ]}
+                      >
+                        {item.label}
+                      </Text>
+
+                      <Text
+                        style={styles.maxiVehicleCardCapacity}
+                        numberOfLines={1}
+                      >
+                        {item.capacity}
+                      </Text>
+
+                      <Text style={styles.maxiVehicleCardDescription}>
+                        {item.description}
+                      </Text>
+
+                      <View
+                        style={[
+                          styles.maxiVehicleSelectionIndicator,
+                          isSelected &&
+                            styles.maxiVehicleSelectionIndicatorSelected,
+                        ]}
+                      >
+                        {isSelected && (
+                          <View style={styles.maxiVehicleSelectionDot} />
+                        )}
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* =====================================================
+                SELECTED VEHICLE SUMMARY
+            ===================================================== */}
+            {selectedMaxiVehicle && (
+              <View style={styles.selectedVehicleSummary}>
+                <View style={styles.selectedVehicleSummaryIcon}>
+                  <Image
+                    source={selectedMaxiVehicle.image}
+                    style={styles.selectedVehicleSummaryImage}
+                    resizeMode="contain"
+                  />
+                </View>
+
+                <View style={styles.selectedVehicleSummaryCopy}>
+                  <Text style={styles.selectedVehicleSummaryLabel}>
+                    Selected vehicle
+                  </Text>
+
+                  <Text style={styles.selectedVehicleSummaryValue}>
+                    {selectedMaxiVehicle.label}
+                  </Text>
+
+                  <Text style={styles.selectedVehicleSummaryDescription}>
+                    {selectedMaxiVehicle.capacity}
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {/* =====================================================
+                VEHICLE INFORMATION
+            ===================================================== */}
+            <View style={styles.vehicleInformationDivider} />
+
+            <View style={styles.vehicleInformationHeading}>
+              <Text style={styles.vehicleInformationHeading}>
+                Vehicle information
+              </Text>
+            </View>
+
+            <Text style={styles.inputLabel}>Model</Text>
 
             <TextInput
-              style={styles.input}
-              value={model || ""}
+              style={[styles.input, modelFocused && styles.inputFocused]}
+              value={model}
               onChangeText={setModel}
-              placeholder="Vehicle model"
-              placeholderTextColor={inputColors.placeholder}
-              selectionColor={inputColors.selection}
+              placeholder="e.g. Toyota Hilux"
+              placeholderTextColor={isDark ? "#8A95A2" : "#8A9099"}
+              onFocus={() => setModelFocused(true)}
+              onBlur={() => setModelFocused(false)}
               autoCapitalize="words"
-              autoCorrect={false}
-              keyboardType="default"
-              textContentType="none"
             />
 
-            {/* Vehicle colour */}
-
-            <Text style={styles.inputLabel}>Vehicle colour</Text>
+            <Text style={styles.inputLabel}>Colour</Text>
 
             <TextInput
-              style={styles.input}
-              value={vehicleColour || ""}
+              style={[styles.input, colourFocused && styles.inputFocused]}
+              value={vehicleColour}
               onChangeText={setVehicleColour}
-              placeholder="Vehicle colour (e.g. Red)"
-              placeholderTextColor={inputColors.placeholder}
-              selectionColor={inputColors.selection}
+              placeholder="e.g. White"
+              placeholderTextColor={isDark ? "#8A95A2" : "#8A9099"}
+              onFocus={() => setColourFocused(true)}
+              onBlur={() => setColourFocused(false)}
               autoCapitalize="words"
-              autoCorrect={false}
-              keyboardType="default"
-              textContentType="none"
             />
 
-            {/* Plate number */}
-
-            <Text style={styles.inputLabel}>Plate number</Text>
+            <Text style={styles.inputLabel}>Plate Number</Text>
 
             <TextInput
-              style={styles.input}
-              value={plateNumber || ""}
+              style={[styles.input, plateFocused && styles.inputFocused]}
+              value={plateNumber}
               onChangeText={setPlateNumber}
-              placeholder="Plate number"
-              placeholderTextColor={inputColors.placeholder}
-              selectionColor={inputColors.selection}
+              placeholder="e.g. ABC 123 XY"
+              placeholderTextColor={isDark ? "#8A95A2" : "#8A9099"}
+              onFocus={() => setPlateFocused(true)}
+              onBlur={() => setPlateFocused(false)}
               autoCapitalize="characters"
-              autoCorrect={false}
-              keyboardType="default"
-              textContentType="none"
             />
 
-            {/* ==================================================
-                VEHICLE CAPACITY / DESCRIPTION
-                ================================================== */}
-
+            {/* =====================================================
+                CAPACITY / DESCRIPTION
+            ===================================================== */}
             <Text style={styles.inputLabel}>
-              Vehicle capacity & description
+              Vehicle Capacity / Description
             </Text>
 
             <TextInput
-              style={[styles.input, styles.descriptionInput]}
-              value={maxiDescription || ""}
+              style={[
+                styles.descriptionInput,
+                descriptionFocused && styles.inputFocused,
+              ]}
+              value={maxiDescription}
               onChangeText={setMaxiDescription}
+              placeholder="Describe your vehicle, its capacity, or anything useful about it..."
+              placeholderTextColor={isDark ? "#8A95A2" : "#8A9099"}
+              onFocus={() => setDescriptionFocused(true)}
+              onBlur={() => setDescriptionFocused(false)}
               multiline
-              numberOfLines={5}
               textAlignVertical="top"
-              placeholder="Describe the capacity of your vehicle and give examples of what it can carry"
-              placeholderTextColor={inputColors.placeholder}
-              selectionColor={inputColors.selection}
             />
 
-            {/* ==================================================
-                VEHICLE PHOTOS
-                ================================================== */}
-
+            {/* =====================================================
+                ACTUAL VEHICLE PHOTOS
+            ===================================================== */}
             <View style={styles.photoSection}>
               <View style={styles.photoHeader}>
                 <View style={styles.photoHeaderCopy}>
-                  <Text style={styles.photoTitle}>Vehicle photos</Text>
+                  <Text style={styles.photoTitle}>Your Vehicle Photos</Text>
 
                   <Text style={styles.photoSubtitle}>
-                    Upload at least 3 clear photos of the vehicle
+                    Upload clear photos of your actual vehicle.
                   </Text>
                 </View>
 
-                {!!maxiImages?.length && (
-                  <View style={styles.photoCount}>
-                    <Text style={styles.photoCountText}>
-                      {maxiImages.length}
-                    </Text>
-                  </View>
-                )}
+                <View style={styles.photoCount}>
+                  <Text style={styles.photoCountText}>
+                    {maxiImages.length}/3
+                  </Text>
+                </View>
               </View>
 
-              {/* Upload button */}
-
               <TouchableOpacity
+                activeOpacity={0.8}
                 style={styles.photoButton}
                 onPress={pickImages}
-                activeOpacity={0.82}
-                accessibilityRole="button"
-                accessibilityLabel="Upload vehicle photos"
+                disabled={maxiImages.length >= 3}
               >
                 <View style={styles.photoButtonIcon}>
-                  <AntDesign name="camera" size={17} color="#FFFFFF" />
+                  <AntDesign
+                    name="camera"
+                    size={20}
+                    color={isDark ? "#F5F7FA" : "#171A1F"}
+                  />
                 </View>
 
                 <View style={styles.photoButtonCopy}>
                   <Text style={styles.photoButtonText}>
-                    {maxiImages?.length > 0
-                      ? "Add or replace photos"
-                      : "Upload vehicle photos"}
+                    {maxiImages.length >= 3
+                      ? "All photos uploaded"
+                      : "Add vehicle photos"}
                   </Text>
 
                   <Text style={styles.photoButtonSubtext}>
-                    Choose clear images from your gallery
+                    {maxiImages.length >= 3
+                      ? "You have uploaded the required photos."
+                      : "Add up to 3 clear photos of your vehicle."}
                   </Text>
                 </View>
 
-                <AntDesign name="arrow-right" size={16} color="#FFFFFF" />
+                {maxiImages.length < 3 && (
+                  <AntDesign
+                    name="right"
+                    size={16}
+                    color={isDark ? "#A7B0BC" : "#626C78"}
+                  />
+                )}
               </TouchableOpacity>
 
-              {/* Image previews */}
-
-              {maxiImages?.length > 0 && (
+              {maxiImages.length > 0 && (
                 <View style={styles.imagePreviewContainer}>
                   {maxiImages.map((uri, index) => (
                     <View
                       key={`${uri}-${index}`}
                       style={styles.previewImageWrapper}
                     >
-                      <Image source={{ uri }} style={styles.previewImage} />
+                      <Image
+                        source={{ uri }}
+                        style={styles.previewImage}
+                        resizeMode="cover"
+                      />
 
                       <View style={styles.previewImageNumber}>
                         <Text style={styles.previewImageNumberText}>
                           {index + 1}
                         </Text>
                       </View>
+
+                      <TouchableOpacity
+                        activeOpacity={0.8}
+                        onPress={() => removeImage(index)}
+                        style={styles.previewImageRemove}
+                      >
+                        <AntDesign name="close" size={13} color="#FFFFFF" />
+                      </TouchableOpacity>
                     </View>
                   ))}
                 </View>
