@@ -223,7 +223,12 @@ const PrivacyPolicy = () => {
             </PolicyBullet>
 
             <PolicyBullet title="Location Information: ">
-              GPS data to facilitate package delivery.
+              Atua Courier collects precise GPS location data to facilitate
+              deliveries, show couriers' positions, provide relevant delivery
+              requests, and update live location during deliveries. When a
+              courier is online, location data may be collected while the app is
+              running in the background or the device is locked, subject to the
+              location permissions granted on the device.
             </PolicyBullet>
 
             <PolicyBullet title="Usage Information: ">
@@ -238,6 +243,16 @@ const PrivacyPolicy = () => {
           <PolicySection number="03" title="How We Use Your Information">
             <PolicyBullet>
               To facilitate connections between Senders and Couriers.
+            </PolicyBullet>
+
+            <PolicyBullet title="Background Location for Couriers: ">
+              To support courier operations while couriers are online, including
+              updating their live location during deliveries and providing
+              relevant delivery requests when the app is running in the
+              background or the device is locked. Couriers must grant the
+              required location permissions to use features that depend on
+              background location access. Couriers can go offline in the app to
+              stop active background tracking.
             </PolicyBullet>
 
             <PolicyBullet>To process payments and payouts.</PolicyBullet>

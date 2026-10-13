@@ -8,6 +8,7 @@ import { DataStore } from "aws-amplify/datastore";
 
 import {
   hasRequiredLocationPermissions,
+  requestBackgroundLocationPermission,
   requestLocationPermissions,
 } from "@/src/location/locationPermissions";
 
@@ -32,6 +33,7 @@ import { ActivityIndicator, Alert, Linking, Text } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import BackgroundLocationDisclosureModal from "../BackgroundLocationDisclosureModal";
 import BottomContainer from "../BottomContainer";
 import HomeMap from "../HomeMap";
 import OrderItem from "../OrderItem";
@@ -80,6 +82,11 @@ HOME COMPONENT
 */
 
 const HomeComponent = () => {
+  const [showLocationDisclosure, setShowLocationDisclosure] = useState(false);
+
+  const [locationDisclosureResolver, setLocationDisclosureResolver] =
+    useState(null);
+
   /*
   ==========================================================
   AUTH / PROFILE
@@ -587,26 +594,28 @@ No `todayEarnings` field is required on Courier.
   ==========================================================
   */
 
-  const showBackgroundLocationAlert = useCallback(() => {
-    Alert.alert(
-      "Background location required",
-      "Atua Courier requires 'Allow all the time' location permission. " +
-        "This allows your location to update when your phone is locked " +
-        "or when Atua Courier is running in the background.",
-      [
-        {
-          text: "Open Settings",
-          onPress: () => {
-            Linking.openSettings();
-          },
-        },
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-      ],
-    );
-  }, []);
+  const showBackgroundLocationDisclosure = useCallback(async () => {
+    if (!dbCourier?.id) {
+      return false;
+    }
+
+    // Check the device's actual location permissions first.
+    const alreadyHasRequiredPermissions =
+      await hasRequiredLocationPermissions();
+
+    // If background permission is already granted, skip the disclosure.
+    if (alreadyHasRequiredPermissions) {
+      return true;
+    }
+
+    // Otherwise, show the disclosure.
+    const agreed = await new Promise((resolve) => {
+      setLocationDisclosureResolver(() => resolve);
+      setShowLocationDisclosure(true);
+    });
+
+    return agreed;
+  }, [dbCourier?.id, hasRequiredLocationPermissions]);
 
   const onGoPress = useCallback(async () => {
     /*
@@ -795,41 +804,60 @@ No `todayEarnings` field is required on Courier.
       }
 
       /*
-      --------------------------------------------------------
-      GOING ONLINE:
-      CHECK EXISTING PERMISSIONS FIRST
-      --------------------------------------------------------
-      */
+==========================================================
+GOING ONLINE: DISCLOSURE AND PERMISSIONS
+==========================================================
+*/
 
+      // Step 1: Show the disclosure only if the required background location permissions are not granted.
+      const userAgreed = await showBackgroundLocationDisclosure();
+
+      if (!userAgreed) {
+        setIsOnline(false);
+        return;
+      }
+
+      // Step 2: Check existing location permissions.
       const alreadyHasRequiredPermissions =
         await hasRequiredLocationPermissions();
 
-      /*
-      --------------------------------------------------------
-      REQUEST PERMISSIONS IF NOT ALREADY GRANTED
-      --------------------------------------------------------
-      */
-
       if (!alreadyHasRequiredPermissions) {
-        const permissionResult = await requestLocationPermissions();
+        // Step 3: Request foreground location permission.
+        const foregroundResult = await requestLocationPermissions();
 
-        if (!permissionResult.granted) {
-          /*
-          Do not start tracking.
-          Do not update the backend to online.
-          Do not update the local state to online.
-          */
-
+        if (!foregroundResult.foregroundGranted) {
           setIsOnline(false);
 
-          if (permissionResult.foregroundGranted === false) {
-            Alert.alert(
-              "Location permission required",
-              "Atua Courier needs location permission to receive and manage delivery requests.",
-            );
-          } else {
-            showBackgroundLocationAlert();
-          }
+          Alert.alert(
+            "Location Permission Required",
+            "Atua Courier needs location permission to receive and manage delivery requests.",
+          );
+
+          return;
+        }
+
+        // Step 4: Request background permission after disclosure.
+        const backgroundResult = await requestBackgroundLocationPermission();
+
+        if (!backgroundResult.granted) {
+          setIsOnline(false);
+
+          Alert.alert(
+            "Background Location Required",
+            "To go online, allow Atua Courier to access your location in the background. You may need to open Settings and select 'Allow all the time'.",
+            [
+              {
+                text: "Cancel",
+                style: "cancel",
+              },
+              {
+                text: "Open Settings",
+                onPress: () => {
+                  Linking.openSettings();
+                },
+              },
+            ],
+          );
 
           return;
         }
@@ -898,7 +926,7 @@ No `todayEarnings` field is required on Courier.
     dbCourier?.isApproved,
     dbCourier?.isBlocked,
     setIsOnline,
-    showBackgroundLocationAlert,
+    showBackgroundLocationDisclosure,
   ]);
 
   /*
@@ -2397,6 +2425,26 @@ RENDER
             ))}
         </BottomSheetScrollView>
       </BottomSheet>
+      {/* Background Location Disclosure */}
+      <BackgroundLocationDisclosureModal
+        visible={showLocationDisclosure}
+        onAgree={() => {
+          const resolve = locationDisclosureResolver;
+
+          setShowLocationDisclosure(false);
+          setLocationDisclosureResolver(null);
+
+          resolve?.(true);
+        }}
+        onDecline={() => {
+          const resolve = locationDisclosureResolver;
+
+          setShowLocationDisclosure(false);
+          setLocationDisclosureResolver(null);
+
+          resolve?.(false);
+        }}
+      />
     </SafeAreaView>
   );
 };

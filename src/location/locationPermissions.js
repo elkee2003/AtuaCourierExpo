@@ -1,20 +1,14 @@
 import * as Location from "expo-location";
 
 /**
- * Requests the location permissions required by Atua Courier.
+ * Requests foreground location permission only.
  *
- * Required permissions:
- * 1. Foreground location permission.
- * 2. Background location permission.
- *
- * The courier must grant both permissions before
- * background GPS tracking can start.
+ * Background permission must be requested separately,
+ * after the in-app background location disclosure is shown
+ * and the courier agrees to continue.
  */
 export async function requestLocationPermissions() {
   try {
-    // --------------------------------------------------
-    // Step 1: Request foreground location permission
-    // --------------------------------------------------
     const foregroundPermission =
       await Location.requestForegroundPermissionsAsync();
 
@@ -27,35 +21,17 @@ export async function requestLocationPermissions() {
       };
     }
 
-    // --------------------------------------------------
-    // Step 2: Request background location permission
-    // --------------------------------------------------
-    // Android may direct the user to Settings instead of
-    // displaying a normal permission popup.
-    const backgroundPermission =
-      await Location.requestBackgroundPermissionsAsync();
-
-    if (backgroundPermission.status !== "granted") {
-      return {
-        granted: false,
-        foregroundGranted: true,
-        backgroundGranted: false,
-        reason:
-          "Background location permission was not granted. Select 'Allow all the time' in Android settings.",
-      };
-    }
-
-    // --------------------------------------------------
-    // Both permissions were granted
-    // --------------------------------------------------
     return {
       granted: true,
       foregroundGranted: true,
-      backgroundGranted: true,
+      backgroundGranted: false,
       reason: null,
     };
   } catch (error) {
-    console.error("Error while requesting location permissions:", error);
+    console.error(
+      "Error while requesting foreground location permission:",
+      error,
+    );
 
     return {
       granted: false,
@@ -63,16 +39,57 @@ export async function requestLocationPermissions() {
       backgroundGranted: false,
       reason:
         error?.message ||
-        "An unexpected error occurred while requesting location permissions.",
+        "An unexpected error occurred while requesting foreground location permission.",
     };
   }
 }
 
 /**
- * Checks whether both foreground and background permissions
- * have already been granted.
+ * Requests background location permission.
  *
- * This function does not display a permission popup.
+ * Call this function only after the in-app disclosure
+ * has been displayed and the courier agrees to continue.
+ */
+export async function requestBackgroundLocationPermission() {
+  try {
+    const backgroundPermission =
+      await Location.requestBackgroundPermissionsAsync();
+
+    if (backgroundPermission.status !== "granted") {
+      return {
+        granted: false,
+        status: backgroundPermission.status,
+        reason:
+          "Background location permission was not granted. The courier must allow background location access to go online.",
+      };
+    }
+
+    return {
+      granted: true,
+      status: backgroundPermission.status,
+      reason: null,
+    };
+  } catch (error) {
+    console.error(
+      "Error while requesting background location permission:",
+      error,
+    );
+
+    return {
+      granted: false,
+      status: "error",
+      reason:
+        error?.message ||
+        "An unexpected error occurred while requesting background location permission.",
+    };
+  }
+}
+
+/**
+ * Checks whether both foreground and background location
+ * permissions have already been granted.
+ *
+ * This function does not display permission prompts.
  *
  * Returns:
  *   true  -> both permissions are granted
@@ -80,10 +97,8 @@ export async function requestLocationPermissions() {
  */
 export async function hasRequiredLocationPermissions() {
   try {
-    // Check foreground permission.
     const foregroundPermission = await Location.getForegroundPermissionsAsync();
 
-    // Check background permission.
     const backgroundPermission = await Location.getBackgroundPermissionsAsync();
 
     return (
@@ -93,8 +108,6 @@ export async function hasRequiredLocationPermissions() {
   } catch (error) {
     console.error("Error while checking location permissions:", error);
 
-    // If the permission check fails, treat the permissions
-    // as unavailable so the app does not start tracking.
     return false;
   }
 }
