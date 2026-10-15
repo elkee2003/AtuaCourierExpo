@@ -11,9 +11,12 @@ import { DataStore } from "aws-amplify/datastore";
 import * as Clipboard from "expo-clipboard";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
+
 import {
   ActivityIndicator,
   Alert,
+  Linking,
+  Platform,
   Text,
   TextInput,
   TouchableOpacity,
@@ -166,6 +169,7 @@ const OrderDetails = ({
     dropoffArrivalVideo,
     updateOrderStatus,
     setUploadProgress,
+    isPickedUp,
   } = useOrderContext();
 
   const { dbCourier } = useAuthContext();
@@ -248,6 +252,81 @@ const OrderDetails = ({
 
     Alert.alert("Copied", "Number copied");
   };
+
+  const handleNavigateWithGoogleMaps = async () => {
+    const latitude = Number(
+      isPickedUp ? order?.destinationLat : order?.originLat,
+    );
+
+    const longitude = Number(
+      isPickedUp ? order?.destinationLng : order?.originLng,
+    );
+
+    if (
+      !order ||
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude) ||
+      Math.abs(latitude) > 90 ||
+      Math.abs(longitude) > 180 ||
+      (latitude === 0 && longitude === 0)
+    ) {
+      Alert.alert(
+        "Location unavailable",
+        "The destination coordinates are missing or invalid.",
+      );
+      return;
+    }
+
+    // Google Maps navigation URL for the active destination.
+    const googleMapsWebUrl =
+      `https://www.google.com/maps/dir/?api=1` +
+      `&destination=${latitude},${longitude}` +
+      `&travelmode=driving&dir_action=navigate`;
+
+    try {
+      if (Platform.OS === "android") {
+        // Opens turn-by-turn navigation in Google Maps on Android,
+        // if Google Maps is installed and handles this URL.
+        const googleNavigationUrl = `google.navigation:q=${latitude},${longitude}&mode=d`;
+
+        try {
+          await Linking.openURL(googleNavigationUrl);
+        } catch {
+          // Fall back to the Google Maps web/app URL.
+          await Linking.openURL(googleMapsWebUrl);
+        }
+      } else {
+        // iOS opens Google Maps if available, or the web fallback.
+        await Linking.openURL(googleMapsWebUrl);
+      }
+    } catch (error) {
+      console.error("Google Maps navigation error:", error);
+
+      Alert.alert(
+        "Unable to open navigation",
+        "Please check that Google Maps is available on your device.",
+      );
+    }
+  };
+
+  // To disable Google Maps navigation
+  const isGoogleMapsNavigationDisabled = useMemo(() => {
+    // Disable navigation for completed, cancelled, or disputed orders
+    if (["DELIVERED", "CANCELLED", "DISPUTED"].includes(order?.status)) {
+      return true;
+    }
+
+    // Maxi orders cannot navigate to pickup until payment is confirmed
+    if (
+      order?.transportationType === "MAXI" &&
+      order?.status === "ACCEPTED" &&
+      order?.paymentStatus !== "PAID"
+    ) {
+      return true;
+    }
+
+    return false;
+  }, [order?.status, order?.paymentStatus, order?.transportationType]);
 
   /**
    * ==========================================================
@@ -782,6 +861,58 @@ const OrderDetails = ({
             autoCapitalize="none"
           />
         </View>
+      )}
+
+      {/* ======================================================
+      GOOGLE MAPS NAVIGATION
+      ====================================================== */}
+
+      {order?.status && (
+        <TouchableOpacity
+          onPress={handleNavigateWithGoogleMaps}
+          disabled={isGoogleMapsNavigationDisabled}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Navigate to the active delivery destination with Google Maps"
+          style={[
+            styles.googleMapsButton,
+            isGoogleMapsNavigationDisabled && styles.googleMapsButtonDisabled,
+          ]}
+        >
+          <Text
+            style={[
+              styles.googleMapsIcon,
+              isGoogleMapsNavigationDisabled && styles.googleMapsTextDisabled,
+            ]}
+          >
+            ↗
+          </Text>
+
+          <View style={styles.googleMapsTextContainer}>
+            <Text
+              style={[
+                styles.googleMapsButtonText,
+                isGoogleMapsNavigationDisabled && styles.googleMapsTextDisabled,
+              ]}
+            >
+              Navigate with Google Maps
+            </Text>
+
+            <Text
+              style={[
+                styles.googleMapsSubtitle,
+                isGoogleMapsNavigationDisabled && styles.googleMapsTextDisabled,
+              ]}
+            >
+              {isGoogleMapsNavigationDisabled &&
+              order?.transportationType === "MAXI" &&
+              order?.status === "ACCEPTED" &&
+              order?.paymentStatus !== "PAID"
+                ? "Navigation available after payment"
+                : "Open turn-by-turn navigation with voice directions"}
+            </Text>
+          </View>
+        </TouchableOpacity>
       )}
 
       {/* ======================================================

@@ -643,6 +643,75 @@ export default StyleSheet.create({
   },
 
   /* ============================================================
+     GOOGLE MAPS NAVIGATION
+     ============================================================ */
+
+  googleMapsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#DCDCDC",
+    borderRadius: 15,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    marginBottom: 12,
+
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+
+  googleMapsButtonDisabled: {
+    backgroundColor: "#F0F0F0",
+    borderColor: "#E2E2E2",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+
+  googleMapsIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor: "#E8F8EE",
+    color: "#16A34A",
+    fontSize: 23,
+    fontWeight: "900",
+    textAlign: "center",
+    textAlignVertical: "center",
+    overflow: "hidden",
+    marginRight: 11,
+  },
+
+  googleMapsTextContainer: {
+    flex: 1,
+    justifyContent: "center",
+  },
+
+  googleMapsButtonText: {
+    fontSize: 10,
+    fontWeight: "900",
+    color: "#171717",
+    letterSpacing: 0.1,
+  },
+
+  googleMapsSubtitle: {
+    fontSize: 7.5,
+    lineHeight: 12,
+    color: "#888888",
+    marginTop: 4,
+  },
+
+  googleMapsTextDisabled: {
+    color: "#A0A0A0",
+  },
+
+  /* ============================================================
      MAIN ACTION
      ============================================================ */
 

@@ -6,7 +6,7 @@ import Feather from "@expo/vector-icons/Feather";
 import { DataStore } from "aws-amplify/datastore";
 import * as Location from "expo-location";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, useWindowDimensions, View } from "react-native";
 
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
@@ -15,6 +15,82 @@ import MapViewDirections from "react-native-maps-directions";
 
 import { GOOGLE_API_KEY } from "../../../keys";
 import styles from "./styles";
+
+// ======================================================
+// DISTANCE CALCULATION HELPERS
+// ======================================================
+// Calculates the shortest distance in metres between the
+// courier's GPS position and the nearest segment of the
+// Google Directions route, used for off-route detection.
+//
+// Also calculates the straight-line distance in metres
+// between two GPS coordinates, used to determine whether
+// the courier is close enough to the active pickup or
+// drop-off location.
+// ======================================================
+const distanceToRouteMeters = (point, routeCoordinates) => {
+  if (
+    !point ||
+    !Array.isArray(routeCoordinates) ||
+    routeCoordinates.length < 2
+  ) {
+    return Infinity;
+  }
+
+  const R = 6371000;
+  const lat0 = (point.latitude * Math.PI) / 180;
+  const toXY = ({ latitude, longitude }) => ({
+    x: R * ((longitude * Math.PI) / 180) * Math.cos(lat0),
+    y: R * ((latitude * Math.PI) / 180),
+  });
+
+  const p = toXY(point);
+  let minDistance = Infinity;
+
+  for (let i = 0; i < routeCoordinates.length - 1; i++) {
+    const a = toXY(routeCoordinates[i]);
+    const b = toXY(routeCoordinates[i + 1]);
+
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const lengthSquared = dx * dx + dy * dy;
+
+    const t =
+      lengthSquared === 0
+        ? 0
+        : Math.max(
+            0,
+            Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / lengthSquared),
+          );
+
+    const nearestX = a.x + t * dx;
+    const nearestY = a.y + t * dy;
+
+    const distance = Math.hypot(p.x - nearestX, p.y - nearestY);
+
+    minDistance = Math.min(minDistance, distance);
+  }
+
+  return minDistance;
+};
+
+const distanceBetweenCoordinatesMeters = (pointA, pointB) => {
+  if (!pointA || !pointB) return Infinity;
+
+  const toRadians = (degrees) => (degrees * Math.PI) / 180;
+  const R = 6371000;
+
+  const lat1 = toRadians(pointA.latitude);
+  const lat2 = toRadians(pointB.latitude);
+  const deltaLat = lat2 - lat1;
+  const deltaLng = toRadians(pointB.longitude - pointA.longitude);
+
+  const a =
+    Math.sin(deltaLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) ** 2;
+
+  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
 
 /**
  * ============================================================
@@ -52,6 +128,28 @@ const OrderDeliveryMap = ({ order, user, onMapReady }) => {
 
   const [errorMsg, setErrorMsg] = useState(null);
 
+  // Current route geometry returned by Google Directions.
+  const [routeCoordinates, setRouteCoordinates] = useState([]);
+
+  // Starting point for the currently displayed route.
+  // This changes only on initialisation, destination changes,
+  // or a confirmed off-route event.
+  const [routeOrigin, setRouteOrigin] = useState(null);
+
+  // Incrementing this forces MapViewDirections to recalculate.
+  const [rerouteKey, setRerouteKey] = useState(0);
+
+  // Prevents repeated reroutes while a new route is being fetched.
+  const [isRerouting, setIsRerouting] = useState(false);
+
+  // Consecutive off-route GPS readings.
+  const offRouteCountRef = useRef(0);
+
+  // Timestamp of the last reroute.
+  const lastRerouteAtRef = useRef(0);
+
+  const previousDestinationKeyRef = useRef(null);
+
   const {
     mapRef,
     setTotalKm,
@@ -63,6 +161,51 @@ const OrderDeliveryMap = ({ order, user, onMapReady }) => {
   } = useOrderContext();
 
   const { dbCourier } = useAuthContext();
+
+  // Before pickup, route to pickup.
+  // After pickup, route to drop-off.
+  const destination = isPickedUp
+    ? {
+        latitude: Number(order.destinationLat),
+        longitude: Number(order.destinationLng),
+      }
+    : {
+        latitude: Number(order.originLat),
+        longitude: Number(order.originLng),
+      };
+
+  const hasValidDestination =
+    (isPickedUp
+      ? order.destinationLat != null &&
+        order.destinationLat !== "" &&
+        order.destinationLng != null &&
+        order.destinationLng !== ""
+      : order.originLat != null &&
+        order.originLat !== "" &&
+        order.originLng != null &&
+        order.originLng !== "") &&
+    Number.isFinite(destination.latitude) &&
+    Number.isFinite(destination.longitude);
+
+  const hasValidOrigin =
+    order.originLat != null &&
+    order.originLat !== "" &&
+    order.originLng != null &&
+    order.originLng !== "" &&
+    Number.isFinite(Number(order.originLat)) &&
+    Number.isFinite(Number(order.originLng));
+
+  const hasValidDropoff =
+    order.destinationLat != null &&
+    order.destinationLat !== "" &&
+    order.destinationLng != null &&
+    order.destinationLng !== "" &&
+    Number.isFinite(Number(order.destinationLat)) &&
+    Number.isFinite(Number(order.destinationLng));
+
+  const destinationKey = hasValidDestination
+    ? `${order.id}:${isPickedUp ? "dropoff" : "pickup"}:${destination.latitude}:${destination.longitude}`
+    : null;
 
   /**
    * ============================================================
@@ -470,6 +613,71 @@ const OrderDeliveryMap = ({ order, user, onMapReady }) => {
    * from the courier's device.
    * ============================================================
    */
+
+  // ======================================================
+  // INITIALISE THE ROUTE FROM THE COURIER'S GPS POSITION
+  // ======================================================
+
+  useEffect(() => {
+    if (routeOrigin || !location) return;
+
+    const latitude = Number(location.latitude);
+    const longitude = Number(location.longitude);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return;
+    }
+
+    setRouteOrigin({ latitude, longitude });
+  }, [location?.latitude, location?.longitude, routeOrigin]);
+
+  // ======================================================
+  // RESET THE ROUTE WHEN THE ACTIVE DESTINATION CHANGES
+  // ======================================================
+
+  useEffect(() => {
+    if (!destinationKey) {
+      previousDestinationKeyRef.current = null;
+      return;
+    }
+
+    const previousKey = previousDestinationKeyRef.current;
+
+    // Record the initial destination without triggering a reroute.
+    if (previousKey === null) {
+      previousDestinationKeyRef.current = destinationKey;
+      return;
+    }
+
+    // Nothing to do if the destination has not changed.
+    if (previousKey === destinationKey) {
+      return;
+    }
+
+    // Wait for a valid GPS position before recording the change.
+    if (!location) return;
+
+    const latitude = Number(location.latitude);
+    const longitude = Number(location.longitude);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return;
+    }
+
+    // Record the change only when we can actually reroute.
+    previousDestinationKeyRef.current = destinationKey;
+
+    offRouteCountRef.current = 0;
+    setRouteCoordinates([]);
+    setRouteOrigin({ latitude, longitude });
+    setIsRerouting(true);
+    setRerouteKey((current) => current + 1);
+  }, [destinationKey, location?.latitude, location?.longitude]);
+
+  // ======================================================
+  // CAMERA FOLLOWS THE COURIER
+  // ======================================================
+
   useEffect(() => {
     if (!location || !mapRef?.current) {
       return;
@@ -479,45 +687,133 @@ const OrderDeliveryMap = ({ order, user, onMapReady }) => {
     const longitude = Number(location.longitude);
     const heading = Number(location.heading);
 
-    /**
-     * Do not move the camera when coordinates are invalid.
-     */
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
       return;
     }
 
-    /**
-     * Build the camera configuration.
-     */
     const cameraConfig = {
       center: {
         latitude,
         longitude,
       },
-
-      /**
-       * Zoom level.
-       *
-       * 16 is suitable for following a courier in a city.
-       */
       zoom: 16,
-
-      /**
-       * Keep the camera pointed in the courier's direction
-       * when the device provides a valid heading.
-       */
-      ...(Number.isFinite(heading) && {
-        heading,
-      }),
+      ...(Number.isFinite(heading) && { heading }),
     };
 
-    /**
-     * Smoothly animate the camera.
-     */
     mapRef.current.animateCamera(cameraConfig, {
       duration: 800,
     });
   }, [location?.latitude, location?.longitude, location?.heading, mapRef]);
+
+  useEffect(() => {
+    if (
+      !location ||
+      !routeCoordinates.length ||
+      isRerouting ||
+      !hasValidDestination
+    ) {
+      return;
+    }
+
+    const latitude = Number(location.latitude);
+    const longitude = Number(location.longitude);
+    const accuracy = Number(location.accuracy);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return;
+    }
+
+    // Ignore GPS readings known to be too inaccurate.
+    if (Number.isFinite(accuracy) && accuracy > 35) {
+      return;
+    }
+
+    const currentPosition = { latitude, longitude };
+
+    const distanceFromRoute = distanceToRouteMeters(
+      currentPosition,
+      routeCoordinates,
+    );
+
+    // Require 3 consecutive readings more than 50 metres
+    // away from the displayed route.
+    if (distanceFromRoute > 50) {
+      offRouteCountRef.current += 1;
+    } else {
+      offRouteCountRef.current = 0;
+      return;
+    }
+
+    if (offRouteCountRef.current < 3) {
+      return;
+    }
+
+    // Prevent repeated route requests.
+    const now = Date.now();
+
+    if (now - lastRerouteAtRef.current < 15000) {
+      return;
+    }
+
+    lastRerouteAtRef.current = now;
+    offRouteCountRef.current = 0;
+
+    console.log(
+      `Courier is ${Math.round(distanceFromRoute)}m off-route. Recalculating route.`,
+    );
+
+    // Recalculate from the courier's current GPS position.
+    setIsRerouting(true);
+    setRouteCoordinates([]);
+    setRouteOrigin(currentPosition);
+    setRerouteKey((current) => current + 1);
+  }, [
+    location?.latitude,
+    location?.longitude,
+    location?.accuracy,
+    routeCoordinates,
+    isRerouting,
+    hasValidDestination,
+  ]);
+
+  // ======================================================
+  // CHECK WHETHER THE COURIER IS NEAR THE ACTIVE DESTINATION
+  // ======================================================
+
+  useEffect(() => {
+    if (!location || !hasValidDestination) {
+      setIsCourierClose(false);
+      return;
+    }
+
+    const currentPosition = {
+      latitude: Number(location.latitude),
+      longitude: Number(location.longitude),
+    };
+
+    if (
+      !Number.isFinite(currentPosition.latitude) ||
+      !Number.isFinite(currentPosition.longitude)
+    ) {
+      setIsCourierClose(false);
+      return;
+    }
+
+    const distanceToDestination = distanceBetweenCoordinatesMeters(
+      currentPosition,
+      destination,
+    );
+
+    // Within 100 metres of the active pickup or drop-off.
+    setIsCourierClose(distanceToDestination <= 100);
+  }, [
+    location?.latitude,
+    location?.longitude,
+    destination.latitude,
+    destination.longitude,
+    hasValidDestination,
+    setIsCourierClose,
+  ]);
 
   /**
    * ============================================================
@@ -531,57 +827,6 @@ const OrderDeliveryMap = ({ order, user, onMapReady }) => {
   ) {
     return <ActivityIndicator style={{ marginTop: 90 }} size="large" />;
   }
-
-  /**
-   * ============================================================
-   * GET ROUTE DESTINATION
-   * ============================================================
-   *
-   * Before pickup:
-   *
-   *     Courier → Pickup location
-   *
-   * After pickup:
-   *
-   *     Courier → Dropoff location
-   * ============================================================
-   */
-  const getDestination = () => {
-    if (isPickedUp) {
-      return {
-        latitude: Number(order.destinationLat),
-        longitude: Number(order.destinationLng),
-      };
-    }
-
-    return {
-      latitude: Number(order.originLat),
-      longitude: Number(order.originLng),
-    };
-  };
-
-  const destination = getDestination();
-
-  /**
-   * Validate route destination.
-   */
-  const hasValidDestination =
-    Number.isFinite(destination.latitude) &&
-    Number.isFinite(destination.longitude);
-
-  /**
-   * Validate pickup coordinates.
-   */
-  const hasValidOrigin =
-    Number.isFinite(Number(order.originLat)) &&
-    Number.isFinite(Number(order.originLng));
-
-  /**
-   * Validate dropoff coordinates.
-   */
-  const hasValidDropoff =
-    Number.isFinite(Number(order.destinationLat)) &&
-    Number.isFinite(Number(order.destinationLng));
 
   /**
    * ============================================================
@@ -650,28 +895,24 @@ const OrderDeliveryMap = ({ order, user, onMapReady }) => {
             DIRECTIONS
             ====================================================== */}
 
-        {hasValidDestination && (
+        {hasValidDestination && routeOrigin && (
           <MapViewDirections
-            origin={{
-              latitude: Number(location.latitude),
-              longitude: Number(location.longitude),
-            }}
+            key={`${destinationKey}-${rerouteKey}`}
+            origin={routeOrigin}
             destination={destination}
             apikey={GOOGLE_API_KEY}
             timePrecision="now"
             strokeWidth={3}
             strokeColor="red"
             onReady={(result) => {
-              /**
-               * Existing proximity threshold preserved.
-               */
-              setIsCourierClose(result.distance <= 0.1);
-
+              setRouteCoordinates(result.coordinates || []);
               setTotalMins(result.duration);
               setTotalKm(result.distance);
+              setIsRerouting(false);
             }}
             onError={(errorMessage) => {
               console.log("Map directions error:", errorMessage);
+              setIsRerouting(false);
             }}
           />
         )}

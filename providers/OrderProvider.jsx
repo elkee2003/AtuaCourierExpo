@@ -171,7 +171,7 @@ const OrderProvider = ({ children }) => {
 
   const isPickedUp = useMemo(() => {
     return [
-      "ACCEPTED",
+      // "ACCEPTED",
       "PICKED_UP",
       "IN_TRANSIT",
       "ARRIVED_DROPOFF",
