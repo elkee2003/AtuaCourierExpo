@@ -121,14 +121,23 @@ const PendingDeliverySingle = ({ item }) => {
   /**
    * 📞 CALL + COPY
    */
+  const displayNumber =
+    item.status === "DELIVERED"
+      ? null
+      : ["PICKED_UP", "IN_TRANSIT", "ARRIVED_DROPOFF", "UNLOADING"].includes(
+            item.status,
+          )
+        ? item.recipientNumber
+        : item.senderNumber;
+
   const handleCall = () => {
-    if (!item.recipientNumber) return;
-    Linking.openURL(`tel:${item.recipientNumber}`);
+    if (!displayNumber) return;
+    Linking.openURL(`tel:${displayNumber}`);
   };
 
   const handleLongPressNumber = () => {
-    if (!item.recipientNumber) return;
-    Clipboard.setStringAsync(item.recipientNumber);
+    if (!displayNumber) return;
+    Clipboard.setStringAsync(displayNumber);
     Alert.alert("Copied", "Number copied to clipboard");
   };
 
@@ -215,26 +224,37 @@ const PendingDeliverySingle = ({ item }) => {
             </View>
           )}
 
-          {/* 👤 RECIPIENT */}
-          <View style={styles.recipientRow}>
-            <Text style={styles.label}>Recipient</Text>
+          {/* 👤 SENDER / RECIPIENT */}
+          {item.status !== "DELIVERED" && (
+            <View style={styles.recipientRow}>
+              <Text style={styles.label}>
+                {[
+                  "PICKED_UP",
+                  "IN_TRANSIT",
+                  "ARRIVED_DROPOFF",
+                  "UNLOADING",
+                ].includes(item.status)
+                  ? "Recipient"
+                  : "Sender"}
+              </Text>
 
-            {!isMaxi || item?.paymentStatus === "PAID" ? (
-              <View style={styles.phoneRow}>
-                <TouchableOpacity onPress={handleCall}>
-                  <Text style={styles.callIcon}>📞</Text>
-                </TouchableOpacity>
+              {!isMaxi || item?.paymentStatus === "PAID" ? (
+                <View style={styles.phoneRow}>
+                  <TouchableOpacity onPress={handleCall}>
+                    <Text style={styles.callIcon}>📞</Text>
+                  </TouchableOpacity>
 
-                <TouchableOpacity onLongPress={handleLongPressNumber}>
-                  <Text style={styles.recipientText}>
-                    {item.recipientNumber || "N/A"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <Text style={styles.recipientText}>Payment required</Text>
-            )}
-          </View>
+                  <TouchableOpacity onLongPress={handleLongPressNumber}>
+                    <Text style={styles.recipientText}>
+                      {displayNumber || "N/A"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <Text style={styles.recipientText}>Payment required</Text>
+              )}
+            </View>
+          )}
 
           {/* 🚀 ACTION */}
           <TouchableOpacity

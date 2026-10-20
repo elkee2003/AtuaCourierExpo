@@ -179,6 +179,10 @@ const OrderDetails = ({
   const roundedTotalMins =
     totalMins != null ? Math.round(Number(totalMins)) : null;
 
+  const senderName = order?.senderName || user?.firstName || "";
+  const senderNumber = order?.senderNumber || user?.phoneNumber || "";
+  const senderNumber2 = order?.senderNumber2 || "";
+
   /**
    * ==========================================================
    * DELIVERY STEPS
@@ -404,7 +408,8 @@ const OrderDetails = ({
      * PRE-TRANSFER EVIDENCE
      * ========================================================
      */
-    if (nextStatus === "ARRIVED_PICKUP") {
+
+    if (order?.status === "ARRIVED_PICKUP") {
       if (freshOrder?.courierPreTransferUploadStatus === "PENDING") {
         console.log("⚠️ PRE_TRANSFER already uploading, skipping...");
       } else {
@@ -444,7 +449,8 @@ const OrderDetails = ({
      * POST-LOADING EVIDENCE
      * ========================================================
      */
-    if (nextStatus === "LOADING") {
+
+    if (order?.status === "LOADING") {
       if (freshOrder?.courierPostLoadingUploadStatus === "PENDING") {
         console.log("⚠️ POST_LOADING already uploading, skipping...");
       } else {
@@ -484,7 +490,7 @@ const OrderDetails = ({
      * DROPOFF / UNLOADING EVIDENCE
      * ========================================================
      */
-    if (nextStatus === "UNLOADING") {
+    if (order?.status === "UNLOADING") {
       if (freshOrder?.dropoffUploadStatus === "PENDING") {
         console.log("⚠️ DROPOFF already uploading, skipping...");
       } else {
@@ -666,6 +672,18 @@ const OrderDetails = ({
             </TouchableOpacity>
           )}
 
+          {order?.recipientNumber2 && (
+            <TouchableOpacity
+              style={styles.phoneButton}
+              onPress={() => copyToClipboard(order?.recipientNumber2)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.phoneIcon}>☎</Text>
+              <Text style={styles.phoneText}>{order?.recipientNumber2}</Text>
+              <Text style={styles.copyText}>COPY</Text>
+            </TouchableOpacity>
+          )}
+
           <View style={styles.addressBox}>
             <Text style={styles.addressLabel}>DROP-OFF ADDRESS</Text>
 
@@ -694,12 +712,12 @@ const OrderDetails = ({
         <View style={styles.personRow}>
           <View style={styles.personAvatar}>
             <Text style={styles.personAvatarText}>
-              {(user?.firstName || "S").charAt(0).toUpperCase()}
+              {senderName?.charAt(0)?.toUpperCase() || "S"}
             </Text>
           </View>
 
           <View style={styles.personContent}>
-            <Text style={styles.personName}>{user?.firstName}</Text>
+            <Text style={styles.personName}>{senderName || "Sender"}</Text>
 
             <Text style={styles.personRole}>Sender</Text>
           </View>
@@ -713,21 +731,35 @@ const OrderDetails = ({
          * can still view and copy the number.
          * for maxi hide sender number if payment has not been made.
          */}
+
         {(order?.transportationType !== "MAXI" ||
           order?.paymentStatus === "PAID") &&
-          order?.status !== "DELIVERED" &&
-          user?.phoneNumber && (
-            <TouchableOpacity
-              style={styles.phoneButton}
-              onPress={() => copyToClipboard(user?.phoneNumber)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.phoneIcon}>☎</Text>
+          order?.status !== "DELIVERED" && (
+            <>
+              {senderNumber && (
+                <TouchableOpacity
+                  style={styles.phoneButton}
+                  onPress={() => copyToClipboard(senderNumber)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.phoneIcon}>☎</Text>
+                  <Text style={styles.phoneText}>{senderNumber}</Text>
+                  <Text style={styles.copyText}>COPY</Text>
+                </TouchableOpacity>
+              )}
 
-              <Text style={styles.phoneText}>{user?.phoneNumber}</Text>
-
-              <Text style={styles.copyText}>COPY</Text>
-            </TouchableOpacity>
+              {senderNumber2 && (
+                <TouchableOpacity
+                  style={styles.phoneButton}
+                  onPress={() => copyToClipboard(senderNumber2)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.phoneIcon}>☎</Text>
+                  <Text style={styles.phoneText}>{senderNumber2}</Text>
+                  <Text style={styles.copyText}>COPY</Text>
+                </TouchableOpacity>
+              )}
+            </>
           )}
 
         <View style={styles.serviceRow}>

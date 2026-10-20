@@ -82,12 +82,16 @@ export default function OrderEvidenceUploader({ order }) {
       return { label: "Failed", color: "#DC2626" };
     }
 
-    if (progress > 0 && progress < 100) {
+    if (uploadStatus === "UPLOADING") {
       return { label: "Uploading", color: "#2563EB" };
     }
 
     if (uploadStatus === "COMPLETE") {
       return { label: "Completed", color: "#16A34A" };
+    }
+
+    if (progress > 0 && progress < 100) {
+      return { label: "Uploading", color: "#2563EB" };
     }
 
     return { label: "Pending", color: "#64748B" };

@@ -1,122 +1,120 @@
-// utils/resumeCourierPendingUploads.ts
-
 import {
-    CourierPostLoadingUploadStatus,
-    CourierPreTransferUploadStatus,
-    DropoffUploadStatus,
-    Order,
+  CourierPostLoadingUploadStatus,
+  CourierPreTransferUploadStatus,
+  DropoffUploadStatus,
+  Order,
 } from "@/src/models";
+
 import { DataStore } from "aws-amplify/datastore";
 import { uploadCourierEvidence } from "./uploadCourierEvidence";
 
-/**
- * =========================
- * 🔁 RESUME COURIER UPLOADS (STAGE-AWARE)
- * =========================
- */
+let recoveryInProgress = false;
+
+const RECOVERABLE_STATUSES = ["PENDING", "FAILED", "UPLOADING"];
+
+const STAGES = [
+  {
+    name: "PRE_TRANSFER",
+    statusField: "courierPreTransferUploadStatus",
+    StatusEnum: CourierPreTransferUploadStatus,
+    localPhotoField: "courierPreTransferLocalPhotos",
+    localVideoField: "courierPreTransferLocalVideo",
+    remotePhotoField: "courierPreTransferPhotos",
+    remoteVideoField: "courierPreTransferVideo",
+  },
+  {
+    name: "POST_LOADING",
+    statusField: "courierPostLoadingUploadStatus",
+    StatusEnum: CourierPostLoadingUploadStatus,
+    localPhotoField: "courierPostLoadingLocalPhotos",
+    localVideoField: "courierPostLoadingLocalVideo",
+    remotePhotoField: "courierPostLoadingPhotos",
+    remoteVideoField: "courierPostLoadingVideo",
+  },
+  {
+    name: "DROPOFF",
+    statusField: "dropoffUploadStatus",
+    StatusEnum: DropoffUploadStatus,
+    localPhotoField: "dropoffArrivalLocalPhotos",
+    localVideoField: "dropoffArrivalLocalVideo",
+    remotePhotoField: "dropoffArrivalPhotos",
+    remoteVideoField: "dropoffArrivalVideo",
+  },
+];
+
 export const resumeCourierPendingUploads = async (courierId) => {
-  if (!courierId) return;
+  if (!courierId || recoveryInProgress) return;
+
+  recoveryInProgress = true;
 
   try {
-    /**
-     * =========================
-     * 📦 GET ALL ORDERS (assigned to courier ideally)
-     * =========================
-     */
-    const orders = await DataStore.query(Order);
+    // Only retrieve orders assigned to this courier.
+    const orders = await DataStore.query(Order, (order) =>
+      order.assignedCourierId.eq(courierId),
+    );
 
     for (const order of orders) {
-      /**
-       * =========================
-       * 🧠 STAGE 1: PRE_TRANSFER
-       * =========================
-       */
-      const shouldRetryPre =
-        order.courierPreTransferUploadStatus ===
-          CourierPreTransferUploadStatus.PENDING ||
-        order.courierPreTransferUploadStatus ===
-          CourierPreTransferUploadStatus.FAILED;
+      for (const stage of STAGES) {
+        const status = order[stage.statusField];
 
-      if (shouldRetryPre) {
-        const photos =
-          order.courierPreTransferLocalPhotos?.map((uri) => ({ uri })) || [];
+        const shouldRecover = RECOVERABLE_STATUSES.some(
+          (value) => value === status,
+        );
 
-        const video = order.courierPreTransferLocalVideo
-          ? { uri: order.courierPreTransferLocalVideo }
-          : null;
+        if (!shouldRecover) continue;
 
-        if (photos.length || video) {
+        const localPhotos = order[stage.localPhotoField] || [];
+        const localVideo = order[stage.localVideoField];
+
+        const hasLocalMedia = localPhotos.length > 0 || Boolean(localVideo);
+
+        if (hasLocalMedia) {
+          const photos = localPhotos.map((uri) => ({ uri }));
+          const video = localVideo ? { uri: localVideo } : null;
+
+          console.log(
+            `Retrying ${stage.name} evidence upload for order ${order.id}`,
+          );
+
           await uploadCourierEvidence(
             order,
             photos,
             video,
-            "PRE_TRANSFER",
+            stage.name,
             courierId,
           );
+
+          continue;
         }
-      }
 
-      /**
-       * =========================
-       * 🧠 STAGE 2: POST_LOADING
-       * =========================
-       */
-      const shouldRetryPost =
-        order.courierPostLoadingUploadStatus ===
-          CourierPostLoadingUploadStatus.PENDING ||
-        order.courierPostLoadingUploadStatus ===
-          CourierPostLoadingUploadStatus.FAILED;
+        // No local files remain. Only mark COMPLETE if remote evidence exists.
+        const hasRemoteMedia =
+          (order[stage.remotePhotoField] || []).length > 0 ||
+          Boolean(order[stage.remoteVideoField]);
 
-      if (shouldRetryPost) {
-        const photos =
-          order.courierPostLoadingLocalPhotos?.map((uri) => ({ uri })) || [];
+        if (hasRemoteMedia) {
+          const latestOrder = await DataStore.query(Order, order.id);
 
-        const video = order.courierPostLoadingLocalVideo
-          ? { uri: order.courierPostLoadingLocalVideo }
-          : null;
-
-        if (photos.length || video) {
-          await uploadCourierEvidence(
-            order,
-            photos,
-            video,
-            "POST_LOADING",
-            courierId,
-          );
-        }
-      }
-
-      /**
-       * =========================
-       * 🧠 STAGE 3: DROPOFF
-       * =========================
-       */
-      const shouldRetryDropoff =
-        order.dropoffUploadStatus === DropoffUploadStatus.PENDING ||
-        order.dropoffUploadStatus === DropoffUploadStatus.FAILED;
-
-      if (shouldRetryDropoff) {
-        const photos =
-          order.dropoffArrivalLocalPhotos?.map((uri) => ({ uri })) || [];
-
-        const video = order.dropoffArrivalLocalVideo
-          ? { uri: order.dropoffArrivalLocalVideo }
-          : null;
-
-        if (photos.length || video) {
-          await uploadCourierEvidence(
-            order,
-            photos,
-            video,
-            "DROPOFF",
-            courierId,
+          if (latestOrder) {
+            await DataStore.save(
+              Order.copyOf(latestOrder, (updated) => {
+                updated[stage.statusField] = stage.StatusEnum.COMPLETE;
+              }),
+            );
+          }
+        } else {
+          console.warn(
+            `Cannot recover ${stage.name} for order ${order.id}: ` +
+              "no local media or uploaded evidence paths are available.",
           );
         }
       }
     }
 
-    console.log("✅ Courier upload recovery complete");
-  } catch (err) {
-    console.log("❌ Courier upload recovery error:", err);
+    console.log("Courier upload recovery finished.");
+  } catch (error) {
+    console.error("Courier upload recovery error:", error);
+  } finally {
+    recoveryInProgress = false;
   }
 };

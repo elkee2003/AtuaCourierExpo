@@ -1055,10 +1055,10 @@ GOING ONLINE: DISCLOSURE AND PERMISSIONS
           o.paymentStatus.eq("PAID"),
 
           // for production environment
-          o.orderEnvironment.eq("PRODUCTION"),
+          // o.orderEnvironment.eq("PRODUCTION"),
 
           // for testing environment
-          // o.orderEnvironment.eq("TEST"),
+          o.orderEnvironment.eq("TEST"),
         ]),
       );
 

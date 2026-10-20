@@ -71,7 +71,7 @@ const ConfirmEmailCom = () => {
 
     try {
       await confirmSignUp({
-        username,
+        username: username.trim(),
         confirmationCode: confirmationCode.trim(),
       });
 
@@ -100,7 +100,7 @@ const ConfirmEmailCom = () => {
     setLoadingCode(true);
 
     try {
-      await resendSignUpCode({ username });
+      await resendSignUpCode({ username: username.trim() });
       Alert.alert(
         "Code Sent",
         "A new code has been sent to your email. Check inbox or spam",
@@ -147,7 +147,10 @@ const ConfirmEmailCom = () => {
               defaultValue=""
               rules={{
                 required: "Code is required",
-                minLength: { value: 6, message: "Enter a valid 6-digit code" },
+                pattern: {
+                  value: /^\d{6}$/,
+                  message: "Enter a valid 6-digit code",
+                },
               }}
               render={({ field: { value, onChange, onBlur } }) => (
                 <TextInput
